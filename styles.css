@@ -4,12 +4,14 @@
     margin: 0;
     padding: 0;
     text-decoration: none;
+
 }
 body{
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   text-decoration: none;
+
 
 }
 .max-width{
@@ -158,17 +160,15 @@ section .title::after{
 .home{
   display: flex;
   background: linear-gradient(to bottom, #33cc33 0%, #ff99cc 100%);
-
   background-repeat: no-repeat;
   background-size: 100% 100%;
   height: 100vh;
   color: #111;
   min-height: 500px;
-  padding-left: 20%;
-font-family: 'Dancing Script', cursive;
+   font-family: 'Dancing Script', cursive;
 }
 .home .max-width{
-  margin: auto 0 auto 40px;
+  margin: auto 0 auto 30px;
 }
 .home .home-content .text-1{
   font-size: 27px;
@@ -204,15 +204,16 @@ font-family: 'Dancing Script', cursive;
   background: none;
 }
 
+
 /* About section styling */
 
 .about{
   background-image: linear-gradient(to left,#FFFFE0,#D8BFD8);
-
+  font-family: "Poppins" ,sans-serif;
 
 }
 .about .title::after{
-  content:"Who i am";
+  content:"Who I am";
   background-image: linear-gradient(to left,#FFFFE0,#D8BFD8);
 
 
@@ -267,6 +268,8 @@ font-family: 'Dancing Script', cursive;
 } */
 .skills {
   background-image: linear-gradient(to left,#B879AC,#e3f4db);
+  font-family: "Poppins" ,sans-serif;
+
 
 }
 .skills .title::after{
@@ -381,6 +384,7 @@ background: linear-gradient(to left,#B879AC,#e3f4db);
 /* projects swction styling */
 .projects{
     background-image: linear-gradient(to left,#FFFFE0,#D8BFD8);
+    font-family: "Poppins" ,sans-serif;
 
 }
 .projects .title::after{
@@ -406,6 +410,7 @@ background: linear-gradient(to left,#B879AC,#e3f4db);
 /* coding platform styling */
 .coding{
   background-image: linear-gradient(to left,#B879AC,#e3f4db);
+  font-family: "Poppins" ,sans-serif;
 
 }
 .coding .title::after{
@@ -472,6 +477,10 @@ img.code {
 }
  /********* Interests Section *********/
 
+.achievments{
+  font-family: "Ubuntu" ,sans-serif;
+
+}
 .achievments-content {
     padding: 0 20px;
 }
@@ -561,6 +570,7 @@ img.code {
 /* Contact styling */
 .contact{
   background-image: linear-gradient(to left,#FFFFE0,#D8BFD8);
+  font-family: "Poppins" ,sans-serif;
 
 }
 .contact .title::after{
@@ -699,6 +709,8 @@ footer{
   padding: 20px 23px;
   padding-bottom: 50px;
   color: #fff;
+  font-family: "Poppins" ,sans-serif;
+
 }
 footer span{
   padding-top: 25px;

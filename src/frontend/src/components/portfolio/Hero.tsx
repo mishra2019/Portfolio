@@ -84,6 +84,7 @@ function scrollToFooter() {
 
 export function Hero() {
   const { personalInfo, heroRoles } = usePortfolioData();
+  const resumeHref = (personalInfo.resumePdf ?? "").trim() || "/Roshan_mishra.pdf";
   const initials = useMemo(() => initialsFromName(personalInfo.name), [personalInfo.name]);
   const contactItems = useMemo(() => {
     const items: {
@@ -206,15 +207,15 @@ export function Hero() {
               transition={{ duration: 0.5, delay: 0.45 }}
               className="flex flex-wrap items-center justify-center gap-3"
             >
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="hero-btn-primary"
+              <a
+                href={resumeHref}
+                download="Roshan_mishra.pdf"
+                className="hero-btn-primary inline-flex items-center gap-2"
                 data-ocid="hero.download_resume.button"
               >
                 <Download className="w-4 h-4" />
                 Download Resume
-              </button>
+              </a>
               <button
                 type="button"
                 onClick={scrollToFooter}

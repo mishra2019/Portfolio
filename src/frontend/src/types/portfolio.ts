@@ -9,6 +9,8 @@ export type PersonalInfo = {
   /** Full URL to LeetCode profile, e.g. https://leetcode.com/u/username */
   leetcode?: string;
   website: string;
+  /** Path under Vite `public/`, e.g. /Roshan_mishra.pdf — served as-is for download */
+  resumePdf?: string;
 };
 
 export type SkillCategory = {

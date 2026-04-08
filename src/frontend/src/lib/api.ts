@@ -11,9 +11,32 @@ export async function fetchPortfolio(): Promise<PortfolioPayload> {
     return data as PortfolioPayload;
   }
 
-  const res = await fetch(portfolioUrl());
+  const url = portfolioUrl();
+  const controller = new AbortController();
+  const timeoutMs = 60_000;
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+  let res: Response;
+  try {
+    res = await fetch(url, { signal: controller.signal });
+  } catch (e) {
+    clearTimeout(t);
+    if (e instanceof Error && e.name === "AbortError") {
+      throw new Error(
+        `Portfolio request timed out after ${timeoutMs / 1000}s (${url}). On Render free tier the first request can take a minute—open your API /api/health in a new tab, wait for JSON, then reload. Also confirm VITE_API_BASE_URL is set on Vercel and redeploy.`,
+      );
+    }
+    throw e;
+  }
+  clearTimeout(t);
+
+  const ct = res.headers.get("content-type") || "";
   if (!res.ok) {
     throw new Error(`Portfolio API returned ${res.status}`);
+  }
+  if (!ct.includes("application/json")) {
+    throw new Error(
+      `Expected JSON from ${url} but got "${ct}". If VITE_API_BASE_URL is missing on Vercel, the app calls /api on the same host and gets HTML instead—set VITE_API_BASE_URL to your Render URL and redeploy.`,
+    );
   }
   return res.json() as Promise<PortfolioPayload>;
 }

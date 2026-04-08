@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "installCommand": "npm install",
-  "buildCommand": "npm run build -w @roshan/portfolio-web",
-  "outputDirectory": "src/frontend/dist",
+  "buildCommand": "npm run build -w @roshan/portfolio-web && rm -rf dist && cp -R src/frontend/dist dist",
+  "outputDirectory": "dist",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }

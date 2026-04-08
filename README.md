@@ -224,7 +224,7 @@ GET https://YOUR-API-HOST/api/portfolio → your portfolio JSON
 
 1. [Vercel](https://vercel.com) → **Add New** → **Project** → import your Git repo.
 2. Leave **Root Directory** as the **repository root** (where `vercel.json` lives).
-3. Confirm Vercel picks up **`vercel.json`**: install `npm install`, build `npm run build -w @roshan/portfolio-web`, output `src/frontend/dist`, SPA rewrite to `index.html`.
+3. Confirm Vercel picks up **`vercel.json`**: install `npm install`, build copies `src/frontend/dist` → repo root **`dist`** for upload, output directory **`dist`**, SPA rewrite to `index.html`. (This avoids dashboard settings that expect a root `dist` folder.)
 
 **Environment variables** (set for **Production** and **Preview** if you use previews):
 

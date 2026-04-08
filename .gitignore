@@ -1,4 +1,7 @@
 node_modules/
+# Vercel copies frontend build here; do not commit
+/dist/
+
 .env
 .env.*
 !.env.example

@@ -23054,78 +23054,45 @@ const featureBundle = {
   ...layout
 };
 const motion = /* @__PURE__ */ createMotionProxy(featureBundle, createDomVisualElement);
-const scriptRel = "modulepreload";
-const assetsURL = function(dep) {
-  return "/" + dep;
-};
-const seen = {};
-const __vitePreload = function preload2(baseModule, deps, importerUrl) {
-  let promise = Promise.resolve();
-  if (deps && deps.length > 0) {
-    document.getElementsByTagName("link");
-    const cspNonceMeta = document.querySelector(
-      "meta[property=csp-nonce]"
-    );
-    const cspNonce = (cspNonceMeta == null ? void 0 : cspNonceMeta.nonce) || (cspNonceMeta == null ? void 0 : cspNonceMeta.getAttribute("nonce"));
-    promise = Promise.allSettled(
-      deps.map((dep) => {
-        dep = assetsURL(dep);
-        if (dep in seen) return;
-        seen[dep] = true;
-        const isCss = dep.endsWith(".css");
-        const cssSelector = isCss ? '[rel="stylesheet"]' : "";
-        if (document.querySelector(`link[href="${dep}"]${cssSelector}`)) {
-          return;
-        }
-        const link = document.createElement("link");
-        link.rel = isCss ? "stylesheet" : scriptRel;
-        if (!isCss) {
-          link.as = "script";
-        }
-        link.crossOrigin = "";
-        link.href = dep;
-        if (cspNonce) {
-          link.setAttribute("nonce", cspNonce);
-        }
-        document.head.appendChild(link);
-        if (isCss) {
-          return new Promise((res, rej) => {
-            link.addEventListener("load", res);
-            link.addEventListener(
-              "error",
-              () => rej(new Error(`Unable to preload CSS for ${dep}`))
-            );
-          });
-        }
-      })
-    );
-  }
-  function handlePreloadError(err) {
-    const e = new Event("vite:preloadError", {
-      cancelable: true
-    });
-    e.payload = err;
-    window.dispatchEvent(e);
-    if (!e.defaultPrevented) {
-      throw err;
-    }
-  }
-  return promise.then((res) => {
-    for (const item of res || []) {
-      if (item.status !== "rejected") continue;
-      handlePreloadError(item.reason);
-    }
-    return baseModule().catch(handlePreloadError);
-  });
-};
+function portfolioUrl() {
+  return "/api/portfolio";
+}
 async function fetchPortfolio() {
-  {
-    const { default: data } = await __vitePreload(async () => {
-      const { default: data2 } = await import("./portfolio-seed-CNA7MB25.js");
-      return { default: data2 };
-    }, true ? [] : void 0);
-    return data;
+  const url = portfolioUrl();
+  const controller = new AbortController();
+  const timeoutMs = 6e4;
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+  let res;
+  try {
+    res = await fetch(url, { signal: controller.signal });
+  } catch (e) {
+    clearTimeout(t);
+    if (e instanceof Error && e.name === "AbortError") {
+      throw new Error(
+        `Portfolio request timed out after ${timeoutMs / 1e3}s (${url}). On Render free tier the first request can take a minute—open your API /api/health in a new tab, wait for JSON, then reload. Also confirm VITE_API_BASE_URL is set on Vercel and redeploy.`
+      );
+    }
+    throw e;
   }
+  clearTimeout(t);
+  const ct = res.headers.get("content-type") || "";
+  if (!res.ok) {
+    const text = await res.text();
+    let extra = "";
+    try {
+      const j = JSON.parse(text);
+      if (typeof j.error === "string") extra = ` — ${j.error}`;
+    } catch {
+      if (text.length > 0 && text.length < 240) extra = ` — ${text}`;
+    }
+    throw new Error(`Portfolio API returned ${res.status}${extra}`);
+  }
+  if (!ct.includes("application/json")) {
+    throw new Error(
+      `Expected JSON from ${url} but got "${ct}". If VITE_API_BASE_URL is missing on Vercel, the app calls /api on the same host and gets HTML instead—set VITE_API_BASE_URL to your Render URL and redeploy.`
+    );
+  }
+  return res.json();
 }
 const PortfolioContext = reactExports.createContext(null);
 function PortfolioProvider({ children }) {
@@ -23138,18 +23105,20 @@ function PortfolioProvider({ children }) {
     return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "min-h-screen flex items-center justify-center bg-[var(--pf-deep)] text-[var(--pf-text)]", children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm opacity-80", children: "Loading portfolio…" }) });
   }
   if (query.isError || !query.data) {
-    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-h-screen flex flex-col items-center justify-center gap-2 px-4 text-center bg-[var(--pf-deep)] text-[var(--pf-text)]", children: [
+    const detail = query.error instanceof Error ? query.error.message : query.error != null ? String(query.error) : null;
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-h-screen flex flex-col items-center justify-center gap-3 px-4 text-center bg-[var(--pf-deep)] text-[var(--pf-text)]", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-semibold", children: "Could not load portfolio" }),
+      detail ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm opacity-90 max-w-lg whitespace-pre-wrap break-words font-mono text-left", children: detail }) : null,
       /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-sm opacity-70 max-w-md", children: [
-        "For local dev: start the API (MongoDB + Express) so Vite can proxy ",
-        /* @__PURE__ */ jsxRuntimeExports.jsx("code", { className: "text-xs", children: "/api" }),
-        ", or set",
+        "Local dev: run ",
+        /* @__PURE__ */ jsxRuntimeExports.jsx("code", { className: "text-xs", children: "npm run dev" }),
+        " (API + Vite). Production: set",
         " ",
         /* @__PURE__ */ jsxRuntimeExports.jsx("code", { className: "text-xs", children: "VITE_API_BASE_URL" }),
-        ". For a static deploy (e.g. Vercel only), set",
+        " on Vercel to your Render API origin and redeploy. Static-only:",
         " ",
         /* @__PURE__ */ jsxRuntimeExports.jsx("code", { className: "text-xs", children: "VITE_STATIC_PORTFOLIO=true" }),
-        " at build time."
+        "."
       ] })
     ] });
   }

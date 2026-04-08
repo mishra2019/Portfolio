@@ -41,6 +41,12 @@ app.get("/api/health", (_req, res) => {
 
 app.get("/api/portfolio", async (_req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      res.status(503).json({
+        error: "Database not connected yet. If this persists, set MONGODB_URI on your host (Atlas SRV). Default localhost MongoDB does not exist on Render/cloud.",
+      });
+      return;
+    }
     const doc = await Portfolio.findOne({ slug: "main" }).lean();
     if (!doc) {
       res.status(404).json({ error: "Portfolio not found. Run npm run seed in src/server." });
@@ -54,15 +60,22 @@ app.get("/api/portfolio", async (_req, res) => {
   }
 });
 
-async function main() {
-  await mongoose.connect(uri);
-  await ensureSeeded();
+function listen() {
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`API listening on http://127.0.0.1:${PORT}`);
+    console.log(`API listening on port ${PORT} (health: /api/health)`);
   });
 }
 
-main().catch((err) => {
-  console.error(err);
+async function connectDb() {
+  await mongoose.connect(uri, {
+    serverSelectionTimeoutMS: 10_000,
+  });
+  await ensureSeeded();
+  console.log("MongoDB connected and seed checked.");
+}
+
+listen();
+connectDb().catch((err) => {
+  console.error("[roshan-portfolio-api] MongoDB failed:", err);
   process.exit(1);
 });

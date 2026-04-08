@@ -8,66 +8,70 @@ import {
   Phone,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
-import { heroRoles, personalInfo } from "../../data/portfolioData";
+import { useEffect, useMemo, useState } from "react";
+import type { ComponentType } from "react";
+import { SiLeetcode } from "react-icons/si";
+import { usePortfolioData } from "../../hooks/PortfolioProvider";
+import { initialsFromName } from "../../utils/initials";
 
 const STATS = [
   {
     value: "~3 yrs",
     label: "Experience",
-    bg: "oklch(0.55 0.18 255 / 0.08)",
-    border: "oklch(0.55 0.18 255 / 0.45)",
-    color: "oklch(0.72 0.18 255)",
-    glow: "oklch(0.55 0.18 255 / 0.35)",
+    bg: "oklch(0.55 0.2 195 / 0.1)",
+    border: "oklch(0.62 0.2 195 / 0.45)",
+    color: "oklch(0.82 0.16 195)",
+    glow: "oklch(0.55 0.22 195 / 0.4)",
   },
   {
-    value: "1500+",
-    label: "Problems Solved",
-    bg: "oklch(0.55 0.17 145 / 0.08)",
-    border: "oklch(0.55 0.17 145 / 0.45)",
-    color: "oklch(0.72 0.17 145)",
-    glow: "oklch(0.55 0.17 145 / 0.35)",
+    value: "10K+",
+    label: "Users (payments)",
+    bg: "oklch(0.48 0.14 165 / 0.12)",
+    border: "oklch(0.55 0.15 165 / 0.45)",
+    color: "oklch(0.85 0.13 165)",
+    glow: "oklch(0.5 0.14 165 / 0.35)",
   },
   {
-    value: "4",
-    label: "Certifications",
-    bg: "oklch(0.72 0.18 70 / 0.08)",
-    border: "oklch(0.72 0.18 70 / 0.45)",
-    color: "oklch(0.82 0.18 70)",
-    glow: "oklch(0.72 0.18 70 / 0.35)",
+    value: "2",
+    label: "Major projects",
+    bg: "oklch(0.55 0.12 72 / 0.12)",
+    border: "oklch(0.72 0.14 72 / 0.5)",
+    color: "oklch(0.92 0.12 72)",
+    glow: "oklch(0.65 0.14 72 / 0.35)",
   },
 ] as const;
 
-const CONTACT_ITEMS = [
-  { icon: Mail,     text: personalInfo.email,    href: `mailto:${personalInfo.email}`, external: false },
-  { icon: Phone,    text: personalInfo.phone,    href: undefined, external: false },
-  { icon: MapPin,   text: personalInfo.location, href: undefined, external: false },
-  { icon: Linkedin, text: "LinkedIn",            href: `https://${personalInfo.linkedin}`, external: true },
-  { icon: Github,   text: "GitHub",              href: `https://${personalInfo.github}`, external: true },
-] as const;
+function externalHref(raw: string): string {
+  const t = raw.trim();
+  if (!t) return "";
+  return /^https?:\/\//i.test(t) ? t : `https://${t}`;
+}
 
-function RotatingRole() {
+function RotatingRole({ roles }: { roles: string[] }) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
+    if (roles.length === 0) return;
     const interval = setInterval(() => {
-      setIndex((i) => (i + 1) % heroRoles.length);
+      setIndex((i) => (i + 1) % roles.length);
     }, 2500);
     return () => clearInterval(interval);
-  }, []);
+  }, [roles.length]);
+
+  if (roles.length === 0) return null;
 
   return (
     <div className="relative h-8 sm:h-9 flex items-center justify-center overflow-hidden">
       <AnimatePresence mode="wait">
         <motion.p
-          key={heroRoles[index]}
+          key={roles[index]}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.45, ease: "easeInOut" }}
           className="absolute text-lg sm:text-xl font-semibold gradient-text whitespace-nowrap"
         >
-          {heroRoles[index]}
+          {roles[index]}
         </motion.p>
       </AnimatePresence>
     </div>
@@ -79,6 +83,47 @@ function scrollToFooter() {
 }
 
 export function Hero() {
+  const { personalInfo, heroRoles } = usePortfolioData();
+  const initials = useMemo(() => initialsFromName(personalInfo.name), [personalInfo.name]);
+  const contactItems = useMemo(() => {
+    const items: {
+      icon: ComponentType<{ className?: string }>;
+      text: string;
+      href?: string;
+      external: boolean;
+    }[] = [
+      { icon: Mail, text: personalInfo.email, href: `mailto:${personalInfo.email}`, external: false },
+      { icon: Phone, text: personalInfo.phone, href: undefined, external: false },
+      { icon: MapPin, text: personalInfo.location, href: undefined, external: false },
+    ];
+    if (personalInfo.linkedin.trim()) {
+      items.push({
+        icon: Linkedin,
+        text: "LinkedIn",
+        href: externalHref(personalInfo.linkedin),
+        external: true,
+      });
+    }
+    if (personalInfo.github.trim()) {
+      items.push({
+        icon: Github,
+        text: "GitHub",
+        href: externalHref(personalInfo.github),
+        external: true,
+      });
+    }
+    const lc = (personalInfo.leetcode ?? "").trim();
+    if (lc) {
+      items.push({
+        icon: SiLeetcode,
+        text: "LeetCode",
+        href: externalHref(lc),
+        external: true,
+      });
+    }
+    return items;
+  }, [personalInfo]);
+
   return (
     <>
       <section
@@ -111,8 +156,8 @@ export function Hero() {
                 Open to opportunities
               </span>
               <span className="hero-badge-blue">
-                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "oklch(0.65 0.18 255)" }} />
-                @ CloudKaptan
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--pf-accent-2)" }} />
+                SDE-1 @ MONKSPACES.AI
               </span>
             </motion.div>
 
@@ -128,13 +173,14 @@ export function Hero() {
               <div
                 className="relative w-44 h-44 sm:w-52 sm:h-52 rounded-full z-10 flex items-center justify-center"
                 style={{
-                  background: "linear-gradient(135deg, oklch(0.18 0.04 255) 0%, oklch(0.14 0.03 255) 100%)",
-                  boxShadow: "0 0 60px oklch(0.55 0.18 255 / 0.4), 0 0 120px oklch(0.55 0.18 255 / 0.15)",
-                  border: "2px solid oklch(0.30 0.06 255 / 0.5)",
+                  background: "linear-gradient(145deg, oklch(0.12 0.06 292) 0%, oklch(0.09 0.05 305) 100%)",
+                  boxShadow:
+                    "0 0 56px oklch(0.5 0.2 195 / 0.35), 0 0 100px oklch(0.45 0.18 310 / 0.2), inset 0 1px 0 oklch(1 0 0 / 0.06)",
+                  border: "2px solid oklch(0.35 0.1 285 / 0.55)",
                 }}
               >
-                <span className="font-bricolage font-black text-5xl sm:text-6xl hero-name-gradient select-none">
-                  AS
+                <span className="font-syne font-black text-5xl sm:text-6xl hero-name-gradient select-none">
+                  {initials}
                 </span>
               </div>
             </motion.div>
@@ -146,11 +192,11 @@ export function Hero() {
               transition={{ duration: 0.6, delay: 0.25 }}
               className="flex flex-col items-center gap-2"
             >
-              <h1 className="font-bricolage text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-none tracking-tight hero-name-gradient">
+              <h1 className="font-syne text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-none tracking-tight hero-name-gradient">
                 {personalInfo.name}
               </h1>
               {/* Rotating role text */}
-              <RotatingRole />
+              <RotatingRole roles={heroRoles} />
             </motion.div>
 
             {/* CTA Buttons */}
@@ -204,7 +250,7 @@ export function Hero() {
                   </span>
                   <span
                     className="text-[10px] sm:text-[11px] font-medium mt-1.5 text-center leading-tight"
-                    style={{ color: "oklch(0.58 0.018 255)" }}
+                    style={{ color: "var(--pf-text-muted)" }}
                   >
                     {stat.label}
                   </span>
@@ -224,7 +270,7 @@ export function Hero() {
         data-ocid="contact_bar.panel"
       >
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-2 px-4">
-          {CONTACT_ITEMS.map((item) => {
+          {contactItems.map((item) => {
             const Icon = item.icon;
             const inner = (
               <span className="contact-bar-item">

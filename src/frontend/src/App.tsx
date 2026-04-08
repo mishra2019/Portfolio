@@ -11,7 +11,7 @@ import { Summary } from "./components/portfolio/Summary";
 
 export default function App() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative z-[1]">
       <Navbar />
       <main>
         <Hero />

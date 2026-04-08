@@ -46,10 +46,10 @@ export function Notes() {
           className="mb-8"
         >
           <h2 className="section-heading">
-            <StickyNote className="inline-block w-7 h-7 mr-2 mb-1" style={{ color: "#2F80FF" }} />
+            <StickyNote className="inline-block w-7 h-7 mr-2 mb-1" style={{ color: "var(--pf-accent)" }} />
             Personal <span>Notes</span>
           </h2>
-          <p className="text-sm" style={{ color: "oklch(0.55 0.015 255)" }}>
+          <p className="text-sm" style={{ color: "var(--pf-text-muted)" }}>
             Jot down reminders, ideas, or anything you want to remember. Notes are stored in this session only.
           </p>
         </motion.div>
@@ -90,8 +90,8 @@ export function Notes() {
             animate={{ opacity: 1 }}
             className="flex flex-col items-center gap-3 py-14"
           >
-            <StickyNote className="w-10 h-10 opacity-20" style={{ color: "#2F80FF" }} />
-            <p className="text-sm" style={{ color: "oklch(0.45 0.015 255)" }}>
+            <StickyNote className="w-10 h-10 opacity-25" style={{ color: "var(--pf-accent)" }} />
+            <p className="text-sm" style={{ color: "var(--pf-text-muted)" }}>
               No notes yet — add your first one above
             </p>
           </motion.div>
@@ -109,7 +109,7 @@ export function Notes() {
                   className="note-card group"
                 >
                   <div className="flex items-start justify-between gap-2 mb-3">
-                    <StickyNote className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "#2F80FF" }} />
+                    <StickyNote className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "var(--pf-accent)" }} />
                     <button
                       type="button"
                       onClick={() => deleteNote(note.id)}
@@ -120,10 +120,10 @@ export function Notes() {
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <p className="text-sm leading-relaxed flex-1" style={{ color: "oklch(0.80 0.018 255)" }}>
+                  <p className="text-sm leading-relaxed flex-1" style={{ color: "var(--pf-text-secondary)" }}>
                     {note.text}
                   </p>
-                  <p className="text-[11px] mt-3" style={{ color: "oklch(0.48 0.012 255)" }}>
+                  <p className="text-[11px] mt-3" style={{ color: "var(--pf-text-muted)" }}>
                     {note.createdAt}
                   </p>
                 </motion.div>

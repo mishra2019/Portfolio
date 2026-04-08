@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm install",
+  "buildCommand": "npm run build -w @roshan/portfolio-web",
+  "outputDirectory": "src/frontend/dist",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "build": {
+    "env": {
+      "VITE_STATIC_PORTFOLIO": "true"
+    }
+  }
+}

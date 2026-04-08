@@ -1,23 +1,31 @@
 import { Mail, Menu, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
-import { personalInfo } from "../../data/portfolioData";
-
-const NAV_LINKS = [
-  { label: "Home", href: "#hero" },
-  { label: "Skills", href: "#skills" },
-  { label: "Experience", href: "#experience" },
-  { label: "Projects", href: "#projects" },
-  { label: "Certifications", href: "#certifications" },
-  { label: "Achievements", href: "#achievements" },
-];
+import { useMemo, useState } from "react";
+import { usePortfolioData } from "../../hooks/PortfolioProvider";
+import { initialsFromName } from "../../utils/initials";
 
 function scrollTo(href: string) {
   document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
 }
 
 export function Navbar() {
+  const { personalInfo, codingAchievements, awards } = usePortfolioData();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const initials = useMemo(() => initialsFromName(personalInfo.name), [personalInfo.name]);
+  const showAchievements = codingAchievements.length > 0 || awards.length > 0;
+  const navLinks = useMemo(() => {
+    const base = [
+      { label: "Home", href: "#hero" },
+      { label: "Skills", href: "#skills" },
+      { label: "Experience", href: "#experience" },
+      { label: "Projects", href: "#projects" },
+      { label: "Certifications", href: "#certifications" },
+    ] as const;
+    if (showAchievements) {
+      return [...base, { label: "Achievements", href: "#achievements" as const }];
+    }
+    return [...base];
+  }, [showAchievements]);
 
   const handleNavClick = (href: string) => {
     setMobileOpen(false);
@@ -38,13 +46,13 @@ export function Navbar() {
             className="flex items-center gap-3"
           >
             <div className="navbar-logo-box">
-              <span className="text-xs font-black tracking-widest text-white">AS</span>
+              <span className="text-xs font-black tracking-widest text-white">{initials}</span>
             </div>
             <div>
-              <p className="text-sm font-bold leading-none" style={{ color: "oklch(0.96 0.018 255)" }}>
+              <p className="text-sm font-bold leading-none font-syne" style={{ color: "var(--pf-text)" }}>
                 {personalInfo.name}
               </p>
-              <p className="text-[10px] font-medium" style={{ color: "oklch(0.55 0.18 255)" }}>
+              <p className="text-[10px] font-medium" style={{ color: "var(--pf-accent)" }}>
                 {personalInfo.title}
               </p>
             </div>
@@ -52,7 +60,7 @@ export function Navbar() {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
-            {NAV_LINKS.map((link, i) => (
+            {navLinks.map((link, i) => (
               <motion.button
                 type="button"
                 key={link.href}
@@ -84,7 +92,7 @@ export function Navbar() {
           <button
             type="button"
             className="md:hidden p-2 rounded-lg transition-colors"
-            style={{ color: "oklch(0.70 0.022 255)" }}
+            style={{ color: "var(--pf-text-secondary)" }}
             onClick={() => setMobileOpen((v) => !v)}
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
           >
@@ -102,18 +110,18 @@ export function Navbar() {
             exit={{ opacity: 0, height: 0 }}
             className="md:hidden border-t overflow-hidden"
             style={{
-              background: "oklch(0.11 0.025 255 / 0.97)",
-              borderColor: "oklch(0.22 0.038 250 / 0.6)",
+              background: "oklch(0.08 0.045 292 / 0.98)",
+              borderColor: "oklch(0.3 0.07 285 / 0.55)",
             }}
           >
             <nav className="flex flex-col px-4 py-4 gap-1">
-              {NAV_LINKS.map((link) => (
+              {navLinks.map((link) => (
                 <button
                   type="button"
                   key={link.href}
                   onClick={() => handleNavClick(link.href)}
                   className="text-left py-2.5 px-3 rounded-lg text-sm font-medium transition-colors hover:bg-white/5"
-                  style={{ color: "oklch(0.70 0.022 255)" }}
+                  style={{ color: "var(--pf-text-secondary)" }}
                 >
                   {link.label}
                 </button>

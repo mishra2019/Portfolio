@@ -1,9 +1,6 @@
-var __defProp = Object.defineProperty;
 var __typeError = (msg) => {
   throw TypeError(msg);
 };
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
 var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
@@ -17,7 +14,26 @@ var __privateWrapper = (obj, member, setter, getter) => ({
     return __privateGet(obj, member, getter);
   }
 });
-var _provider, _providerCalled, _a, _focused, _cleanup, _setup, _b, _online, _cleanup2, _setup2, _c, _gcTimeout, _d, _initialState, _revertState, _cache, _client, _retryer, _defaultOptions, _abortSignalConsumed, _Query_instances, dispatch_fn, _e, _client2, _observers, _mutationCache, _retryer2, _Mutation_instances, dispatch_fn2, _f, _mutations, _scopes, _mutationId, _g, _queries, _h, _queryCache, _mutationCache2, _defaultOptions2, _queryDefaults, _mutationDefaults, _mountCount, _unsubscribeFocus, _unsubscribeOnline, _i, _rawKey, _derKey, _publicKey, _privateKey, _inner, _delegation, _options;
+var _focused, _cleanup, _setup, _a, _provider, _providerCalled, _b, _online, _cleanup2, _setup2, _c, _gcTimeout, _d, _initialState, _revertState, _cache, _client, _retryer, _defaultOptions, _abortSignalConsumed, _Query_instances, isInitialPausedFetch_fn, dispatch_fn, _e, _client2, _currentQuery, _currentQueryInitialState, _currentResult, _currentResultState, _currentResultOptions, _currentThenable, _selectError, _selectFn, _selectResult, _lastQueryWithDefinedData, _staleTimeoutId, _refetchIntervalId, _currentRefetchInterval, _trackedProps, _QueryObserver_instances, executeFetch_fn, updateStaleTimeout_fn, computeRefetchInterval_fn, updateRefetchInterval_fn, updateTimers_fn, clearStaleTimeout_fn, clearRefetchInterval_fn, updateQuery_fn, notify_fn, _f, _client3, _observers, _mutationCache, _retryer2, _Mutation_instances, dispatch_fn2, _g, _mutations, _scopes, _mutationId, _h, _queries, _i, _queryCache, _mutationCache2, _defaultOptions2, _queryDefaults, _mutationDefaults, _mountCount, _unsubscribeFocus, _unsubscribeOnline, _j;
+function _mergeNamespaces(n, m) {
+  for (var i = 0; i < m.length; i++) {
+    const e = m[i];
+    if (typeof e !== "string" && !Array.isArray(e)) {
+      for (const k in e) {
+        if (k !== "default" && !(k in n)) {
+          const d = Object.getOwnPropertyDescriptor(e, k);
+          if (d) {
+            Object.defineProperty(n, k, d.get ? d : {
+              enumerable: true,
+              get: () => e[k]
+            });
+          }
+        }
+      }
+    }
+  }
+  return Object.freeze(Object.defineProperty(n, Symbol.toStringTag, { value: "Module" }));
+}
 (function polyfill() {
   const relList = document.createElement("link").relList;
   if (relList && relList.supports && relList.supports("modulepreload")) {
@@ -116,6 +132,69 @@ var Subscribable = class {
   onUnsubscribe() {
   }
 };
+var FocusManager = (_a = class extends Subscribable {
+  constructor() {
+    super();
+    __privateAdd(this, _focused);
+    __privateAdd(this, _cleanup);
+    __privateAdd(this, _setup);
+    __privateSet(this, _setup, (onFocus) => {
+      if (typeof window !== "undefined" && window.addEventListener) {
+        const listener = () => onFocus();
+        window.addEventListener("visibilitychange", listener, false);
+        return () => {
+          window.removeEventListener("visibilitychange", listener);
+        };
+      }
+      return;
+    });
+  }
+  onSubscribe() {
+    if (!__privateGet(this, _cleanup)) {
+      this.setEventListener(__privateGet(this, _setup));
+    }
+  }
+  onUnsubscribe() {
+    var _a2;
+    if (!this.hasListeners()) {
+      (_a2 = __privateGet(this, _cleanup)) == null ? void 0 : _a2.call(this);
+      __privateSet(this, _cleanup, void 0);
+    }
+  }
+  setEventListener(setup) {
+    var _a2;
+    __privateSet(this, _setup, setup);
+    (_a2 = __privateGet(this, _cleanup)) == null ? void 0 : _a2.call(this);
+    __privateSet(this, _cleanup, setup((focused) => {
+      if (typeof focused === "boolean") {
+        this.setFocused(focused);
+      } else {
+        this.onFocus();
+      }
+    }));
+  }
+  setFocused(focused) {
+    const changed = __privateGet(this, _focused) !== focused;
+    if (changed) {
+      __privateSet(this, _focused, focused);
+      this.onFocus();
+    }
+  }
+  onFocus() {
+    const isFocused = this.isFocused();
+    this.listeners.forEach((listener) => {
+      listener(isFocused);
+    });
+  }
+  isFocused() {
+    var _a2;
+    if (typeof __privateGet(this, _focused) === "boolean") {
+      return __privateGet(this, _focused);
+    }
+    return ((_a2 = globalThis.document) == null ? void 0 : _a2.visibilityState) !== "hidden";
+  }
+}, _focused = new WeakMap(), _cleanup = new WeakMap(), _setup = new WeakMap(), _a);
+var focusManager = new FocusManager();
 var defaultTimeoutProvider = {
   // We need the wrapper function syntax below instead of direct references to
   // global setTimeout etc.
@@ -132,7 +211,7 @@ var defaultTimeoutProvider = {
   setInterval: (callback, delay2) => setInterval(callback, delay2),
   clearInterval: (intervalId) => clearInterval(intervalId)
 };
-var TimeoutManager = (_a = class {
+var TimeoutManager = (_b = class {
   constructor() {
     // We cannot have TimeoutManager<T> as we must instantiate it with a concrete
     // type at app boot; and if we leave that type, then any new timer provider
@@ -158,7 +237,7 @@ var TimeoutManager = (_a = class {
   clearInterval(intervalId) {
     __privateGet(this, _provider).clearInterval(intervalId);
   }
-}, _provider = new WeakMap(), _providerCalled = new WeakMap(), _a);
+}, _provider = new WeakMap(), _providerCalled = new WeakMap(), _b);
 var timeoutManager = new TimeoutManager();
 function systemSetTimeoutZero(callback) {
   setTimeout(callback, 0);
@@ -267,10 +346,11 @@ function partialMatchKey(a, b) {
   return false;
 }
 var hasOwn = Object.prototype.hasOwnProperty;
-function replaceEqualDeep(a, b) {
+function replaceEqualDeep(a, b, depth = 0) {
   if (a === b) {
     return a;
   }
+  if (depth > 500) return b;
   const array = isPlainArray(a) && isPlainArray(b);
   if (!array && !(isPlainObject(a) && isPlainObject(b))) return b;
   const aItems = array ? a : Object.keys(a);
@@ -292,11 +372,22 @@ function replaceEqualDeep(a, b) {
       copy[key] = bItem;
       continue;
     }
-    const v = replaceEqualDeep(aItem, bItem);
+    const v = replaceEqualDeep(aItem, bItem, depth + 1);
     copy[key] = v;
     if (v === aItem) equalItems++;
   }
   return aSize === bSize && equalItems === aSize ? a : copy;
+}
+function shallowEqualObjects(a, b) {
+  if (!b || Object.keys(a).length !== Object.keys(b).length) {
+    return false;
+  }
+  for (const key in a) {
+    if (a[key] !== b[key]) {
+      return false;
+    }
+  }
+  return true;
 }
 function isPlainArray(value) {
   return Array.isArray(value) && value.length === Object.keys(value).length;
@@ -345,7 +436,7 @@ function addToStart(items, item, max = 0) {
   const newItems = [item, ...items];
   return max && newItems.length > max ? newItems.slice(0, -1) : newItems;
 }
-var skipToken = Symbol();
+var skipToken = /* @__PURE__ */ Symbol();
 function ensureQueryFn(options, fetchOptions) {
   if (!options.queryFn && (fetchOptions == null ? void 0 : fetchOptions.initialPromise)) {
     return () => fetchOptions.initialPromise;
@@ -355,69 +446,50 @@ function ensureQueryFn(options, fetchOptions) {
   }
   return options.queryFn;
 }
-var FocusManager = (_b = class extends Subscribable {
-  constructor() {
-    super();
-    __privateAdd(this, _focused);
-    __privateAdd(this, _cleanup);
-    __privateAdd(this, _setup);
-    __privateSet(this, _setup, (onFocus) => {
-      if (!isServer && window.addEventListener) {
-        const listener = () => onFocus();
-        window.addEventListener("visibilitychange", listener, false);
-        return () => {
-          window.removeEventListener("visibilitychange", listener);
-        };
+function shouldThrowError(throwOnError, params) {
+  if (typeof throwOnError === "function") {
+    return throwOnError(...params);
+  }
+  return !!throwOnError;
+}
+function addConsumeAwareSignal(object, getSignal, onCancelled) {
+  let consumed = false;
+  let signal;
+  Object.defineProperty(object, "signal", {
+    enumerable: true,
+    get: () => {
+      signal ?? (signal = getSignal());
+      if (consumed) {
+        return signal;
       }
-      return;
-    });
-  }
-  onSubscribe() {
-    if (!__privateGet(this, _cleanup)) {
-      this.setEventListener(__privateGet(this, _setup));
-    }
-  }
-  onUnsubscribe() {
-    var _a2;
-    if (!this.hasListeners()) {
-      (_a2 = __privateGet(this, _cleanup)) == null ? void 0 : _a2.call(this);
-      __privateSet(this, _cleanup, void 0);
-    }
-  }
-  setEventListener(setup) {
-    var _a2;
-    __privateSet(this, _setup, setup);
-    (_a2 = __privateGet(this, _cleanup)) == null ? void 0 : _a2.call(this);
-    __privateSet(this, _cleanup, setup((focused) => {
-      if (typeof focused === "boolean") {
-        this.setFocused(focused);
+      consumed = true;
+      if (signal.aborted) {
+        onCancelled();
       } else {
-        this.onFocus();
+        signal.addEventListener("abort", onCancelled, { once: true });
       }
-    }));
-  }
-  setFocused(focused) {
-    const changed = __privateGet(this, _focused) !== focused;
-    if (changed) {
-      __privateSet(this, _focused, focused);
-      this.onFocus();
+      return signal;
     }
-  }
-  onFocus() {
-    const isFocused = this.isFocused();
-    this.listeners.forEach((listener) => {
-      listener(isFocused);
-    });
-  }
-  isFocused() {
-    var _a2;
-    if (typeof __privateGet(this, _focused) === "boolean") {
-      return __privateGet(this, _focused);
+  });
+  return object;
+}
+var environmentManager = /* @__PURE__ */ (() => {
+  let isServerFn = () => isServer;
+  return {
+    /**
+     * Returns whether the current runtime should be treated as a server environment.
+     */
+    isServer() {
+      return isServerFn();
+    },
+    /**
+     * Overrides the server check globally.
+     */
+    setIsServer(isServerValue) {
+      isServerFn = isServerValue;
     }
-    return ((_a2 = globalThis.document) == null ? void 0 : _a2.visibilityState) !== "hidden";
-  }
-}, _focused = new WeakMap(), _cleanup = new WeakMap(), _setup = new WeakMap(), _b);
-var focusManager = new FocusManager();
+  };
+})();
 function pendingThenable() {
   let resolve;
   let reject;
@@ -534,7 +606,7 @@ var OnlineManager = (_c = class extends Subscribable {
     __privateAdd(this, _cleanup2);
     __privateAdd(this, _setup2);
     __privateSet(this, _setup2, (onOnline) => {
-      if (!isServer && window.addEventListener) {
+      if (typeof window !== "undefined" && window.addEventListener) {
         const onlineListener = () => onOnline(true);
         const offlineListener = () => onOnline(false);
         window.addEventListener("online", onlineListener, false);
@@ -659,7 +731,7 @@ function createRetryer(config) {
       if (isResolved()) {
         return;
       }
-      const retry = config.retry ?? (isServer ? 0 : 3);
+      const retry = config.retry ?? (environmentManager.isServer() ? 0 : 3);
       const retryDelay = config.retryDelay ?? defaultRetryDelay;
       const delay2 = typeof retryDelay === "function" ? retryDelay(failureCount, error) : retryDelay;
       const shouldRetry = retry === true || typeof retry === "number" && failureCount < retry || typeof retry === "function" && retry(failureCount, error);
@@ -719,7 +791,7 @@ var Removable = (_d = class {
   updateGcTime(newGcTime) {
     this.gcTime = Math.max(
       this.gcTime || 0,
-      newGcTime ?? (isServer ? Infinity : 5 * 60 * 1e3)
+      newGcTime ?? (environmentManager.isServer() ? Infinity : 5 * 60 * 1e3)
     );
   }
   clearGcTimeout() {
@@ -765,10 +837,9 @@ var Query = (_e = class extends Removable {
     if (this.state && this.state.data === void 0) {
       const defaultState = getDefaultState$1(this.options);
       if (defaultState.data !== void 0) {
-        this.setData(defaultState.data, {
-          updatedAt: defaultState.dataUpdatedAt,
-          manual: true
-        });
+        this.setState(
+          successState(defaultState.data, defaultState.dataUpdatedAt)
+        );
         __privateSet(this, _initialState, defaultState);
       }
     }
@@ -801,9 +872,12 @@ var Query = (_e = class extends Removable {
     super.destroy();
     this.cancel({ silent: true });
   }
+  get resetState() {
+    return __privateGet(this, _initialState);
+  }
   reset() {
     this.destroy();
-    this.setState(__privateGet(this, _initialState));
+    this.setState(this.resetState);
   }
   isActive() {
     return this.observers.some(
@@ -814,7 +888,10 @@ var Query = (_e = class extends Removable {
     if (this.getObserversCount() > 0) {
       return !this.isActive();
     }
-    return this.options.queryFn === skipToken || this.state.dataUpdateCount + this.state.errorUpdateCount === 0;
+    return this.options.queryFn === skipToken || !this.isFetched();
+  }
+  isFetched() {
+    return this.state.dataUpdateCount + this.state.errorUpdateCount > 0;
   }
   isStatic() {
     if (this.getObserversCount() > 0) {
@@ -868,7 +945,7 @@ var Query = (_e = class extends Removable {
       this.observers = this.observers.filter((x) => x !== observer2);
       if (!this.observers.length) {
         if (__privateGet(this, _retryer)) {
-          if (__privateGet(this, _abortSignalConsumed)) {
+          if (__privateGet(this, _abortSignalConsumed) || __privateMethod(this, _Query_instances, isInitialPausedFetch_fn).call(this)) {
             __privateGet(this, _retryer).cancel({ revert: true });
           } else {
             __privateGet(this, _retryer).cancelRetry();
@@ -888,8 +965,8 @@ var Query = (_e = class extends Removable {
     }
   }
   async fetch(options, fetchOptions) {
-    var _a2, _b2, _c2, _d2, _e2, _f2, _g2, _h2, _i2, _j, _k, _l;
-    if (this.state.fetchStatus !== "idle" && // If the promise in the retyer is already rejected, we have to definitely
+    var _a2, _b2, _c2, _d2, _e2, _f2, _g2, _h2, _i2, _j2, _k, _l;
+    if (this.state.fetchStatus !== "idle" && // If the promise in the retryer is already rejected, we have to definitely
     // re-start the fetch; there is a chance that the query is still in a
     // pending state when that happens
     ((_a2 = __privateGet(this, _retryer)) == null ? void 0 : _a2.status()) !== "rejected") {
@@ -1015,7 +1092,7 @@ var Query = (_e = class extends Removable {
         type: "error",
         error
       });
-      (_j = (_i2 = __privateGet(this, _cache).config).onError) == null ? void 0 : _j.call(
+      (_j2 = (_i2 = __privateGet(this, _cache).config).onError) == null ? void 0 : _j2.call(
         _i2,
         error,
         this
@@ -1031,7 +1108,9 @@ var Query = (_e = class extends Removable {
       this.scheduleGc();
     }
   }
-}, _initialState = new WeakMap(), _revertState = new WeakMap(), _cache = new WeakMap(), _client = new WeakMap(), _retryer = new WeakMap(), _defaultOptions = new WeakMap(), _abortSignalConsumed = new WeakMap(), _Query_instances = new WeakSet(), dispatch_fn = function(action) {
+}, _initialState = new WeakMap(), _revertState = new WeakMap(), _cache = new WeakMap(), _client = new WeakMap(), _retryer = new WeakMap(), _defaultOptions = new WeakMap(), _abortSignalConsumed = new WeakMap(), _Query_instances = new WeakSet(), isInitialPausedFetch_fn = function() {
+  return this.state.fetchStatus === "paused" && this.state.status === "pending";
+}, dispatch_fn = function(action) {
   const reducer = (state) => {
     switch (action.type) {
       case "failed":
@@ -1059,12 +1138,8 @@ var Query = (_e = class extends Removable {
       case "success":
         const newState = {
           ...state,
-          data: action.data,
+          ...successState(action.data, action.dataUpdatedAt),
           dataUpdateCount: state.dataUpdateCount + 1,
-          dataUpdatedAt: action.dataUpdatedAt ?? Date.now(),
-          error: null,
-          isInvalidated: false,
-          status: "success",
           ...!action.manual && {
             fetchStatus: "idle",
             fetchFailureCount: 0,
@@ -1083,7 +1158,10 @@ var Query = (_e = class extends Removable {
           fetchFailureCount: state.fetchFailureCount + 1,
           fetchFailureReason: error,
           fetchStatus: "idle",
-          status: "error"
+          status: "error",
+          // flag existing data as invalidated if we get a background error
+          // note that "no data" always means stale so we can set unconditionally here
+          isInvalidated: true
         };
       case "invalidate":
         return {
@@ -1116,6 +1194,15 @@ function fetchState(data, options) {
     }
   };
 }
+function successState(data, dataUpdatedAt) {
+  return {
+    data,
+    dataUpdatedAt: dataUpdatedAt ?? Date.now(),
+    error: null,
+    isInvalidated: false,
+    status: "success"
+  };
+}
 function getDefaultState$1(options) {
   const data = typeof options.initialData === "function" ? options.initialData() : options.initialData;
   const hasData = data !== void 0;
@@ -1135,6 +1222,450 @@ function getDefaultState$1(options) {
     fetchStatus: "idle"
   };
 }
+var QueryObserver = (_f = class extends Subscribable {
+  constructor(client2, options) {
+    super();
+    __privateAdd(this, _QueryObserver_instances);
+    __privateAdd(this, _client2);
+    __privateAdd(this, _currentQuery);
+    __privateAdd(this, _currentQueryInitialState);
+    __privateAdd(this, _currentResult);
+    __privateAdd(this, _currentResultState);
+    __privateAdd(this, _currentResultOptions);
+    __privateAdd(this, _currentThenable);
+    __privateAdd(this, _selectError);
+    __privateAdd(this, _selectFn);
+    __privateAdd(this, _selectResult);
+    // This property keeps track of the last query with defined data.
+    // It will be used to pass the previous data and query to the placeholder function between renders.
+    __privateAdd(this, _lastQueryWithDefinedData);
+    __privateAdd(this, _staleTimeoutId);
+    __privateAdd(this, _refetchIntervalId);
+    __privateAdd(this, _currentRefetchInterval);
+    __privateAdd(this, _trackedProps, /* @__PURE__ */ new Set());
+    this.options = options;
+    __privateSet(this, _client2, client2);
+    __privateSet(this, _selectError, null);
+    __privateSet(this, _currentThenable, pendingThenable());
+    this.bindMethods();
+    this.setOptions(options);
+  }
+  bindMethods() {
+    this.refetch = this.refetch.bind(this);
+  }
+  onSubscribe() {
+    if (this.listeners.size === 1) {
+      __privateGet(this, _currentQuery).addObserver(this);
+      if (shouldFetchOnMount(__privateGet(this, _currentQuery), this.options)) {
+        __privateMethod(this, _QueryObserver_instances, executeFetch_fn).call(this);
+      } else {
+        this.updateResult();
+      }
+      __privateMethod(this, _QueryObserver_instances, updateTimers_fn).call(this);
+    }
+  }
+  onUnsubscribe() {
+    if (!this.hasListeners()) {
+      this.destroy();
+    }
+  }
+  shouldFetchOnReconnect() {
+    return shouldFetchOn(
+      __privateGet(this, _currentQuery),
+      this.options,
+      this.options.refetchOnReconnect
+    );
+  }
+  shouldFetchOnWindowFocus() {
+    return shouldFetchOn(
+      __privateGet(this, _currentQuery),
+      this.options,
+      this.options.refetchOnWindowFocus
+    );
+  }
+  destroy() {
+    this.listeners = /* @__PURE__ */ new Set();
+    __privateMethod(this, _QueryObserver_instances, clearStaleTimeout_fn).call(this);
+    __privateMethod(this, _QueryObserver_instances, clearRefetchInterval_fn).call(this);
+    __privateGet(this, _currentQuery).removeObserver(this);
+  }
+  setOptions(options) {
+    const prevOptions = this.options;
+    const prevQuery = __privateGet(this, _currentQuery);
+    this.options = __privateGet(this, _client2).defaultQueryOptions(options);
+    if (this.options.enabled !== void 0 && typeof this.options.enabled !== "boolean" && typeof this.options.enabled !== "function" && typeof resolveEnabled(this.options.enabled, __privateGet(this, _currentQuery)) !== "boolean") {
+      throw new Error(
+        "Expected enabled to be a boolean or a callback that returns a boolean"
+      );
+    }
+    __privateMethod(this, _QueryObserver_instances, updateQuery_fn).call(this);
+    __privateGet(this, _currentQuery).setOptions(this.options);
+    if (prevOptions._defaulted && !shallowEqualObjects(this.options, prevOptions)) {
+      __privateGet(this, _client2).getQueryCache().notify({
+        type: "observerOptionsUpdated",
+        query: __privateGet(this, _currentQuery),
+        observer: this
+      });
+    }
+    const mounted = this.hasListeners();
+    if (mounted && shouldFetchOptionally(
+      __privateGet(this, _currentQuery),
+      prevQuery,
+      this.options,
+      prevOptions
+    )) {
+      __privateMethod(this, _QueryObserver_instances, executeFetch_fn).call(this);
+    }
+    this.updateResult();
+    if (mounted && (__privateGet(this, _currentQuery) !== prevQuery || resolveEnabled(this.options.enabled, __privateGet(this, _currentQuery)) !== resolveEnabled(prevOptions.enabled, __privateGet(this, _currentQuery)) || resolveStaleTime(this.options.staleTime, __privateGet(this, _currentQuery)) !== resolveStaleTime(prevOptions.staleTime, __privateGet(this, _currentQuery)))) {
+      __privateMethod(this, _QueryObserver_instances, updateStaleTimeout_fn).call(this);
+    }
+    const nextRefetchInterval = __privateMethod(this, _QueryObserver_instances, computeRefetchInterval_fn).call(this);
+    if (mounted && (__privateGet(this, _currentQuery) !== prevQuery || resolveEnabled(this.options.enabled, __privateGet(this, _currentQuery)) !== resolveEnabled(prevOptions.enabled, __privateGet(this, _currentQuery)) || nextRefetchInterval !== __privateGet(this, _currentRefetchInterval))) {
+      __privateMethod(this, _QueryObserver_instances, updateRefetchInterval_fn).call(this, nextRefetchInterval);
+    }
+  }
+  getOptimisticResult(options) {
+    const query = __privateGet(this, _client2).getQueryCache().build(__privateGet(this, _client2), options);
+    const result = this.createResult(query, options);
+    if (shouldAssignObserverCurrentProperties(this, result)) {
+      __privateSet(this, _currentResult, result);
+      __privateSet(this, _currentResultOptions, this.options);
+      __privateSet(this, _currentResultState, __privateGet(this, _currentQuery).state);
+    }
+    return result;
+  }
+  getCurrentResult() {
+    return __privateGet(this, _currentResult);
+  }
+  trackResult(result, onPropTracked) {
+    return new Proxy(result, {
+      get: (target, key) => {
+        this.trackProp(key);
+        onPropTracked == null ? void 0 : onPropTracked(key);
+        if (key === "promise") {
+          this.trackProp("data");
+          if (!this.options.experimental_prefetchInRender && __privateGet(this, _currentThenable).status === "pending") {
+            __privateGet(this, _currentThenable).reject(
+              new Error(
+                "experimental_prefetchInRender feature flag is not enabled"
+              )
+            );
+          }
+        }
+        return Reflect.get(target, key);
+      }
+    });
+  }
+  trackProp(key) {
+    __privateGet(this, _trackedProps).add(key);
+  }
+  getCurrentQuery() {
+    return __privateGet(this, _currentQuery);
+  }
+  refetch({ ...options } = {}) {
+    return this.fetch({
+      ...options
+    });
+  }
+  fetchOptimistic(options) {
+    const defaultedOptions = __privateGet(this, _client2).defaultQueryOptions(options);
+    const query = __privateGet(this, _client2).getQueryCache().build(__privateGet(this, _client2), defaultedOptions);
+    return query.fetch().then(() => this.createResult(query, defaultedOptions));
+  }
+  fetch(fetchOptions) {
+    return __privateMethod(this, _QueryObserver_instances, executeFetch_fn).call(this, {
+      ...fetchOptions,
+      cancelRefetch: fetchOptions.cancelRefetch ?? true
+    }).then(() => {
+      this.updateResult();
+      return __privateGet(this, _currentResult);
+    });
+  }
+  createResult(query, options) {
+    var _a2;
+    const prevQuery = __privateGet(this, _currentQuery);
+    const prevOptions = this.options;
+    const prevResult = __privateGet(this, _currentResult);
+    const prevResultState = __privateGet(this, _currentResultState);
+    const prevResultOptions = __privateGet(this, _currentResultOptions);
+    const queryChange = query !== prevQuery;
+    const queryInitialState = queryChange ? query.state : __privateGet(this, _currentQueryInitialState);
+    const { state } = query;
+    let newState = { ...state };
+    let isPlaceholderData = false;
+    let data;
+    if (options._optimisticResults) {
+      const mounted = this.hasListeners();
+      const fetchOnMount = !mounted && shouldFetchOnMount(query, options);
+      const fetchOptionally = mounted && shouldFetchOptionally(query, prevQuery, options, prevOptions);
+      if (fetchOnMount || fetchOptionally) {
+        newState = {
+          ...newState,
+          ...fetchState(state.data, query.options)
+        };
+      }
+      if (options._optimisticResults === "isRestoring") {
+        newState.fetchStatus = "idle";
+      }
+    }
+    let { error, errorUpdatedAt, status } = newState;
+    data = newState.data;
+    let skipSelect = false;
+    if (options.placeholderData !== void 0 && data === void 0 && status === "pending") {
+      let placeholderData;
+      if ((prevResult == null ? void 0 : prevResult.isPlaceholderData) && options.placeholderData === (prevResultOptions == null ? void 0 : prevResultOptions.placeholderData)) {
+        placeholderData = prevResult.data;
+        skipSelect = true;
+      } else {
+        placeholderData = typeof options.placeholderData === "function" ? options.placeholderData(
+          (_a2 = __privateGet(this, _lastQueryWithDefinedData)) == null ? void 0 : _a2.state.data,
+          __privateGet(this, _lastQueryWithDefinedData)
+        ) : options.placeholderData;
+      }
+      if (placeholderData !== void 0) {
+        status = "success";
+        data = replaceData(
+          prevResult == null ? void 0 : prevResult.data,
+          placeholderData,
+          options
+        );
+        isPlaceholderData = true;
+      }
+    }
+    if (options.select && data !== void 0 && !skipSelect) {
+      if (prevResult && data === (prevResultState == null ? void 0 : prevResultState.data) && options.select === __privateGet(this, _selectFn)) {
+        data = __privateGet(this, _selectResult);
+      } else {
+        try {
+          __privateSet(this, _selectFn, options.select);
+          data = options.select(data);
+          data = replaceData(prevResult == null ? void 0 : prevResult.data, data, options);
+          __privateSet(this, _selectResult, data);
+          __privateSet(this, _selectError, null);
+        } catch (selectError) {
+          __privateSet(this, _selectError, selectError);
+        }
+      }
+    }
+    if (__privateGet(this, _selectError)) {
+      error = __privateGet(this, _selectError);
+      data = __privateGet(this, _selectResult);
+      errorUpdatedAt = Date.now();
+      status = "error";
+    }
+    const isFetching = newState.fetchStatus === "fetching";
+    const isPending = status === "pending";
+    const isError = status === "error";
+    const isLoading = isPending && isFetching;
+    const hasData = data !== void 0;
+    const result = {
+      status,
+      fetchStatus: newState.fetchStatus,
+      isPending,
+      isSuccess: status === "success",
+      isError,
+      isInitialLoading: isLoading,
+      isLoading,
+      data,
+      dataUpdatedAt: newState.dataUpdatedAt,
+      error,
+      errorUpdatedAt,
+      failureCount: newState.fetchFailureCount,
+      failureReason: newState.fetchFailureReason,
+      errorUpdateCount: newState.errorUpdateCount,
+      isFetched: query.isFetched(),
+      isFetchedAfterMount: newState.dataUpdateCount > queryInitialState.dataUpdateCount || newState.errorUpdateCount > queryInitialState.errorUpdateCount,
+      isFetching,
+      isRefetching: isFetching && !isPending,
+      isLoadingError: isError && !hasData,
+      isPaused: newState.fetchStatus === "paused",
+      isPlaceholderData,
+      isRefetchError: isError && hasData,
+      isStale: isStale(query, options),
+      refetch: this.refetch,
+      promise: __privateGet(this, _currentThenable),
+      isEnabled: resolveEnabled(options.enabled, query) !== false
+    };
+    const nextResult = result;
+    if (this.options.experimental_prefetchInRender) {
+      const hasResultData = nextResult.data !== void 0;
+      const isErrorWithoutData = nextResult.status === "error" && !hasResultData;
+      const finalizeThenableIfPossible = (thenable) => {
+        if (isErrorWithoutData) {
+          thenable.reject(nextResult.error);
+        } else if (hasResultData) {
+          thenable.resolve(nextResult.data);
+        }
+      };
+      const recreateThenable = () => {
+        const pending = __privateSet(this, _currentThenable, nextResult.promise = pendingThenable());
+        finalizeThenableIfPossible(pending);
+      };
+      const prevThenable = __privateGet(this, _currentThenable);
+      switch (prevThenable.status) {
+        case "pending":
+          if (query.queryHash === prevQuery.queryHash) {
+            finalizeThenableIfPossible(prevThenable);
+          }
+          break;
+        case "fulfilled":
+          if (isErrorWithoutData || nextResult.data !== prevThenable.value) {
+            recreateThenable();
+          }
+          break;
+        case "rejected":
+          if (!isErrorWithoutData || nextResult.error !== prevThenable.reason) {
+            recreateThenable();
+          }
+          break;
+      }
+    }
+    return nextResult;
+  }
+  updateResult() {
+    const prevResult = __privateGet(this, _currentResult);
+    const nextResult = this.createResult(__privateGet(this, _currentQuery), this.options);
+    __privateSet(this, _currentResultState, __privateGet(this, _currentQuery).state);
+    __privateSet(this, _currentResultOptions, this.options);
+    if (__privateGet(this, _currentResultState).data !== void 0) {
+      __privateSet(this, _lastQueryWithDefinedData, __privateGet(this, _currentQuery));
+    }
+    if (shallowEqualObjects(nextResult, prevResult)) {
+      return;
+    }
+    __privateSet(this, _currentResult, nextResult);
+    const shouldNotifyListeners = () => {
+      if (!prevResult) {
+        return true;
+      }
+      const { notifyOnChangeProps } = this.options;
+      const notifyOnChangePropsValue = typeof notifyOnChangeProps === "function" ? notifyOnChangeProps() : notifyOnChangeProps;
+      if (notifyOnChangePropsValue === "all" || !notifyOnChangePropsValue && !__privateGet(this, _trackedProps).size) {
+        return true;
+      }
+      const includedProps = new Set(
+        notifyOnChangePropsValue ?? __privateGet(this, _trackedProps)
+      );
+      if (this.options.throwOnError) {
+        includedProps.add("error");
+      }
+      return Object.keys(__privateGet(this, _currentResult)).some((key) => {
+        const typedKey = key;
+        const changed = __privateGet(this, _currentResult)[typedKey] !== prevResult[typedKey];
+        return changed && includedProps.has(typedKey);
+      });
+    };
+    __privateMethod(this, _QueryObserver_instances, notify_fn).call(this, { listeners: shouldNotifyListeners() });
+  }
+  onQueryUpdate() {
+    this.updateResult();
+    if (this.hasListeners()) {
+      __privateMethod(this, _QueryObserver_instances, updateTimers_fn).call(this);
+    }
+  }
+}, _client2 = new WeakMap(), _currentQuery = new WeakMap(), _currentQueryInitialState = new WeakMap(), _currentResult = new WeakMap(), _currentResultState = new WeakMap(), _currentResultOptions = new WeakMap(), _currentThenable = new WeakMap(), _selectError = new WeakMap(), _selectFn = new WeakMap(), _selectResult = new WeakMap(), _lastQueryWithDefinedData = new WeakMap(), _staleTimeoutId = new WeakMap(), _refetchIntervalId = new WeakMap(), _currentRefetchInterval = new WeakMap(), _trackedProps = new WeakMap(), _QueryObserver_instances = new WeakSet(), executeFetch_fn = function(fetchOptions) {
+  __privateMethod(this, _QueryObserver_instances, updateQuery_fn).call(this);
+  let promise = __privateGet(this, _currentQuery).fetch(
+    this.options,
+    fetchOptions
+  );
+  if (!(fetchOptions == null ? void 0 : fetchOptions.throwOnError)) {
+    promise = promise.catch(noop$7);
+  }
+  return promise;
+}, updateStaleTimeout_fn = function() {
+  __privateMethod(this, _QueryObserver_instances, clearStaleTimeout_fn).call(this);
+  const staleTime = resolveStaleTime(
+    this.options.staleTime,
+    __privateGet(this, _currentQuery)
+  );
+  if (environmentManager.isServer() || __privateGet(this, _currentResult).isStale || !isValidTimeout(staleTime)) {
+    return;
+  }
+  const time2 = timeUntilStale(__privateGet(this, _currentResult).dataUpdatedAt, staleTime);
+  const timeout = time2 + 1;
+  __privateSet(this, _staleTimeoutId, timeoutManager.setTimeout(() => {
+    if (!__privateGet(this, _currentResult).isStale) {
+      this.updateResult();
+    }
+  }, timeout));
+}, computeRefetchInterval_fn = function() {
+  return (typeof this.options.refetchInterval === "function" ? this.options.refetchInterval(__privateGet(this, _currentQuery)) : this.options.refetchInterval) ?? false;
+}, updateRefetchInterval_fn = function(nextInterval) {
+  __privateMethod(this, _QueryObserver_instances, clearRefetchInterval_fn).call(this);
+  __privateSet(this, _currentRefetchInterval, nextInterval);
+  if (environmentManager.isServer() || resolveEnabled(this.options.enabled, __privateGet(this, _currentQuery)) === false || !isValidTimeout(__privateGet(this, _currentRefetchInterval)) || __privateGet(this, _currentRefetchInterval) === 0) {
+    return;
+  }
+  __privateSet(this, _refetchIntervalId, timeoutManager.setInterval(() => {
+    if (this.options.refetchIntervalInBackground || focusManager.isFocused()) {
+      __privateMethod(this, _QueryObserver_instances, executeFetch_fn).call(this);
+    }
+  }, __privateGet(this, _currentRefetchInterval)));
+}, updateTimers_fn = function() {
+  __privateMethod(this, _QueryObserver_instances, updateStaleTimeout_fn).call(this);
+  __privateMethod(this, _QueryObserver_instances, updateRefetchInterval_fn).call(this, __privateMethod(this, _QueryObserver_instances, computeRefetchInterval_fn).call(this));
+}, clearStaleTimeout_fn = function() {
+  if (__privateGet(this, _staleTimeoutId)) {
+    timeoutManager.clearTimeout(__privateGet(this, _staleTimeoutId));
+    __privateSet(this, _staleTimeoutId, void 0);
+  }
+}, clearRefetchInterval_fn = function() {
+  if (__privateGet(this, _refetchIntervalId)) {
+    timeoutManager.clearInterval(__privateGet(this, _refetchIntervalId));
+    __privateSet(this, _refetchIntervalId, void 0);
+  }
+}, updateQuery_fn = function() {
+  const query = __privateGet(this, _client2).getQueryCache().build(__privateGet(this, _client2), this.options);
+  if (query === __privateGet(this, _currentQuery)) {
+    return;
+  }
+  const prevQuery = __privateGet(this, _currentQuery);
+  __privateSet(this, _currentQuery, query);
+  __privateSet(this, _currentQueryInitialState, query.state);
+  if (this.hasListeners()) {
+    prevQuery == null ? void 0 : prevQuery.removeObserver(this);
+    query.addObserver(this);
+  }
+}, notify_fn = function(notifyOptions) {
+  notifyManager.batch(() => {
+    if (notifyOptions.listeners) {
+      this.listeners.forEach((listener) => {
+        listener(__privateGet(this, _currentResult));
+      });
+    }
+    __privateGet(this, _client2).getQueryCache().notify({
+      query: __privateGet(this, _currentQuery),
+      type: "observerResultsUpdated"
+    });
+  });
+}, _f);
+function shouldLoadOnMount(query, options) {
+  return resolveEnabled(options.enabled, query) !== false && query.state.data === void 0 && !(query.state.status === "error" && options.retryOnMount === false);
+}
+function shouldFetchOnMount(query, options) {
+  return shouldLoadOnMount(query, options) || query.state.data !== void 0 && shouldFetchOn(query, options, options.refetchOnMount);
+}
+function shouldFetchOn(query, options, field) {
+  if (resolveEnabled(options.enabled, query) !== false && resolveStaleTime(options.staleTime, query) !== "static") {
+    const value = typeof field === "function" ? field(query) : field;
+    return value === "always" || value !== false && isStale(query, options);
+  }
+  return false;
+}
+function shouldFetchOptionally(query, prevQuery, options, prevOptions) {
+  return (query !== prevQuery || resolveEnabled(prevOptions.enabled, query) === false) && (!options.suspense || query.state.status !== "error") && isStale(query, options);
+}
+function isStale(query, options) {
+  return resolveEnabled(options.enabled, query) !== false && query.isStaleByTime(resolveStaleTime(options.staleTime, query));
+}
+function shouldAssignObserverCurrentProperties(observer2, optimisticResult) {
+  if (!shallowEqualObjects(observer2.getCurrentResult(), optimisticResult)) {
+    return true;
+  }
+  return false;
+}
 function infiniteQueryBehavior(pages) {
   return {
     onFetch: (context, query) => {
@@ -1148,19 +1679,11 @@ function infiniteQueryBehavior(pages) {
       const fetchFn = async () => {
         let cancelled = false;
         const addSignalProperty = (object) => {
-          Object.defineProperty(object, "signal", {
-            enumerable: true,
-            get: () => {
-              if (context.signal.aborted) {
-                cancelled = true;
-              } else {
-                context.signal.addEventListener("abort", () => {
-                  cancelled = true;
-                });
-              }
-              return context.signal;
-            }
-          });
+          addConsumeAwareSignal(
+            object,
+            () => context.signal,
+            () => cancelled = true
+          );
         };
         const queryFn = ensureQueryFn(context.options, context.fetchOptions);
         const fetchPage = async (data, param, previous) => {
@@ -1246,15 +1769,15 @@ function getPreviousPageParam(options, { pages, pageParams }) {
   var _a2;
   return pages.length > 0 ? (_a2 = options.getPreviousPageParam) == null ? void 0 : _a2.call(options, pages[0], pages, pageParams[0], pageParams) : void 0;
 }
-var Mutation = (_f = class extends Removable {
+var Mutation = (_g = class extends Removable {
   constructor(config) {
     super();
     __privateAdd(this, _Mutation_instances);
-    __privateAdd(this, _client2);
+    __privateAdd(this, _client3);
     __privateAdd(this, _observers);
     __privateAdd(this, _mutationCache);
     __privateAdd(this, _retryer2);
-    __privateSet(this, _client2, config.client);
+    __privateSet(this, _client3, config.client);
     this.mutationId = config.mutationId;
     __privateSet(this, _mutationCache, config.mutationCache);
     __privateSet(this, _observers, []);
@@ -1304,12 +1827,12 @@ var Mutation = (_f = class extends Removable {
     this.execute(this.state.variables);
   }
   async execute(variables) {
-    var _a2, _b2, _c2, _d2, _e2, _f2, _g2, _h2, _i2, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t;
+    var _a2, _b2, _c2, _d2, _e2, _f2, _g2, _h2, _i2, _j2, _k, _l, _m, _n, _o, _p, _q, _r;
     const onContinue = () => {
       __privateMethod(this, _Mutation_instances, dispatch_fn2).call(this, { type: "continue" });
     };
     const mutationFnContext = {
-      client: __privateGet(this, _client2),
+      client: __privateGet(this, _client3),
       meta: this.options.meta,
       mutationKey: this.options.mutationKey
     };
@@ -1339,14 +1862,15 @@ var Mutation = (_f = class extends Removable {
         onContinue();
       } else {
         __privateMethod(this, _Mutation_instances, dispatch_fn2).call(this, { type: "pending", variables, isPaused });
-        await ((_b2 = (_a2 = __privateGet(this, _mutationCache).config).onMutate) == null ? void 0 : _b2.call(
+        if (__privateGet(this, _mutationCache).config.onMutate) {
+          await __privateGet(this, _mutationCache).config.onMutate(
+            variables,
+            this,
+            mutationFnContext
+          );
+        }
+        const context = await ((_b2 = (_a2 = this.options).onMutate) == null ? void 0 : _b2.call(
           _a2,
-          variables,
-          this,
-          mutationFnContext
-        ));
-        const context = await ((_d2 = (_c2 = this.options).onMutate) == null ? void 0 : _d2.call(
-          _c2,
           variables,
           mutationFnContext
         ));
@@ -1360,23 +1884,23 @@ var Mutation = (_f = class extends Removable {
         }
       }
       const data = await __privateGet(this, _retryer2).start();
-      await ((_f2 = (_e2 = __privateGet(this, _mutationCache).config).onSuccess) == null ? void 0 : _f2.call(
-        _e2,
+      await ((_d2 = (_c2 = __privateGet(this, _mutationCache).config).onSuccess) == null ? void 0 : _d2.call(
+        _c2,
         data,
         variables,
         this.state.context,
         this,
         mutationFnContext
       ));
-      await ((_h2 = (_g2 = this.options).onSuccess) == null ? void 0 : _h2.call(
-        _g2,
+      await ((_f2 = (_e2 = this.options).onSuccess) == null ? void 0 : _f2.call(
+        _e2,
         data,
         variables,
         this.state.context,
         mutationFnContext
       ));
-      await ((_j = (_i2 = __privateGet(this, _mutationCache).config).onSettled) == null ? void 0 : _j.call(
-        _i2,
+      await ((_h2 = (_g2 = __privateGet(this, _mutationCache).config).onSettled) == null ? void 0 : _h2.call(
+        _g2,
         data,
         null,
         this.state.variables,
@@ -1384,8 +1908,8 @@ var Mutation = (_f = class extends Removable {
         this,
         mutationFnContext
       ));
-      await ((_l = (_k = this.options).onSettled) == null ? void 0 : _l.call(
-        _k,
+      await ((_j2 = (_i2 = this.options).onSettled) == null ? void 0 : _j2.call(
+        _i2,
         data,
         null,
         variables,
@@ -1396,23 +1920,31 @@ var Mutation = (_f = class extends Removable {
       return data;
     } catch (error) {
       try {
-        await ((_n = (_m = __privateGet(this, _mutationCache).config).onError) == null ? void 0 : _n.call(
-          _m,
+        await ((_l = (_k = __privateGet(this, _mutationCache).config).onError) == null ? void 0 : _l.call(
+          _k,
           error,
           variables,
           this.state.context,
           this,
           mutationFnContext
         ));
-        await ((_p = (_o = this.options).onError) == null ? void 0 : _p.call(
-          _o,
+      } catch (e) {
+        void Promise.reject(e);
+      }
+      try {
+        await ((_n = (_m = this.options).onError) == null ? void 0 : _n.call(
+          _m,
           error,
           variables,
           this.state.context,
           mutationFnContext
         ));
-        await ((_r = (_q = __privateGet(this, _mutationCache).config).onSettled) == null ? void 0 : _r.call(
-          _q,
+      } catch (e) {
+        void Promise.reject(e);
+      }
+      try {
+        await ((_p = (_o = __privateGet(this, _mutationCache).config).onSettled) == null ? void 0 : _p.call(
+          _o,
           void 0,
           error,
           this.state.variables,
@@ -1420,23 +1952,28 @@ var Mutation = (_f = class extends Removable {
           this,
           mutationFnContext
         ));
-        await ((_t = (_s = this.options).onSettled) == null ? void 0 : _t.call(
-          _s,
+      } catch (e) {
+        void Promise.reject(e);
+      }
+      try {
+        await ((_r = (_q = this.options).onSettled) == null ? void 0 : _r.call(
+          _q,
           void 0,
           error,
           variables,
           this.state.context,
           mutationFnContext
         ));
-        throw error;
-      } finally {
-        __privateMethod(this, _Mutation_instances, dispatch_fn2).call(this, { type: "error", error });
+      } catch (e) {
+        void Promise.reject(e);
       }
+      __privateMethod(this, _Mutation_instances, dispatch_fn2).call(this, { type: "error", error });
+      throw error;
     } finally {
       __privateGet(this, _mutationCache).runNext(this);
     }
   }
-}, _client2 = new WeakMap(), _observers = new WeakMap(), _mutationCache = new WeakMap(), _retryer2 = new WeakMap(), _Mutation_instances = new WeakSet(), dispatch_fn2 = function(action) {
+}, _client3 = new WeakMap(), _observers = new WeakMap(), _mutationCache = new WeakMap(), _retryer2 = new WeakMap(), _Mutation_instances = new WeakSet(), dispatch_fn2 = function(action) {
   const reducer = (state) => {
     switch (action.type) {
       case "failed":
@@ -1501,7 +2038,7 @@ var Mutation = (_f = class extends Removable {
       action
     });
   });
-}, _f);
+}, _g);
 function getDefaultState() {
   return {
     context: void 0,
@@ -1515,7 +2052,7 @@ function getDefaultState() {
     submittedAt: 0
   };
 }
-var MutationCache = (_g = class extends Subscribable {
+var MutationCache = (_h = class extends Subscribable {
   constructor(config = {}) {
     super();
     __privateAdd(this, _mutations);
@@ -1627,12 +2164,12 @@ var MutationCache = (_g = class extends Subscribable {
       )
     );
   }
-}, _mutations = new WeakMap(), _scopes = new WeakMap(), _mutationId = new WeakMap(), _g);
+}, _mutations = new WeakMap(), _scopes = new WeakMap(), _mutationId = new WeakMap(), _h);
 function scopeFor(mutation) {
   var _a2;
   return (_a2 = mutation.options.scope) == null ? void 0 : _a2.id;
 }
-var QueryCache = (_h = class extends Subscribable {
+var QueryCache = (_i = class extends Subscribable {
   constructor(config = {}) {
     super();
     __privateAdd(this, _queries);
@@ -1719,8 +2256,8 @@ var QueryCache = (_h = class extends Subscribable {
       });
     });
   }
-}, _queries = new WeakMap(), _h);
-var QueryClient = (_i = class {
+}, _queries = new WeakMap(), _i);
+var QueryClient = (_j = class {
   constructor(config = {}) {
     __privateAdd(this, _queryCache);
     __privateAdd(this, _mutationCache2);
@@ -2007,7 +2544,7 @@ var QueryClient = (_i = class {
     __privateGet(this, _queryCache).clear();
     __privateGet(this, _mutationCache2).clear();
   }
-}, _queryCache = new WeakMap(), _mutationCache2 = new WeakMap(), _defaultOptions2 = new WeakMap(), _queryDefaults = new WeakMap(), _mutationDefaults = new WeakMap(), _mountCount = new WeakMap(), _unsubscribeFocus = new WeakMap(), _unsubscribeOnline = new WeakMap(), _i);
+}, _queryCache = new WeakMap(), _mutationCache2 = new WeakMap(), _defaultOptions2 = new WeakMap(), _queryDefaults = new WeakMap(), _mutationDefaults = new WeakMap(), _mountCount = new WeakMap(), _unsubscribeFocus = new WeakMap(), _unsubscribeOnline = new WeakMap(), _j);
 var react = { exports: {} };
 var react_production = {};
 /**
@@ -2019,7 +2556,7 @@ var react_production = {};
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-var REACT_ELEMENT_TYPE$1 = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE$2 = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE$1 = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE$1 = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE$1 = Symbol.for("react.profiler"), REACT_CONSUMER_TYPE$1 = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE$1 = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE$1 = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE$1 = Symbol.for("react.suspense"), REACT_MEMO_TYPE$1 = Symbol.for("react.memo"), REACT_LAZY_TYPE$1 = Symbol.for("react.lazy"), MAYBE_ITERATOR_SYMBOL$1 = Symbol.iterator;
+var REACT_ELEMENT_TYPE$1 = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE$2 = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE$1 = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE$1 = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE$1 = Symbol.for("react.profiler"), REACT_CONSUMER_TYPE$1 = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE$1 = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE$1 = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE$1 = Symbol.for("react.suspense"), REACT_MEMO_TYPE$1 = Symbol.for("react.memo"), REACT_LAZY_TYPE$2 = Symbol.for("react.lazy"), MAYBE_ITERATOR_SYMBOL$1 = Symbol.iterator;
 function getIteratorFn$1(maybeIterable) {
   if (null === maybeIterable || "object" !== typeof maybeIterable) return null;
   maybeIterable = MAYBE_ITERATOR_SYMBOL$1 && maybeIterable[MAYBE_ITERATOR_SYMBOL$1] || maybeIterable["@@iterator"];
@@ -2067,13 +2604,13 @@ pureComponentPrototype.constructor = PureComponent;
 assign$1(pureComponentPrototype, Component.prototype);
 pureComponentPrototype.isPureReactComponent = true;
 var isArrayImpl$1 = Array.isArray, ReactSharedInternals$2 = { H: null, A: null, T: null, S: null, V: null }, hasOwnProperty$1 = Object.prototype.hasOwnProperty;
-function ReactElement(type, key, self2, source, owner, props) {
-  self2 = props.ref;
+function ReactElement(type, key, self, source, owner, props) {
+  self = props.ref;
   return {
     $$typeof: REACT_ELEMENT_TYPE$1,
     type,
     key,
-    ref: void 0 !== self2 ? self2 : null,
+    ref: void 0 !== self ? self : null,
     props
   };
 }
@@ -2143,7 +2680,7 @@ function mapIntoArray(children, array, escapedPrefix, nameSoFar, callback) {
           case REACT_PORTAL_TYPE$2:
             invokeCallback = true;
             break;
-          case REACT_LAZY_TYPE$1:
+          case REACT_LAZY_TYPE$2:
             return invokeCallback = children._init, mapIntoArray(
               invokeCallback(children._payload),
               array,
@@ -2352,16 +2889,16 @@ react_production.forwardRef = function(render) {
 react_production.isValidElement = isValidElement;
 react_production.lazy = function(ctor) {
   return {
-    $$typeof: REACT_LAZY_TYPE$1,
+    $$typeof: REACT_LAZY_TYPE$2,
     _payload: { _status: -1, _result: ctor },
     _init: lazyInitializer
   };
 };
-react_production.memo = function(type, compare2) {
+react_production.memo = function(type, compare) {
   return {
     $$typeof: REACT_MEMO_TYPE$1,
     type,
-    compare: void 0 === compare2 ? null : compare2
+    compare: void 0 === compare ? null : compare
   };
 };
 react_production.startTransition = function(scope) {
@@ -2442,14 +2979,26 @@ react_production.useSyncExternalStore = function(subscribe, getSnapshot, getServ
 react_production.useTransition = function() {
   return ReactSharedInternals$2.H.useTransition();
 };
-react_production.version = "19.1.1";
+react_production.version = "19.1.5";
 {
   react.exports = react_production;
 }
 var reactExports = react.exports;
+const React$2 = /* @__PURE__ */ getDefaultExportFromCjs(reactExports);
+const React$3 = /* @__PURE__ */ _mergeNamespaces({
+  __proto__: null,
+  default: React$2
+}, [reactExports]);
 var QueryClientContext = reactExports.createContext(
   void 0
 );
+var useQueryClient = (queryClient2) => {
+  const client2 = reactExports.useContext(QueryClientContext);
+  if (!client2) {
+    throw new Error("No QueryClient set, use QueryClientProvider to set one");
+  }
+  return client2;
+};
 var QueryClientProvider = ({
   client: client2,
   children
@@ -2462,6 +3011,139 @@ var QueryClientProvider = ({
   }, [client2]);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(QueryClientContext.Provider, { value: client2, children });
 };
+var IsRestoringContext = reactExports.createContext(false);
+var useIsRestoring = () => reactExports.useContext(IsRestoringContext);
+IsRestoringContext.Provider;
+function createValue() {
+  let isReset = false;
+  return {
+    clearReset: () => {
+      isReset = false;
+    },
+    reset: () => {
+      isReset = true;
+    },
+    isReset: () => {
+      return isReset;
+    }
+  };
+}
+var QueryErrorResetBoundaryContext = reactExports.createContext(createValue());
+var useQueryErrorResetBoundary = () => reactExports.useContext(QueryErrorResetBoundaryContext);
+var ensurePreventErrorBoundaryRetry = (options, errorResetBoundary, query) => {
+  const throwOnError = (query == null ? void 0 : query.state.error) && typeof options.throwOnError === "function" ? shouldThrowError(options.throwOnError, [query.state.error, query]) : options.throwOnError;
+  if (options.suspense || options.experimental_prefetchInRender || throwOnError) {
+    if (!errorResetBoundary.isReset()) {
+      options.retryOnMount = false;
+    }
+  }
+};
+var useClearResetErrorBoundary = (errorResetBoundary) => {
+  reactExports.useEffect(() => {
+    errorResetBoundary.clearReset();
+  }, [errorResetBoundary]);
+};
+var getHasError = ({
+  result,
+  errorResetBoundary,
+  throwOnError,
+  query,
+  suspense
+}) => {
+  return result.isError && !errorResetBoundary.isReset() && !result.isFetching && query && (suspense && result.data === void 0 || shouldThrowError(throwOnError, [result.error, query]));
+};
+var ensureSuspenseTimers = (defaultedOptions) => {
+  if (defaultedOptions.suspense) {
+    const MIN_SUSPENSE_TIME_MS = 1e3;
+    const clamp2 = (value) => value === "static" ? value : Math.max(value ?? MIN_SUSPENSE_TIME_MS, MIN_SUSPENSE_TIME_MS);
+    const originalStaleTime = defaultedOptions.staleTime;
+    defaultedOptions.staleTime = typeof originalStaleTime === "function" ? (...args) => clamp2(originalStaleTime(...args)) : clamp2(originalStaleTime);
+    if (typeof defaultedOptions.gcTime === "number") {
+      defaultedOptions.gcTime = Math.max(
+        defaultedOptions.gcTime,
+        MIN_SUSPENSE_TIME_MS
+      );
+    }
+  }
+};
+var willFetch = (result, isRestoring) => result.isLoading && result.isFetching && !isRestoring;
+var shouldSuspend = (defaultedOptions, result) => (defaultedOptions == null ? void 0 : defaultedOptions.suspense) && result.isPending;
+var fetchOptimistic = (defaultedOptions, observer2, errorResetBoundary) => observer2.fetchOptimistic(defaultedOptions).catch(() => {
+  errorResetBoundary.clearReset();
+});
+function useBaseQuery(options, Observer, queryClient2) {
+  var _a2, _b2, _c2, _d2;
+  const isRestoring = useIsRestoring();
+  const errorResetBoundary = useQueryErrorResetBoundary();
+  const client2 = useQueryClient();
+  const defaultedOptions = client2.defaultQueryOptions(options);
+  (_b2 = (_a2 = client2.getDefaultOptions().queries) == null ? void 0 : _a2._experimental_beforeQuery) == null ? void 0 : _b2.call(
+    _a2,
+    defaultedOptions
+  );
+  const query = client2.getQueryCache().get(defaultedOptions.queryHash);
+  defaultedOptions._optimisticResults = isRestoring ? "isRestoring" : "optimistic";
+  ensureSuspenseTimers(defaultedOptions);
+  ensurePreventErrorBoundaryRetry(defaultedOptions, errorResetBoundary, query);
+  useClearResetErrorBoundary(errorResetBoundary);
+  const isNewCacheEntry = !client2.getQueryCache().get(defaultedOptions.queryHash);
+  const [observer2] = reactExports.useState(
+    () => new Observer(
+      client2,
+      defaultedOptions
+    )
+  );
+  const result = observer2.getOptimisticResult(defaultedOptions);
+  const shouldSubscribe = !isRestoring && options.subscribed !== false;
+  reactExports.useSyncExternalStore(
+    reactExports.useCallback(
+      (onStoreChange) => {
+        const unsubscribe = shouldSubscribe ? observer2.subscribe(notifyManager.batchCalls(onStoreChange)) : noop$7;
+        observer2.updateResult();
+        return unsubscribe;
+      },
+      [observer2, shouldSubscribe]
+    ),
+    () => observer2.getCurrentResult(),
+    () => observer2.getCurrentResult()
+  );
+  reactExports.useEffect(() => {
+    observer2.setOptions(defaultedOptions);
+  }, [defaultedOptions, observer2]);
+  if (shouldSuspend(defaultedOptions, result)) {
+    throw fetchOptimistic(defaultedOptions, observer2, errorResetBoundary);
+  }
+  if (getHasError({
+    result,
+    errorResetBoundary,
+    throwOnError: defaultedOptions.throwOnError,
+    query,
+    suspense: defaultedOptions.suspense
+  })) {
+    throw result.error;
+  }
+  (_d2 = (_c2 = client2.getDefaultOptions().queries) == null ? void 0 : _c2._experimental_afterQuery) == null ? void 0 : _d2.call(
+    _c2,
+    defaultedOptions,
+    result
+  );
+  if (defaultedOptions.experimental_prefetchInRender && !environmentManager.isServer() && willFetch(result, isRestoring)) {
+    const promise = isNewCacheEntry ? (
+      // Fetch immediately on render in order to ensure `.promise` is resolved even if the component is unmounted
+      fetchOptimistic(defaultedOptions, observer2, errorResetBoundary)
+    ) : (
+      // subscribe to the "cache promise" so that we can finalize the currentThenable once data comes in
+      query == null ? void 0 : query.promise
+    );
+    promise == null ? void 0 : promise.catch(noop$7).finally(() => {
+      observer2.updateResult();
+    });
+  }
+  return !defaultedOptions.notifyOnChangeProps ? observer2.trackResult(result) : result;
+}
+function useQuery(options, queryClient2) {
+  return useBaseQuery(options, QueryObserver);
+}
 var client = { exports: {} };
 var reactDomClient_production = {};
 var scheduler = { exports: {} };
@@ -2475,13 +3157,13 @@ var scheduler_production = {};
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-(function(exports) {
+(function(exports$1) {
   function push2(heap, node) {
     var index2 = heap.length;
     heap.push(node);
     a: for (; 0 < index2; ) {
       var parentIndex = index2 - 1 >>> 1, parent = heap[parentIndex];
-      if (0 < compare2(parent, node))
+      if (0 < compare(parent, node))
         heap[parentIndex] = node, heap[index2] = parent, index2 = parentIndex;
       else break a;
     }
@@ -2496,28 +3178,28 @@ var scheduler_production = {};
       heap[0] = last;
       a: for (var index2 = 0, length = heap.length, halfLength = length >>> 1; index2 < halfLength; ) {
         var leftIndex = 2 * (index2 + 1) - 1, left = heap[leftIndex], rightIndex = leftIndex + 1, right = heap[rightIndex];
-        if (0 > compare2(left, last))
-          rightIndex < length && 0 > compare2(right, left) ? (heap[index2] = right, heap[rightIndex] = last, index2 = rightIndex) : (heap[index2] = left, heap[leftIndex] = last, index2 = leftIndex);
-        else if (rightIndex < length && 0 > compare2(right, last))
+        if (0 > compare(left, last))
+          rightIndex < length && 0 > compare(right, left) ? (heap[index2] = right, heap[rightIndex] = last, index2 = rightIndex) : (heap[index2] = left, heap[leftIndex] = last, index2 = leftIndex);
+        else if (rightIndex < length && 0 > compare(right, last))
           heap[index2] = right, heap[rightIndex] = last, index2 = rightIndex;
         else break a;
       }
     }
     return first;
   }
-  function compare2(a, b) {
+  function compare(a, b) {
     var diff = a.sortIndex - b.sortIndex;
     return 0 !== diff ? diff : a.id - b.id;
   }
-  exports.unstable_now = void 0;
+  exports$1.unstable_now = void 0;
   if ("object" === typeof performance && "function" === typeof performance.now) {
     var localPerformance = performance;
-    exports.unstable_now = function() {
+    exports$1.unstable_now = function() {
       return localPerformance.now();
     };
   } else {
     var localDate = Date, initialTime = localDate.now();
-    exports.unstable_now = function() {
+    exports$1.unstable_now = function() {
       return localDate.now() - initialTime;
     };
   }
@@ -2544,12 +3226,12 @@ var scheduler_production = {};
   }
   var isMessageLoopRunning = false, taskTimeoutID = -1, frameInterval = 5, startTime = -1;
   function shouldYieldToHost() {
-    return needsPaint ? true : exports.unstable_now() - startTime < frameInterval ? false : true;
+    return needsPaint ? true : exports$1.unstable_now() - startTime < frameInterval ? false : true;
   }
   function performWorkUntilDeadline() {
     needsPaint = false;
     if (isMessageLoopRunning) {
-      var currentTime = exports.unstable_now();
+      var currentTime = exports$1.unstable_now();
       startTime = currentTime;
       var hasMoreWork = true;
       try {
@@ -2569,7 +3251,7 @@ var scheduler_production = {};
                   var continuationCallback = callback(
                     currentTask.expirationTime <= currentTime
                   );
-                  currentTime = exports.unstable_now();
+                  currentTime = exports$1.unstable_now();
                   if ("function" === typeof continuationCallback) {
                     currentTask.callback = continuationCallback;
                     advanceTimers(currentTime);
@@ -2619,27 +3301,27 @@ var scheduler_production = {};
     };
   function requestHostTimeout(callback, ms) {
     taskTimeoutID = localSetTimeout(function() {
-      callback(exports.unstable_now());
+      callback(exports$1.unstable_now());
     }, ms);
   }
-  exports.unstable_IdlePriority = 5;
-  exports.unstable_ImmediatePriority = 1;
-  exports.unstable_LowPriority = 4;
-  exports.unstable_NormalPriority = 3;
-  exports.unstable_Profiling = null;
-  exports.unstable_UserBlockingPriority = 2;
-  exports.unstable_cancelCallback = function(task) {
+  exports$1.unstable_IdlePriority = 5;
+  exports$1.unstable_ImmediatePriority = 1;
+  exports$1.unstable_LowPriority = 4;
+  exports$1.unstable_NormalPriority = 3;
+  exports$1.unstable_Profiling = null;
+  exports$1.unstable_UserBlockingPriority = 2;
+  exports$1.unstable_cancelCallback = function(task) {
     task.callback = null;
   };
-  exports.unstable_forceFrameRate = function(fps) {
+  exports$1.unstable_forceFrameRate = function(fps) {
     0 > fps || 125 < fps ? console.error(
       "forceFrameRate takes a positive int between 0 and 125, forcing frame rates higher than 125 fps is not supported"
     ) : frameInterval = 0 < fps ? Math.floor(1e3 / fps) : 5;
   };
-  exports.unstable_getCurrentPriorityLevel = function() {
+  exports$1.unstable_getCurrentPriorityLevel = function() {
     return currentPriorityLevel;
   };
-  exports.unstable_next = function(eventHandler) {
+  exports$1.unstable_next = function(eventHandler) {
     switch (currentPriorityLevel) {
       case 1:
       case 2:
@@ -2657,10 +3339,10 @@ var scheduler_production = {};
       currentPriorityLevel = previousPriorityLevel;
     }
   };
-  exports.unstable_requestPaint = function() {
+  exports$1.unstable_requestPaint = function() {
     needsPaint = true;
   };
-  exports.unstable_runWithPriority = function(priorityLevel, eventHandler) {
+  exports$1.unstable_runWithPriority = function(priorityLevel, eventHandler) {
     switch (priorityLevel) {
       case 1:
       case 2:
@@ -2679,8 +3361,8 @@ var scheduler_production = {};
       currentPriorityLevel = previousPriorityLevel;
     }
   };
-  exports.unstable_scheduleCallback = function(priorityLevel, callback, options) {
-    var currentTime = exports.unstable_now();
+  exports$1.unstable_scheduleCallback = function(priorityLevel, callback, options) {
+    var currentTime = exports$1.unstable_now();
     "object" === typeof options && null !== options ? (options = options.delay, options = "number" === typeof options && 0 < options ? currentTime + options : currentTime) : options = currentTime;
     switch (priorityLevel) {
       case 1:
@@ -2710,8 +3392,8 @@ var scheduler_production = {};
     options > currentTime ? (priorityLevel.sortIndex = options, push2(timerQueue, priorityLevel), null === peek(taskQueue) && priorityLevel === peek(timerQueue) && (isHostTimeoutScheduled ? (localClearTimeout(taskTimeoutID), taskTimeoutID = -1) : isHostTimeoutScheduled = true, requestHostTimeout(handleTimeout, options - currentTime))) : (priorityLevel.sortIndex = timeout, push2(taskQueue, priorityLevel), isHostCallbackScheduled || isPerformingWork || (isHostCallbackScheduled = true, isMessageLoopRunning || (isMessageLoopRunning = true, schedulePerformWorkUntilDeadline())));
     return priorityLevel;
   };
-  exports.unstable_shouldYield = shouldYieldToHost;
-  exports.unstable_wrapCallback = function(callback) {
+  exports$1.unstable_shouldYield = shouldYieldToHost;
+  exports$1.unstable_wrapCallback = function(callback) {
     var parentPriorityLevel = currentPriorityLevel;
     return function() {
       var previousPriorityLevel = currentPriorityLevel;
@@ -2879,7 +3561,7 @@ reactDom_production.useFormState = function(action, initialState, permalink) {
 reactDom_production.useFormStatus = function() {
   return ReactSharedInternals$1.H.useHostTransitionStatus();
 };
-reactDom_production.version = "19.1.1";
+reactDom_production.version = "19.1.5";
 function checkDCE$1() {
   if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === "undefined" || typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.checkDCE !== "function") {
     return;
@@ -3018,7 +3700,7 @@ function findCurrentHostFiberImpl(node) {
   }
   return null;
 }
-var assign = Object.assign, REACT_LEGACY_ELEMENT_TYPE = Symbol.for("react.element"), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_PROVIDER_TYPE = Symbol.for("react.provider"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy");
+var assign = Object.assign, REACT_LEGACY_ELEMENT_TYPE = Symbol.for("react.element"), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_PROVIDER_TYPE = Symbol.for("react.provider"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE$1 = Symbol.for("react.lazy");
 var REACT_ACTIVITY_TYPE = Symbol.for("react.activity");
 var REACT_MEMO_CACHE_SENTINEL = Symbol.for("react.memo_cache_sentinel");
 var MAYBE_ITERATOR_SYMBOL = Symbol.iterator;
@@ -3062,7 +3744,7 @@ function getComponentNameFromType(type) {
         return type;
       case REACT_MEMO_TYPE:
         return innerType = type.displayName || null, null !== innerType ? innerType : getComponentNameFromType(type.type) || "Memo";
-      case REACT_LAZY_TYPE:
+      case REACT_LAZY_TYPE$1:
         innerType = type._payload;
         type = type._init;
         try {
@@ -4684,7 +5366,7 @@ function createFiberFromTypeAndProps(type, key, pendingProps, owner, mode, lanes
             case REACT_MEMO_TYPE:
               fiberTag = 14;
               break a;
-            case REACT_LAZY_TYPE:
+            case REACT_LAZY_TYPE$1:
               fiberTag = 16;
               owner = null;
               break a;
@@ -5529,7 +6211,7 @@ function useThenable(thenable) {
   null === (null === workInProgressHook ? index2.memoizedState : workInProgressHook.next) && (index2 = index2.alternate, ReactSharedInternals.H = null === index2 || null === index2.memoizedState ? HooksDispatcherOnMount : HooksDispatcherOnUpdate);
   return thenable;
 }
-function use(usable) {
+function use$1(usable) {
   if (null !== usable && "object" === typeof usable) {
     if ("function" === typeof usable.then) return useThenable(usable);
     if (usable.$$typeof === REACT_CONTEXT_TYPE) return readContext(usable);
@@ -6271,7 +6953,7 @@ function entangleTransitionUpdate(root2, queue, lane) {
 }
 var ContextOnlyDispatcher = {
   readContext,
-  use,
+  use: use$1,
   useCallback: throwInvalidHookError,
   useContext: throwInvalidHookError,
   useEffect: throwInvalidHookError,
@@ -6295,7 +6977,7 @@ var ContextOnlyDispatcher = {
   useCacheRefresh: throwInvalidHookError
 }, HooksDispatcherOnMount = {
   readContext,
-  use,
+  use: use$1,
   useCallback: function(callback, deps) {
     mountWorkInProgressHook().memoizedState = [
       callback,
@@ -6471,7 +7153,7 @@ var ContextOnlyDispatcher = {
   }
 }, HooksDispatcherOnUpdate = {
   readContext,
-  use,
+  use: use$1,
   useCallback: updateCallback,
   useContext: readContext,
   useEffect: updateEffect,
@@ -6514,7 +7196,7 @@ var ContextOnlyDispatcher = {
   useCacheRefresh: updateRefresh
 }, HooksDispatcherOnRerender = {
   readContext,
-  use,
+  use: use$1,
   useCallback: updateCallback,
   useContext: readContext,
   useEffect: updateEffect,
@@ -6639,7 +7321,7 @@ function createChildReconciler(shouldTrackSideEffects) {
         lanes,
         element.key
       );
-    if (null !== current && (current.elementType === elementType || "object" === typeof elementType && null !== elementType && elementType.$$typeof === REACT_LAZY_TYPE && resolveLazy(elementType) === current.type))
+    if (null !== current && (current.elementType === elementType || "object" === typeof elementType && null !== elementType && elementType.$$typeof === REACT_LAZY_TYPE$1 && resolveLazy(elementType) === current.type))
       return current = useFiber(current, element.props), coerceRef(current, element), current.return = returnFiber, current;
     current = createFiberFromTypeAndProps(
       element.type,
@@ -6696,7 +7378,7 @@ function createChildReconciler(shouldTrackSideEffects) {
             returnFiber.mode,
             lanes
           ), newChild.return = returnFiber, newChild;
-        case REACT_LAZY_TYPE:
+        case REACT_LAZY_TYPE$1:
           var init = newChild._init;
           newChild = init(newChild._payload);
           return createChild(returnFiber, newChild, lanes);
@@ -6730,7 +7412,7 @@ function createChildReconciler(shouldTrackSideEffects) {
           return newChild.key === key ? updateElement(returnFiber, oldFiber, newChild, lanes) : null;
         case REACT_PORTAL_TYPE:
           return newChild.key === key ? updatePortal(returnFiber, oldFiber, newChild, lanes) : null;
-        case REACT_LAZY_TYPE:
+        case REACT_LAZY_TYPE$1:
           return key = newChild._init, newChild = key(newChild._payload), updateSlot(returnFiber, oldFiber, newChild, lanes);
       }
       if (isArrayImpl(newChild) || getIteratorFn(newChild))
@@ -6766,7 +7448,7 @@ function createChildReconciler(shouldTrackSideEffects) {
           return existingChildren = existingChildren.get(
             null === newChild.key ? newIdx : newChild.key
           ) || null, updatePortal(returnFiber, existingChildren, newChild, lanes);
-        case REACT_LAZY_TYPE:
+        case REACT_LAZY_TYPE$1:
           var init = newChild._init;
           newChild = init(newChild._payload);
           return updateFromMap(
@@ -6904,7 +7586,7 @@ function createChildReconciler(shouldTrackSideEffects) {
                     returnFiber = lanes;
                     break a;
                   }
-                } else if (currentFirstChild.elementType === key || "object" === typeof key && null !== key && key.$$typeof === REACT_LAZY_TYPE && resolveLazy(key) === currentFirstChild.type) {
+                } else if (currentFirstChild.elementType === key || "object" === typeof key && null !== key && key.$$typeof === REACT_LAZY_TYPE$1 && resolveLazy(key) === currentFirstChild.type) {
                   deleteRemainingChildren(
                     returnFiber,
                     currentFirstChild.sibling
@@ -6960,7 +7642,7 @@ function createChildReconciler(shouldTrackSideEffects) {
             returnFiber = lanes;
           }
           return placeSingleChild(returnFiber);
-        case REACT_LAZY_TYPE:
+        case REACT_LAZY_TYPE$1:
           return key = newChild._init, newChild = key(newChild._payload), reconcileChildFibersImpl(
             returnFiber,
             currentFirstChild,
@@ -13859,12 +14541,12 @@ ReactDOMHydrationRoot.prototype.unstable_scheduleHydration = function(target) {
   }
 };
 var isomorphicReactPackageVersion$jscomp$inline_1785 = React.version;
-if ("19.1.1" !== isomorphicReactPackageVersion$jscomp$inline_1785)
+if ("19.1.5" !== isomorphicReactPackageVersion$jscomp$inline_1785)
   throw Error(
     formatProdErrorMessage(
       527,
       isomorphicReactPackageVersion$jscomp$inline_1785,
-      "19.1.1"
+      "19.1.5"
     )
   );
 ReactDOMSharedInternals.findDOMNode = function(componentOrElement) {
@@ -13882,10 +14564,10 @@ ReactDOMSharedInternals.findDOMNode = function(componentOrElement) {
 };
 var internals$jscomp$inline_2256 = {
   bundleType: 0,
-  version: "19.1.1",
+  version: "19.1.5",
   rendererPackageName: "react-dom",
   currentDispatcherRef: ReactSharedInternals,
-  reconcilerVersion: "19.1.1"
+  reconcilerVersion: "19.1.5"
 };
 if ("undefined" !== typeof __REACT_DEVTOOLS_GLOBAL_HOOK__) {
   var hook$jscomp$inline_2257 = __REACT_DEVTOOLS_GLOBAL_HOOK__;
@@ -13952,7 +14634,7 @@ reactDomClient_production.hydrateRoot = function(container, initialChildren, opt
   listenToAllSupportedEvents(container);
   return new ReactDOMHydrationRoot(initialChildren);
 };
-reactDomClient_production.version = "19.1.1";
+reactDomClient_production.version = "19.1.5";
 function checkDCE() {
   if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === "undefined" || typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.checkDCE !== "function") {
     return;
@@ -13969,6 +14651,340 @@ function checkDCE() {
 }
 var clientExports = client.exports;
 const ReactDOM = /* @__PURE__ */ getDefaultExportFromCjs(clientExports);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const toKebabCase = (string) => string.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+const toCamelCase = (string) => string.replace(
+  /^([A-Z])|[\s-_]+(\w)/g,
+  (match, p1, p2) => p2 ? p2.toUpperCase() : p1.toLowerCase()
+);
+const toPascalCase = (string) => {
+  const camelCase = toCamelCase(string);
+  return camelCase.charAt(0).toUpperCase() + camelCase.slice(1);
+};
+const mergeClasses = (...classes) => classes.filter((className, index2, array) => {
+  return Boolean(className) && className.trim() !== "" && array.indexOf(className) === index2;
+}).join(" ").trim();
+const hasA11yProp = (props) => {
+  for (const prop in props) {
+    if (prop.startsWith("aria-") || prop === "role" || prop === "title") {
+      return true;
+    }
+  }
+};
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+var defaultAttributes = {
+  xmlns: "http://www.w3.org/2000/svg",
+  width: 24,
+  height: 24,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 2,
+  strokeLinecap: "round",
+  strokeLinejoin: "round"
+};
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Icon = reactExports.forwardRef(
+  ({
+    color: color2 = "currentColor",
+    size = 24,
+    strokeWidth = 2,
+    absoluteStrokeWidth,
+    className = "",
+    children,
+    iconNode,
+    ...rest
+  }, ref) => reactExports.createElement(
+    "svg",
+    {
+      ref,
+      ...defaultAttributes,
+      width: size,
+      height: size,
+      stroke: color2,
+      strokeWidth: absoluteStrokeWidth ? Number(strokeWidth) * 24 / Number(size) : strokeWidth,
+      className: mergeClasses("lucide", className),
+      ...!children && !hasA11yProp(rest) && { "aria-hidden": "true" },
+      ...rest
+    },
+    [
+      ...iconNode.map(([tag, attrs]) => reactExports.createElement(tag, attrs)),
+      ...Array.isArray(children) ? children : [children]
+    ]
+  )
+);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const createLucideIcon = (iconName, iconNode) => {
+  const Component2 = reactExports.forwardRef(
+    ({ className, ...props }, ref) => reactExports.createElement(Icon, {
+      ref,
+      iconNode,
+      className: mergeClasses(
+        `lucide-${toKebabCase(toPascalCase(iconName))}`,
+        `lucide-${iconName}`,
+        className
+      ),
+      ...props
+    })
+  );
+  Component2.displayName = toPascalCase(iconName);
+  return Component2;
+};
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$g = [
+  [
+    "path",
+    {
+      d: "m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526",
+      key: "1yiouv"
+    }
+  ],
+  ["circle", { cx: "12", cy: "8", r: "6", key: "1vp47v" }]
+];
+const Award = createLucideIcon("award", __iconNode$g);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$f = [
+  ["path", { d: "m18 16 4-4-4-4", key: "1inbqp" }],
+  ["path", { d: "m6 8-4 4 4 4", key: "15zrgr" }],
+  ["path", { d: "m14.5 4-5 16", key: "e7oirm" }]
+];
+const CodeXml = createLucideIcon("code-xml", __iconNode$f);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$e = [
+  ["path", { d: "M12 15V3", key: "m9g1x1" }],
+  ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
+  ["path", { d: "m7 10 5 5 5-5", key: "brsn70" }]
+];
+const Download = createLucideIcon("download", __iconNode$e);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$d = [
+  ["path", { d: "M15 3h6v6", key: "1q9fwt" }],
+  ["path", { d: "M10 14 21 3", key: "gplh6r" }],
+  ["path", { d: "M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6", key: "a6xqqp" }]
+];
+const ExternalLink = createLucideIcon("external-link", __iconNode$d);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$c = [
+  [
+    "path",
+    {
+      d: "M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4",
+      key: "tonef"
+    }
+  ],
+  ["path", { d: "M9 18c-4.51 2-5-2-7-2", key: "9comsn" }]
+];
+const Github = createLucideIcon("github", __iconNode$c);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$b = [
+  [
+    "path",
+    {
+      d: "M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z",
+      key: "j76jl0"
+    }
+  ],
+  ["path", { d: "M22 10v6", key: "1lu8f3" }],
+  ["path", { d: "M6 12.5V16a6 3 0 0 0 12 0v-3.5", key: "1r8lef" }]
+];
+const GraduationCap = createLucideIcon("graduation-cap", __iconNode$b);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$a = [
+  [
+    "path",
+    {
+      d: "M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z",
+      key: "c3ymky"
+    }
+  ]
+];
+const Heart = createLucideIcon("heart", __iconNode$a);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$9 = [
+  [
+    "path",
+    {
+      d: "M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z",
+      key: "c2jq9f"
+    }
+  ],
+  ["rect", { width: "4", height: "12", x: "2", y: "9", key: "mk3on5" }],
+  ["circle", { cx: "4", cy: "4", r: "2", key: "bt5ra8" }]
+];
+const Linkedin = createLucideIcon("linkedin", __iconNode$9);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$8 = [
+  ["path", { d: "m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7", key: "132q7q" }],
+  ["rect", { x: "2", y: "4", width: "20", height: "16", rx: "2", key: "izxlao" }]
+];
+const Mail = createLucideIcon("mail", __iconNode$8);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$7 = [
+  [
+    "path",
+    {
+      d: "M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0",
+      key: "1r0f0z"
+    }
+  ],
+  ["circle", { cx: "12", cy: "10", r: "3", key: "ilqhr7" }]
+];
+const MapPin = createLucideIcon("map-pin", __iconNode$7);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$6 = [
+  ["path", { d: "M4 12h16", key: "1lakjw" }],
+  ["path", { d: "M4 18h16", key: "19g7jn" }],
+  ["path", { d: "M4 6h16", key: "1o0s65" }]
+];
+const Menu = createLucideIcon("menu", __iconNode$6);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$5 = [
+  ["path", { d: "M7.9 20A9 9 0 1 0 4 16.1L2 22Z", key: "vv11sd" }]
+];
+const MessageCircle = createLucideIcon("message-circle", __iconNode$5);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$4 = [
+  [
+    "path",
+    {
+      d: "M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384",
+      key: "9njp5v"
+    }
+  ]
+];
+const Phone = createLucideIcon("phone", __iconNode$4);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$3 = [
+  ["path", { d: "M5 12h14", key: "1ays0h" }],
+  ["path", { d: "M12 5v14", key: "s699le" }]
+];
+const Plus = createLucideIcon("plus", __iconNode$3);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$2 = [
+  ["path", { d: "M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z", key: "qazsjp" }],
+  ["path", { d: "M15 3v4a2 2 0 0 0 2 2h4", key: "40519r" }]
+];
+const StickyNote = createLucideIcon("sticky-note", __iconNode$2);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$1 = [
+  ["path", { d: "M3 6h18", key: "d0wm0j" }],
+  ["path", { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6", key: "4alrt4" }],
+  ["path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2", key: "v07s0e" }],
+  ["line", { x1: "10", x2: "10", y1: "11", y2: "17", key: "1uufr5" }],
+  ["line", { x1: "14", x2: "14", y1: "11", y2: "17", key: "xtxkd" }]
+];
+const Trash2 = createLucideIcon("trash-2", __iconNode$1);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode = [
+  ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
+  ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
+];
+const X = createLucideIcon("x", __iconNode);
 const LayoutGroupContext = reactExports.createContext({});
 function useConstant(init) {
   const ref = reactExports.useRef(null);
@@ -13977,8 +14993,8 @@ function useConstant(init) {
   }
   return ref.current;
 }
-const isBrowser$2 = typeof window !== "undefined";
-const useIsomorphicLayoutEffect = isBrowser$2 ? reactExports.useLayoutEffect : reactExports.useEffect;
+const isBrowser$1 = typeof window !== "undefined";
+const useIsomorphicLayoutEffect = isBrowser$1 ? reactExports.useLayoutEffect : reactExports.useEffect;
 const PresenceContext = /* @__PURE__ */ reactExports.createContext(null);
 function addUniqueItem(arr, item) {
   if (arr.indexOf(item) === -1)
@@ -14000,7 +15016,7 @@ let invariant = () => {
 };
 const MotionGlobalConfig = {};
 const isNumericalString = (v) => /^-?(?:\d+(?:\.\d+)?|\.\d+)$/u.test(v);
-function isObject$1(value) {
+function isObject(value) {
   return typeof value === "object" && value !== null;
 }
 const isZeroValueString = (v) => /^0[^.\s]+$/u.test(v);
@@ -14082,7 +15098,7 @@ const reverseEasing = (easing) => (p) => 1 - easing(1 - p);
 const backOut = /* @__PURE__ */ cubicBezier(0.33, 1.53, 0.69, 0.99);
 const backIn = /* @__PURE__ */ reverseEasing(backOut);
 const backInOut = /* @__PURE__ */ mirrorEasing(backIn);
-const anticipate = (p) => (p *= 2) < 1 ? 0.5 * backIn(p) : 0.5 * (2 - Math.pow(2, -10 * (p - 1)));
+const anticipate = (p) => p >= 1 ? 1 : (p *= 2) < 1 ? 0.5 * backIn(p) : 0.5 * (2 - Math.pow(2, -10 * (p - 1)));
 const circIn = (p) => 1 - Math.sin(Math.acos(p));
 const circOut = reverseEasing(circIn);
 const circInOut = mirrorEasing(circIn);
@@ -14164,8 +15180,7 @@ function createRenderStep(runNextFrame, stepName) {
       const queue = addToCurrentFrame ? thisFrame : nextFrame;
       if (keepAlive)
         toKeepAlive.add(callback);
-      if (!queue.has(callback))
-        queue.add(callback);
+      queue.add(callback);
       return callback;
     },
     /**
@@ -14185,7 +15200,9 @@ function createRenderStep(runNextFrame, stepName) {
         return;
       }
       isProcessing = true;
-      [thisFrame, nextFrame] = [nextFrame, thisFrame];
+      const prevFrame = thisFrame;
+      thisFrame = nextFrame;
+      nextFrame = prevFrame;
       thisFrame.forEach(triggerCallback);
       thisFrame.clear();
       isProcessing = false;
@@ -14213,9 +15230,10 @@ function createRenderBatcher(scheduleNextBatch, allowKeepAlive) {
   }, {});
   const { setup, read, resolveKeyframes, preUpdate, update, preRender, render, postRender } = steps;
   const processBatch = () => {
-    const timestamp = MotionGlobalConfig.useManualTiming ? state.timestamp : performance.now();
+    const useManualTiming = MotionGlobalConfig.useManualTiming;
+    const timestamp = useManualTiming ? state.timestamp : performance.now();
     runNextFrame = false;
-    if (!MotionGlobalConfig.useManualTiming) {
+    if (!useManualTiming) {
       state.delta = useDefaultElapsed ? 1e3 / 60 : Math.max(Math.min(timestamp - state.timestamp, maxElapsed), 1);
     }
     state.timestamp = timestamp;
@@ -14333,27 +15351,27 @@ const rgba = {
   transform: ({ red, green, blue, alpha: alpha$1 = 1 }) => "rgba(" + rgbUnit.transform(red) + ", " + rgbUnit.transform(green) + ", " + rgbUnit.transform(blue) + ", " + sanitize(alpha.transform(alpha$1)) + ")"
 };
 function parseHex(v) {
-  let r = "";
+  let r2 = "";
   let g = "";
   let b = "";
   let a = "";
   if (v.length > 5) {
-    r = v.substring(1, 3);
+    r2 = v.substring(1, 3);
     g = v.substring(3, 5);
     b = v.substring(5, 7);
     a = v.substring(7, 9);
   } else {
-    r = v.substring(1, 2);
+    r2 = v.substring(1, 2);
     g = v.substring(2, 3);
     b = v.substring(3, 4);
     a = v.substring(4, 5);
-    r += r;
+    r2 += r2;
     g += g;
     b += b;
     a += a;
   }
   return {
-    red: parseInt(r, 16),
+    red: parseInt(r2, 16),
     green: parseInt(g, 16),
     blue: parseInt(b, 16),
     alpha: a ? parseInt(a, 16) / 255 : 1
@@ -14444,19 +15462,18 @@ function analyseComplexValue(value) {
     ++i;
     return SPLIT_TOKEN;
   });
-  const split2 = tokenised.split(SPLIT_TOKEN);
-  return { values, split: split2, indexes, types };
+  const split = tokenised.split(SPLIT_TOKEN);
+  return { values, split, indexes, types };
 }
 function parseComplexValue(v) {
   return analyseComplexValue(v).values;
 }
-function createTransformer(source) {
-  const { split: split2, types } = analyseComplexValue(source);
-  const numSections = split2.length;
+function buildTransformer({ split, types }) {
+  const numSections = split.length;
   return (v) => {
     let output = "";
     for (let i = 0; i < numSections; i++) {
-      output += split2[i];
+      output += split[i];
       if (v[i] !== void 0) {
         const type = types[i];
         if (type === NUMBER_TOKEN) {
@@ -14471,11 +15488,20 @@ function createTransformer(source) {
     return output;
   };
 }
+function createTransformer(source) {
+  return buildTransformer(analyseComplexValue(source));
+}
 const convertNumbersToZero = (v) => typeof v === "number" ? 0 : color.test(v) ? color.getAnimatableNone(v) : v;
+const convertToZero = (value, splitBefore) => {
+  if (typeof value === "number") {
+    return (splitBefore == null ? void 0 : splitBefore.trim().endsWith("/")) ? value : 0;
+  }
+  return convertNumbersToZero(value);
+};
 function getAnimatableNone$1(v) {
-  const parsed = parseComplexValue(v);
-  const transformer = createTransformer(v);
-  return transformer(parsed.map(convertNumbersToZero));
+  const info = analyseComplexValue(v);
+  const transformer = buildTransformer(info);
+  return transformer(info.values.map((value, i) => convertToZero(value, info.split[i])));
 }
 const complex = {
   test,
@@ -14681,11 +15707,6 @@ function createGeneratorEasing(options, scale2 = 100, createGenerator) {
     duration: /* @__PURE__ */ millisecondsToSeconds(duration)
   };
 }
-const velocitySampleDuration = 5;
-function calcGeneratorVelocity(resolveValue, t, current) {
-  const prevT = Math.max(t - velocitySampleDuration, 0);
-  return velocityPerSecond(current - resolveValue(prevT), t - prevT);
-}
 const springDefaults = {
   // Default spring physics
   stiffness: 100,
@@ -14715,6 +15736,17 @@ const springDefaults = {
   minDamping: 0.05,
   maxDamping: 1
 };
+function calcAngularFreq(undampedFreq, dampingRatio) {
+  return undampedFreq * Math.sqrt(1 - dampingRatio * dampingRatio);
+}
+const rootIterations = 12;
+function approximateRoot(envelope, derivative, initialGuess) {
+  let result = initialGuess;
+  for (let i = 1; i < rootIterations; i++) {
+    result = result - envelope(result) / derivative(result);
+  }
+  return result;
+}
 const safeMin = 1e-3;
 function findSpring({ duration = springDefaults.duration, bounce = springDefaults.bounce, velocity = springDefaults.velocity, mass = springDefaults.mass }) {
   let envelope;
@@ -14770,17 +15802,6 @@ function findSpring({ duration = springDefaults.duration, bounce = springDefault
       duration
     };
   }
-}
-const rootIterations = 12;
-function approximateRoot(envelope, derivative, initialGuess) {
-  let result = initialGuess;
-  for (let i = 1; i < rootIterations; i++) {
-    result = result - envelope(result) / derivative(result);
-  }
-  return result;
-}
-function calcAngularFreq(undampedFreq, dampingRatio) {
-  return undampedFreq * Math.sqrt(1 - dampingRatio * dampingRatio);
 }
 const durationKeys = ["duration", "bounce"];
 const physicsKeys = ["stiffness", "damping", "mass"];
@@ -14843,14 +15864,28 @@ function spring(optionsOrVisualDuration = springDefaults.visualDuration, bounce 
   restSpeed || (restSpeed = isGranularScale ? springDefaults.restSpeed.granular : springDefaults.restSpeed.default);
   restDelta || (restDelta = isGranularScale ? springDefaults.restDelta.granular : springDefaults.restDelta.default);
   let resolveSpring;
+  let resolveVelocity;
+  let angularFreq;
+  let A;
+  let sinCoeff;
+  let cosCoeff;
   if (dampingRatio < 1) {
-    const angularFreq = calcAngularFreq(undampedAngularFreq, dampingRatio);
+    angularFreq = calcAngularFreq(undampedAngularFreq, dampingRatio);
+    A = (initialVelocity + dampingRatio * undampedAngularFreq * initialDelta) / angularFreq;
     resolveSpring = (t) => {
       const envelope = Math.exp(-dampingRatio * undampedAngularFreq * t);
-      return target - envelope * ((initialVelocity + dampingRatio * undampedAngularFreq * initialDelta) / angularFreq * Math.sin(angularFreq * t) + initialDelta * Math.cos(angularFreq * t));
+      return target - envelope * (A * Math.sin(angularFreq * t) + initialDelta * Math.cos(angularFreq * t));
+    };
+    sinCoeff = dampingRatio * undampedAngularFreq * A + initialDelta * angularFreq;
+    cosCoeff = dampingRatio * undampedAngularFreq * initialDelta - A * angularFreq;
+    resolveVelocity = (t) => {
+      const envelope = Math.exp(-dampingRatio * undampedAngularFreq * t);
+      return envelope * (sinCoeff * Math.sin(angularFreq * t) + cosCoeff * Math.cos(angularFreq * t));
     };
   } else if (dampingRatio === 1) {
     resolveSpring = (t) => target - Math.exp(-undampedAngularFreq * t) * (initialDelta + (initialVelocity + undampedAngularFreq * initialDelta) * t);
+    const C = initialVelocity + undampedAngularFreq * initialDelta;
+    resolveVelocity = (t) => Math.exp(-undampedAngularFreq * t) * (undampedAngularFreq * C * t - initialVelocity);
   } else {
     const dampedAngularFreq = undampedAngularFreq * Math.sqrt(dampingRatio * dampingRatio - 1);
     resolveSpring = (t) => {
@@ -14858,19 +15893,33 @@ function spring(optionsOrVisualDuration = springDefaults.visualDuration, bounce 
       const freqForT = Math.min(dampedAngularFreq * t, 300);
       return target - envelope * ((initialVelocity + dampingRatio * undampedAngularFreq * initialDelta) * Math.sinh(freqForT) + dampedAngularFreq * initialDelta * Math.cosh(freqForT)) / dampedAngularFreq;
     };
+    const P = (initialVelocity + dampingRatio * undampedAngularFreq * initialDelta) / dampedAngularFreq;
+    const sinhCoeff = dampingRatio * undampedAngularFreq * P - initialDelta * dampedAngularFreq;
+    const coshCoeff = dampingRatio * undampedAngularFreq * initialDelta - P * dampedAngularFreq;
+    resolveVelocity = (t) => {
+      const envelope = Math.exp(-dampingRatio * undampedAngularFreq * t);
+      const freqForT = Math.min(dampedAngularFreq * t, 300);
+      return envelope * (sinhCoeff * Math.sinh(freqForT) + coshCoeff * Math.cosh(freqForT));
+    };
   }
   const generator = {
     calculatedDuration: isResolvedFromDuration ? duration || null : null,
+    velocity: (t) => /* @__PURE__ */ secondsToMilliseconds(resolveVelocity(t)),
     next: (t) => {
+      if (!isResolvedFromDuration && dampingRatio < 1) {
+        const envelope = Math.exp(-dampingRatio * undampedAngularFreq * t);
+        const sin = Math.sin(angularFreq * t);
+        const cos = Math.cos(angularFreq * t);
+        const current2 = target - envelope * (A * sin + initialDelta * cos);
+        const currentVelocity = /* @__PURE__ */ secondsToMilliseconds(envelope * (sinCoeff * sin + cosCoeff * cos));
+        state.done = Math.abs(currentVelocity) <= restSpeed && Math.abs(target - current2) <= restDelta;
+        state.value = state.done ? target : current2;
+        return state;
+      }
       const current = resolveSpring(t);
       if (!isResolvedFromDuration) {
-        let currentVelocity = t === 0 ? initialVelocity : 0;
-        if (dampingRatio < 1) {
-          currentVelocity = t === 0 ? /* @__PURE__ */ secondsToMilliseconds(initialVelocity) : calcGeneratorVelocity(resolveSpring, t, current);
-        }
-        const isBelowVelocityThreshold = Math.abs(currentVelocity) <= restSpeed;
-        const isBelowDisplacementThreshold = Math.abs(target - current) <= restDelta;
-        state.done = isBelowVelocityThreshold && isBelowDisplacementThreshold;
+        const currentVelocity = /* @__PURE__ */ secondsToMilliseconds(resolveVelocity(t));
+        state.done = Math.abs(currentVelocity) <= restSpeed && Math.abs(target - current) <= restDelta;
       } else {
         state.done = t >= duration;
       }
@@ -14894,6 +15943,11 @@ spring.applyToOptions = (options) => {
   options.type = "keyframes";
   return options;
 };
+const velocitySampleDuration = 5;
+function getGeneratorVelocity(resolveValue, t, current) {
+  const prevT = Math.max(t - velocitySampleDuration, 0);
+  return velocityPerSecond(current - resolveValue(prevT), t - prevT);
+}
 function inertia({ keyframes: keyframes2, velocity = 0, power = 0.8, timeConstant = 325, bounceDamping = 10, bounceStiffness = 500, modifyTarget, min, max, restDelta = 0.5, restSpeed }) {
   const origin = keyframes2[0];
   const state = {
@@ -14929,7 +15983,7 @@ function inertia({ keyframes: keyframes2, velocity = 0, power = 0.8, timeConstan
     timeReachedBoundary = t;
     spring$1 = spring({
       keyframes: [state.value, nearestBoundary(state.value)],
-      velocity: calcGeneratorVelocity(calcLatest, t, state.value),
+      velocity: getGeneratorVelocity(calcLatest, t, state.value),
       // TODO: This should be passing * 1000
       damping: bounceDamping,
       stiffness: bounceStiffness,
@@ -15041,9 +16095,9 @@ function keyframes({ duration = 300, keyframes: keyframeValues, times, ease: eas
     }
   };
 }
-const isNotNull$1 = (value) => value !== null;
-function getFinalKeyframe$1(keyframes2, { repeat, repeatType = "loop" }, finalKeyframe, speed = 1) {
-  const resolvedKeyframes = keyframes2.filter(isNotNull$1);
+const isNotNull = (value) => value !== null;
+function getFinalKeyframe(keyframes2, { repeat, repeatType = "loop" }, finalKeyframe, speed = 1) {
+  const resolvedKeyframes = keyframes2.filter(isNotNull);
   const useFirstKeyframe = speed < 0 || repeat && repeatType !== "loop" && repeat % 2 === 1;
   const index2 = useFirstKeyframe ? 0 : resolvedKeyframes.length - 1;
   return !index2 || finalKeyframe === void 0 ? resolvedKeyframes[index2] : finalKeyframe;
@@ -15094,6 +16148,10 @@ class JSAnimation extends WithPromise {
     this.currentTime = 0;
     this.holdTime = null;
     this.playbackSpeed = 1;
+    this.delayState = {
+      done: false,
+      value: void 0
+    };
     this.stop = () => {
       var _a2, _b2;
       const { motionValue: motionValue2 } = this.options;
@@ -15192,8 +16250,14 @@ class JSAnimation extends WithPromise {
       }
       elapsed = clamp(0, 1, iterationProgress) * resolvedDuration;
     }
-    const state = isInDelayPhase ? { done: false, value: keyframes2[0] } : frameGenerator.next(elapsed);
-    if (mixKeyframes) {
+    let state;
+    if (isInDelayPhase) {
+      this.delayState.value = keyframes2[0];
+      state = this.delayState;
+    } else {
+      state = frameGenerator.next(elapsed);
+    }
+    if (mixKeyframes && !isInDelayPhase) {
       state.value = mixKeyframes(state.value);
     }
     let { done } = state;
@@ -15202,7 +16266,7 @@ class JSAnimation extends WithPromise {
     }
     const isAnimationFinished = this.holdTime === null && (this.state === "finished" || this.state === "running" && done);
     if (isAnimationFinished && type !== inertia) {
-      state.value = getFinalKeyframe$1(keyframes2, this.options, finalKeyframe, this.speed);
+      state.value = getFinalKeyframe(keyframes2, this.options, finalKeyframe, this.speed);
     }
     if (onUpdate) {
       onUpdate(state.value);
@@ -15231,7 +16295,6 @@ class JSAnimation extends WithPromise {
     return /* @__PURE__ */ millisecondsToSeconds(this.currentTime);
   }
   set time(newTime) {
-    var _a2;
     newTime = /* @__PURE__ */ secondsToMilliseconds(newTime);
     this.currentTime = newTime;
     if (this.startTime === null || this.holdTime !== null || this.playbackSpeed === 0) {
@@ -15239,16 +16302,40 @@ class JSAnimation extends WithPromise {
     } else if (this.driver) {
       this.startTime = this.driver.now() - newTime / this.playbackSpeed;
     }
-    (_a2 = this.driver) == null ? void 0 : _a2.start(false);
+    if (this.driver) {
+      this.driver.start(false);
+    } else {
+      this.startTime = 0;
+      this.state = "paused";
+      this.holdTime = newTime;
+      this.tick(newTime);
+    }
+  }
+  /**
+   * Returns the generator's velocity at the current time in units/second.
+   * Uses the analytical derivative when available (springs), avoiding
+   * the MotionValue's frame-dependent velocity estimation.
+   */
+  getGeneratorVelocity() {
+    const t = this.currentTime;
+    if (t <= 0)
+      return this.options.velocity || 0;
+    if (this.generator.velocity) {
+      return this.generator.velocity(t);
+    }
+    const current = this.generator.next(t).value;
+    return getGeneratorVelocity((s) => this.generator.next(s).value, t, current);
   }
   get speed() {
     return this.playbackSpeed;
   }
   set speed(newSpeed) {
-    this.updateTime(time.now());
     const hasChanged = this.playbackSpeed !== newSpeed;
+    if (hasChanged && this.driver) {
+      this.updateTime(time.now());
+    }
     this.playbackSpeed = newSpeed;
-    if (hasChanged) {
+    if (hasChanged && this.driver) {
       this.time = /* @__PURE__ */ millisecondsToSeconds(this.currentTime);
     }
   }
@@ -15449,8 +16536,14 @@ function removeNonTranslationalTransform(visualElement) {
 }
 const positionalValues = {
   // Dimensions
-  width: ({ x }, { paddingLeft = "0", paddingRight = "0" }) => x.max - x.min - parseFloat(paddingLeft) - parseFloat(paddingRight),
-  height: ({ y }, { paddingTop = "0", paddingBottom = "0" }) => y.max - y.min - parseFloat(paddingTop) - parseFloat(paddingBottom),
+  width: ({ x }, { paddingLeft = "0", paddingRight = "0", boxSizing }) => {
+    const width = x.max - x.min;
+    return boxSizing === "border-box" ? width : width - parseFloat(paddingLeft) - parseFloat(paddingRight);
+  },
+  height: ({ y }, { paddingTop = "0", paddingBottom = "0", boxSizing }) => {
+    const height = y.max - y.min;
+    return boxSizing === "border-box" ? height : height - parseFloat(paddingTop) - parseFloat(paddingBottom);
+  },
   top: (_bbox, { top }) => parseFloat(top),
   left: (_bbox, { left }) => parseFloat(left),
   bottom: ({ y }, { top }) => parseFloat(top) + (y.max - y.min),
@@ -15592,8 +16685,8 @@ function setStyle(element, name, value) {
 }
 const supportsFlags = {};
 function memoSupports(callback, supportsFlag) {
-  const memoized2 = /* @__PURE__ */ memo(callback);
-  return () => supportsFlags[supportsFlag] ?? memoized2();
+  const memoized = /* @__PURE__ */ memo(callback);
+  return () => supportsFlags[supportsFlag] ?? memoized();
 }
 const supportsScrollTimeline = /* @__PURE__ */ memoSupports(() => window.ScrollTimeline !== void 0, "scrollTimeline");
 const supportsLinearEasing = /* @__PURE__ */ memoSupports(() => {
@@ -15684,12 +16777,11 @@ class NativeAnimation extends WithPromise {
     this.animation.onfinish = () => {
       this.finishedTime = this.time;
       if (!pseudoElement) {
-        const keyframe = getFinalKeyframe$1(keyframes2, this.options, finalKeyframe, this.speed);
+        const keyframe = getFinalKeyframe(keyframes2, this.options, finalKeyframe, this.speed);
         if (this.updateMotionValue) {
           this.updateMotionValue(keyframe);
-        } else {
-          setStyle(element, name, keyframe);
         }
+        setStyle(element, name, keyframe);
         this.animation.cancel();
       }
       onComplete == null ? void 0 : onComplete();
@@ -15766,9 +16858,13 @@ class NativeAnimation extends WithPromise {
     return /* @__PURE__ */ millisecondsToSeconds(Number(this.animation.currentTime) || 0);
   }
   set time(newTime) {
+    const wasFinished = this.finishedTime !== null;
     this.manualStartTime = null;
     this.finishedTime = null;
     this.animation.currentTime = /* @__PURE__ */ secondsToMilliseconds(newTime);
+    if (wasFinished) {
+      this.animation.pause();
+    }
   }
   /**
    * The playback speed of the animation.
@@ -15794,7 +16890,7 @@ class NativeAnimation extends WithPromise {
   /**
    * Attaches a timeline to the animation, for instance the `ScrollTimeline`.
    */
-  attachTimeline({ timeline, observe }) {
+  attachTimeline({ timeline, rangeStart, rangeEnd, observe }) {
     var _a2;
     if (this.allowFlatten) {
       (_a2 = this.animation.effect) == null ? void 0 : _a2.updateTiming({ easing: "linear" });
@@ -15802,6 +16898,10 @@ class NativeAnimation extends WithPromise {
     this.animation.onfinish = null;
     if (timeline && supportsScrollTimeline()) {
       this.animation.timeline = timeline;
+      if (rangeStart)
+        this.animation.rangeStart = rangeStart;
+      if (rangeEnd)
+        this.animation.rangeEnd = rangeEnd;
       return noop;
     } else {
       return observe(this);
@@ -15827,7 +16927,7 @@ class NativeAnimationExtended extends NativeAnimation {
     replaceStringEasing(options);
     replaceTransitionType(options);
     super(options);
-    if (options.startTime !== void 0) {
+    if (options.startTime !== void 0 && options.autoplay !== false) {
       this.startTime = options.startTime;
     }
     this.options = options;
@@ -15854,7 +16954,11 @@ class NativeAnimationExtended extends NativeAnimation {
     });
     const sampleTime = Math.max(sampleDelta, time.now() - this.startTime);
     const delta = clamp(0, sampleDelta, sampleTime - sampleDelta);
-    motionValue2.setWithVelocity(sampleAnimation.sample(Math.max(0, sampleTime - delta)).value, sampleAnimation.sample(sampleTime).value, delta);
+    const current = sampleAnimation.sample(sampleTime).value;
+    const { name } = this.options;
+    if (element && name)
+      setStyle(element, name, current);
+    motionValue2.setWithVelocity(sampleAnimation.sample(Math.max(0, sampleTime - delta)).value, current, delta);
     sampleAnimation.stop();
   }
 }
@@ -15898,24 +17002,50 @@ function makeAnimationInstant(options) {
   options.duration = 0;
   options.type = "keyframes";
 }
-const acceleratedValues$1 = /* @__PURE__ */ new Set([
+const acceleratedValues = /* @__PURE__ */ new Set([
   "opacity",
   "clipPath",
   "filter",
   "transform"
-  // TODO: Could be re-enabled now we have support for linear() easing
+  // TODO: Can be accelerated but currently disabled until https://issues.chromium.org/issues/41491098 is resolved
+  // or until we implement support for linear() easing.
   // "background-color"
+]);
+const browserColorFunctions = /^(?:oklch|oklab|lab|lch|color|color-mix|light-dark)\(/;
+function hasBrowserOnlyColors(keyframes2) {
+  for (let i = 0; i < keyframes2.length; i++) {
+    if (typeof keyframes2[i] === "string" && browserColorFunctions.test(keyframes2[i])) {
+      return true;
+    }
+  }
+  return false;
+}
+const colorProperties = /* @__PURE__ */ new Set([
+  "color",
+  "backgroundColor",
+  "outlineColor",
+  "fill",
+  "stroke",
+  "borderColor",
+  "borderTopColor",
+  "borderRightColor",
+  "borderBottomColor",
+  "borderLeftColor"
 ]);
 const supportsWaapi = /* @__PURE__ */ memo(() => Object.hasOwnProperty.call(Element.prototype, "animate"));
 function supportsBrowserAnimation(options) {
   var _a2;
-  const { motionValue: motionValue2, name, repeatDelay, repeatType, damping, type } = options;
+  const { motionValue: motionValue2, name, repeatDelay, repeatType, damping, type, keyframes: keyframes2 } = options;
   const subject = (_a2 = motionValue2 == null ? void 0 : motionValue2.owner) == null ? void 0 : _a2.current;
   if (!(subject instanceof HTMLElement)) {
     return false;
   }
   const { onUpdate, transformTemplate } = motionValue2.owner.getProps();
-  return supportsWaapi() && name && acceleratedValues$1.has(name) && (name !== "transform" || !transformTemplate) && /**
+  return supportsWaapi() && name && /**
+   * Force WAAPI for color properties with browser-only color formats
+   * (oklch, oklab, lab, lch, etc.) that the JS animation path can't parse.
+   */
+  (acceleratedValues.has(name) || colorProperties.has(name) && hasBrowserOnlyColors(keyframes2)) && (name !== "transform" || !transformTemplate) && /**
    * If we're outputting values to onUpdate then we can't use WAAPI as there's
    * no way to read the value from WAAPI every frame.
    */
@@ -15956,9 +17086,11 @@ class AsyncMotionValueAnimation extends WithPromise {
     this.keyframeResolver = void 0;
     const { name, type, velocity, delay: delay2, isHandoff, onUpdate } = options;
     this.resolvedAt = time.now();
+    let canAnimateValue = true;
     if (!canAnimate(keyframes2, name, type, velocity)) {
+      canAnimateValue = false;
       if (MotionGlobalConfig.instantAnimations || !delay2) {
-        onUpdate == null ? void 0 : onUpdate(getFinalKeyframe$1(keyframes2, options, finalKeyframe));
+        onUpdate == null ? void 0 : onUpdate(getFinalKeyframe(keyframes2, options, finalKeyframe));
       }
       keyframes2[0] = keyframes2[keyframes2.length - 1];
       makeAnimationInstant(options);
@@ -15971,12 +17103,21 @@ class AsyncMotionValueAnimation extends WithPromise {
       ...options,
       keyframes: keyframes2
     };
-    const useWaapi = !isHandoff && supportsBrowserAnimation(resolvedOptions);
+    const useWaapi = canAnimateValue && !isHandoff && supportsBrowserAnimation(resolvedOptions);
     const element = (_b2 = (_a2 = resolvedOptions.motionValue) == null ? void 0 : _a2.owner) == null ? void 0 : _b2.current;
-    const animation = useWaapi ? new NativeAnimationExtended({
-      ...resolvedOptions,
-      element
-    }) : new JSAnimation(resolvedOptions);
+    let animation;
+    if (useWaapi) {
+      try {
+        animation = new NativeAnimationExtended({
+          ...resolvedOptions,
+          element
+        });
+      } catch {
+        animation = new JSAnimation(resolvedOptions);
+      }
+    } else {
+      animation = new JSAnimation(resolvedOptions);
+    }
     animation.finished.then(() => {
       this.notifyFinished();
     }).catch(noop);
@@ -16112,12 +17253,6 @@ const getDefaultTransition = (valueKey, { keyframes: keyframes2 }) => {
   }
   return ease;
 };
-const isNotNull = (value) => value !== null;
-function getFinalKeyframe(keyframes2, { repeat, repeatType = "loop" }, finalKeyframe) {
-  const resolvedKeyframes = keyframes2.filter(isNotNull);
-  const index2 = repeat && repeatType !== "loop" && repeat % 2 === 1 ? 0 : resolvedKeyframes.length - 1;
-  return resolvedKeyframes[index2];
-}
 function resolveTransition(transition, parentTransition) {
   if ((transition == null ? void 0 : transition.inherit) && parentTransition) {
     const { inherit: _, ...rest } = transition;
@@ -16132,8 +17267,24 @@ function getValueTransition(transition, key) {
   }
   return valueTransition;
 }
-function isTransitionDefined({ when, delay: _delay, delayChildren, staggerChildren, staggerDirection, repeat, repeatType, repeatDelay, from, elapsed, ...transition }) {
-  return !!Object.keys(transition).length;
+const orchestrationKeys = /* @__PURE__ */ new Set([
+  "when",
+  "delay",
+  "delayChildren",
+  "staggerChildren",
+  "staggerDirection",
+  "repeat",
+  "repeatType",
+  "repeatDelay",
+  "from",
+  "elapsed"
+]);
+function isTransitionDefined(transition) {
+  for (const key in transition) {
+    if (!orchestrationKeys.has(key))
+      return true;
+  }
+  return false;
 }
 const animateMotionValue = (name, value, target, transition = {}, element, isHandoff) => (onComplete) => {
   const valueTransition = getValueTransition(transition, name) || {};
@@ -16572,7 +17723,8 @@ function animateTarget(visualElement, targetAndTransition, { delay: delay2 = 0, 
       ...getValueTransition(transition || {}, key)
     };
     const currentValue = value.get();
-    if (currentValue !== void 0 && !value.isAnimating && !Array.isArray(valueTarget) && valueTarget === currentValue && !valueTransition.velocity) {
+    if (currentValue !== void 0 && !value.isAnimating() && !Array.isArray(valueTarget) && valueTarget === currentValue && !valueTransition.velocity) {
+      frame.update(() => value.set(valueTarget));
       continue;
     }
     let isHandoff = false;
@@ -16933,15 +18085,6 @@ class DOMKeyframesResolver extends KeyframeResolver {
     this.resolveNoneKeyframes();
   }
 }
-const acceleratedValues = /* @__PURE__ */ new Set([
-  "opacity",
-  "clipPath",
-  "filter",
-  "transform"
-  // TODO: Can be accelerated but currently disabled until https://issues.chromium.org/issues/41491098 is resolved
-  // or until we implement support for linear() easing.
-  // "background-color"
-]);
 function resolveElements(elementOrSelector, scope, selectorCache) {
   if (elementOrSelector == null) {
     return [];
@@ -16959,7 +18102,7 @@ const getValueAsType = (value, type) => {
   return type && typeof value === "number" ? type.transform(value) : value;
 };
 function isHTMLElement(element) {
-  return isObject$1(element) && "offsetHeight" in element;
+  return isObject(element) && "offsetHeight" in element && !("ownerSVGElement" in element);
 }
 const { schedule: microtask } = /* @__PURE__ */ createRenderBatcher(queueMicrotask, false);
 const isDragging = {
@@ -17169,7 +18312,7 @@ function press(targetOrSelector, onPressStart, options = {}) {
   return cancelEvents;
 }
 function isSVGElement(element) {
-  return isObject$1(element) && "ownerSVGElement" in element;
+  return isObject(element) && "ownerSVGElement" in element;
 }
 const resizeHandlers = /* @__PURE__ */ new WeakMap();
 let observer;
@@ -17332,10 +18475,10 @@ function updateMotionValuesFromProps(element, next, prev) {
 }
 const prefersReducedMotion = { current: null };
 const hasReducedMotionListener = { current: false };
-const isBrowser$1 = typeof window !== "undefined";
+const isBrowser = typeof window !== "undefined";
 function initPrefersReducedMotion() {
   hasReducedMotionListener.current = true;
-  if (!isBrowser$1)
+  if (!isBrowser)
     return;
   if (window.matchMedia) {
     const motionMediaQuery = window.matchMedia("(prefers-reduced-motion)");
@@ -17842,6 +18985,7 @@ function applyBoxDelta(box, { x, y }) {
 const TREE_SCALE_SNAP_MIN = 0.999999999999;
 const TREE_SCALE_SNAP_MAX = 1.0000000000001;
 function applyTreeDeltas(box, treeScale, treePath, isSharedTransition = false) {
+  var _a2;
   const treeLength = treePath.length;
   if (!treeLength)
     return;
@@ -17856,10 +19000,8 @@ function applyTreeDeltas(box, treeScale, treePath, isSharedTransition = false) {
       continue;
     }
     if (isSharedTransition && node.options.layoutScroll && node.scroll && node !== node.root) {
-      transformBox(box, {
-        x: -node.scroll.offset.x,
-        y: -node.scroll.offset.y
-      });
+      translateAxis(box.x, -node.scroll.offset.x);
+      translateAxis(box.y, -node.scroll.offset.y);
     }
     if (delta) {
       treeScale.x *= delta.x.scale;
@@ -17867,7 +19009,7 @@ function applyTreeDeltas(box, treeScale, treePath, isSharedTransition = false) {
       applyBoxDelta(box, delta);
     }
     if (isSharedTransition && hasTransform(node.latestValues)) {
-      transformBox(box, node.latestValues);
+      transformBox(box, node.latestValues, (_a2 = node.layout) == null ? void 0 : _a2.layoutBox);
     }
   }
   if (treeScale.x < TREE_SCALE_SNAP_MAX && treeScale.x > TREE_SCALE_SNAP_MIN) {
@@ -17878,16 +19020,23 @@ function applyTreeDeltas(box, treeScale, treePath, isSharedTransition = false) {
   }
 }
 function translateAxis(axis, distance2) {
-  axis.min = axis.min + distance2;
-  axis.max = axis.max + distance2;
+  axis.min += distance2;
+  axis.max += distance2;
 }
 function transformAxis(axis, axisTranslate, axisScale, boxScale, axisOrigin = 0.5) {
   const originPoint = mixNumber$1(axis.min, axis.max, axisOrigin);
   applyAxisDelta(axis, axisTranslate, axisScale, originPoint, boxScale);
 }
-function transformBox(box, transform) {
-  transformAxis(box.x, transform.x, transform.scaleX, transform.scale, transform.originX);
-  transformAxis(box.y, transform.y, transform.scaleY, transform.scale, transform.originY);
+function resolveAxisTranslate(value, axis) {
+  if (typeof value === "string") {
+    return parseFloat(value) / 100 * (axis.max - axis.min);
+  }
+  return value;
+}
+function transformBox(box, transform, sourceBox) {
+  const resolveBox = sourceBox ?? box;
+  transformAxis(box.x, resolveAxisTranslate(transform.x, resolveBox.x), transform.scaleX, transform.scale, transform.originX);
+  transformAxis(box.y, resolveAxisTranslate(transform.y, resolveBox.y), transform.scaleY, transform.scale, transform.originY);
 }
 function measureViewportBox(instance, transformPoint2) {
   return convertBoundingBoxToBox(transformBoxPoints(instance.getBoundingClientRect(), transformPoint2));
@@ -18277,6 +19426,7 @@ function createAnimationState(visualElement) {
   let animate = createAnimateFunction(visualElement);
   let state = createState();
   let isInitialRender = true;
+  let wasReset = false;
   const buildResolvedTypeValues = (type) => (acc, definition) => {
     var _a2;
     const resolved = resolveVariant(visualElement, definition, type === "exit" ? (_a2 = visualElement.presenceContext) == null ? void 0 : _a2.custom : void 0);
@@ -18305,7 +19455,7 @@ function createAnimationState(visualElement) {
       if (activeDelta === false)
         removedVariantIndex = i;
       let isInherited = prop === context[type] && prop !== props[type] && propIsVariant;
-      if (isInherited && isInitialRender && visualElement.manuallyAnimateOnMount) {
+      if (isInherited && (isInitialRender || wasReset) && visualElement.manuallyAnimateOnMount) {
         isInherited = false;
       }
       typeState.protectedKeys = { ...encounteredKeys };
@@ -18379,7 +19529,7 @@ function createAnimationState(visualElement) {
       if (typeState.isActive) {
         encounteredKeys = { ...encounteredKeys, ...resolvedValues };
       }
-      if (isInitialRender && visualElement.blockInitialAnimation) {
+      if ((isInitialRender || wasReset) && visualElement.blockInitialAnimation) {
         shouldAnimateType = false;
       }
       const willAnimateViaParent = isInherited && variantDidChange;
@@ -18387,7 +19537,7 @@ function createAnimationState(visualElement) {
       if (shouldAnimateType && needsAnimating) {
         animations2.push(...definitionList.map((animation) => {
           const options = { type };
-          if (typeof animation === "string" && isInitialRender && !willAnimateViaParent && visualElement.manuallyAnimateOnMount && visualElement.parent) {
+          if (typeof animation === "string" && (isInitialRender || wasReset) && !willAnimateViaParent && visualElement.manuallyAnimateOnMount && visualElement.parent) {
             const { parent } = visualElement;
             const parentVariant = resolveVariant(parent, animation);
             if (parent.enteringChildren && parentVariant) {
@@ -18424,6 +19574,7 @@ function createAnimationState(visualElement) {
       shouldAnimate = false;
     }
     isInitialRender = false;
+    wasReset = false;
     return shouldAnimate ? animate(animations2) : Promise.resolve();
   }
   function setActive(type, isActive) {
@@ -18448,6 +19599,7 @@ function createAnimationState(visualElement) {
     getState: () => state,
     reset: () => {
       state = createState();
+      wasReset = true;
     }
   };
 }
@@ -18520,21 +19672,23 @@ function calcBoxDelta(delta, source, target, origin) {
   calcAxisDelta(delta.x, source.x, target.x, origin ? origin.originX : void 0);
   calcAxisDelta(delta.y, source.y, target.y, origin ? origin.originY : void 0);
 }
-function calcRelativeAxis(target, relative, parent) {
-  target.min = parent.min + relative.min;
+function calcRelativeAxis(target, relative, parent, anchor = 0) {
+  const anchorPoint = anchor ? mixNumber$1(parent.min, parent.max, anchor) : parent.min;
+  target.min = anchorPoint + relative.min;
   target.max = target.min + calcLength(relative);
 }
-function calcRelativeBox(target, relative, parent) {
-  calcRelativeAxis(target.x, relative.x, parent.x);
-  calcRelativeAxis(target.y, relative.y, parent.y);
+function calcRelativeBox(target, relative, parent, anchor) {
+  calcRelativeAxis(target.x, relative.x, parent.x, anchor == null ? void 0 : anchor.x);
+  calcRelativeAxis(target.y, relative.y, parent.y, anchor == null ? void 0 : anchor.y);
 }
-function calcRelativeAxisPosition(target, layout2, parent) {
-  target.min = layout2.min - parent.min;
+function calcRelativeAxisPosition(target, layout2, parent, anchor = 0) {
+  const anchorPoint = anchor ? mixNumber$1(parent.min, parent.max, anchor) : parent.min;
+  target.min = layout2.min - anchorPoint;
   target.max = target.min + calcLength(layout2);
 }
-function calcRelativePosition(target, layout2, parent) {
-  calcRelativeAxisPosition(target.x, layout2.x, parent.x);
-  calcRelativeAxisPosition(target.y, layout2.y, parent.y);
+function calcRelativePosition(target, layout2, parent, anchor) {
+  calcRelativeAxisPosition(target.x, layout2.x, parent.x, anchor == null ? void 0 : anchor.x);
+  calcRelativeAxisPosition(target.y, layout2.y, parent.y, anchor == null ? void 0 : anchor.y);
 }
 function removePointDelta(point, translate, scale2, originPoint, boxScale) {
   point -= translate;
@@ -18627,8 +19781,13 @@ function buildProjectionTransform(delta, treeScale, latestTransform) {
   }
   return transform || "none";
 }
-const borders = ["TopLeft", "TopRight", "BottomLeft", "BottomRight"];
-const numBorders = borders.length;
+const borderLabels = [
+  "borderTopLeftRadius",
+  "borderTopRightRadius",
+  "borderBottomLeftRadius",
+  "borderBottomRightRadius"
+];
+const numBorders = borderLabels.length;
 const asNumber = (value) => typeof value === "string" ? parseFloat(value) : value;
 const isPx = (value) => typeof value === "number" || px.test(value);
 function mixValues(target, follow, lead, progress2, shouldCrossfadeOpacity, isOnlyMember) {
@@ -18639,7 +19798,7 @@ function mixValues(target, follow, lead, progress2, shouldCrossfadeOpacity, isOn
     target.opacity = mixNumber$1(follow.opacity ?? 1, lead.opacity ?? 1, progress2);
   }
   for (let i = 0; i < numBorders; i++) {
-    const borderLabel = `border${borders[i]}Radius`;
+    const borderLabel = borderLabels[i];
     let followRadius = getRadius(follow, borderLabel);
     let leadRadius = getRadius(lead, borderLabel);
     if (followRadius === void 0 && leadRadius === void 0)
@@ -18725,49 +19884,40 @@ class NodeStack {
   add(node) {
     addUniqueItem(this.members, node);
     for (let i = this.members.length - 1; i >= 0; i--) {
-      const m = this.members[i];
-      if (m === node || m === this.lead || m === this.prevLead)
+      const member = this.members[i];
+      if (member === node || member === this.lead || member === this.prevLead)
         continue;
-      const inst = m.instance;
-      if (inst && inst.isConnected === false && m.isPresent !== false && !m.snapshot) {
-        removeItem(this.members, m);
+      const inst = member.instance;
+      if ((!inst || inst.isConnected === false) && !member.snapshot) {
+        removeItem(this.members, member);
+        member.unmount();
       }
     }
     node.scheduleRender();
   }
   remove(node) {
     removeItem(this.members, node);
-    if (node === this.prevLead) {
+    if (node === this.prevLead)
       this.prevLead = void 0;
-    }
     if (node === this.lead) {
       const prevLead = this.members[this.members.length - 1];
-      if (prevLead) {
+      if (prevLead)
         this.promote(prevLead);
-      }
     }
   }
   relegate(node) {
-    const indexOfNode = this.members.findIndex((member) => node === member);
-    if (indexOfNode === 0)
-      return false;
-    let prevLead;
-    for (let i = indexOfNode; i >= 0; i--) {
+    var _a2;
+    for (let i = this.members.indexOf(node) - 1; i >= 0; i--) {
       const member = this.members[i];
-      const inst = member.instance;
-      if (member.isPresent !== false && (!inst || inst.isConnected !== false)) {
-        prevLead = member;
-        break;
+      if (member.isPresent !== false && ((_a2 = member.instance) == null ? void 0 : _a2.isConnected) !== false) {
+        this.promote(member);
+        return true;
       }
     }
-    if (prevLead) {
-      this.promote(prevLead);
-      return true;
-    } else {
-      return false;
-    }
+    return false;
   }
   promote(node, preserveFollowOpacity) {
+    var _a2;
     const prevLead = this.lead;
     if (node === prevLead)
       return;
@@ -18775,56 +19925,39 @@ class NodeStack {
     this.lead = node;
     node.show();
     if (prevLead) {
-      prevLead.instance && prevLead.scheduleRender();
+      prevLead.updateSnapshot();
       node.scheduleRender();
-      const prevDep = prevLead.options.layoutDependency;
-      const nextDep = node.options.layoutDependency;
-      const dependencyMatches = prevDep !== void 0 && nextDep !== void 0 && prevDep === nextDep;
-      if (!dependencyMatches) {
-        const prevInstance = prevLead.instance;
-        const isStale = prevInstance && prevInstance.isConnected === false && !prevLead.snapshot;
-        if (!isStale) {
-          node.resumeFrom = prevLead;
-          if (preserveFollowOpacity) {
-            node.resumeFrom.preserveOpacity = true;
-          }
-          if (prevLead.snapshot) {
-            node.snapshot = prevLead.snapshot;
-            node.snapshot.latestValues = prevLead.animationValues || prevLead.latestValues;
-          }
-          if (node.root && node.root.isUpdating) {
-            node.isLayoutDirty = true;
-          }
+      const { layoutDependency: prevDep } = prevLead.options;
+      const { layoutDependency: nextDep } = node.options;
+      if (prevDep === void 0 || prevDep !== nextDep) {
+        node.resumeFrom = prevLead;
+        if (preserveFollowOpacity)
+          prevLead.preserveOpacity = true;
+        if (prevLead.snapshot) {
+          node.snapshot = prevLead.snapshot;
+          node.snapshot.latestValues = prevLead.animationValues || prevLead.latestValues;
         }
+        if ((_a2 = node.root) == null ? void 0 : _a2.isUpdating)
+          node.isLayoutDirty = true;
       }
-      const { crossfade } = node.options;
-      if (crossfade === false) {
+      if (node.options.crossfade === false)
         prevLead.hide();
-      }
     }
   }
   exitAnimationComplete() {
-    this.members.forEach((node) => {
-      const { options, resumingFrom } = node;
-      options.onExitComplete && options.onExitComplete();
-      if (resumingFrom) {
-        resumingFrom.options.onExitComplete && resumingFrom.options.onExitComplete();
-      }
+    this.members.forEach((member) => {
+      var _a2, _b2, _c2, _d2, _e2;
+      (_b2 = (_a2 = member.options).onExitComplete) == null ? void 0 : _b2.call(_a2);
+      (_e2 = (_c2 = member.resumingFrom) == null ? void 0 : (_d2 = _c2.options).onExitComplete) == null ? void 0 : _e2.call(_d2);
     });
   }
   scheduleRender() {
-    this.members.forEach((node) => {
-      node.instance && node.scheduleRender(false);
-    });
+    this.members.forEach((member) => member.instance && member.scheduleRender(false));
   }
-  /**
-   * Clear any leads that have been removed this render to prevent them from being
-   * used in future animations and to prevent memory leaks
-   */
   removeLeadSnapshot() {
-    if (this.lead && this.lead.snapshot) {
+    var _a2;
+    if ((_a2 = this.lead) == null ? void 0 : _a2.snapshot)
       this.lead.snapshot = void 0;
-    }
   }
 }
 const globalProjectionState = {
@@ -19071,6 +20204,9 @@ function createProjectionNode$1({ attachResizeListener, defaultParent, measureSc
       for (let i = 0; i < this.path.length; i++) {
         const node = this.path[i];
         node.shouldResetTransform = true;
+        if (typeof node.latestValues.x === "string" || typeof node.latestValues.y === "string") {
+          node.isLayoutDirty = true;
+        }
         node.updateScroll("snapshot");
         if (node.options.layoutRoot) {
           node.willUpdate(false);
@@ -19088,8 +20224,13 @@ function createProjectionNode$1({ attachResizeListener, defaultParent, measureSc
       this.updateScheduled = false;
       const updateWasBlocked = this.isUpdateBlocked();
       if (updateWasBlocked) {
+        const wasBlockedByResize = this.updateBlockedByResize;
         this.unblockUpdate();
+        this.updateBlockedByResize = false;
         this.clearAllSnapshots();
+        if (wasBlockedByResize) {
+          this.nodes.forEach(forceLayoutMeasure);
+        }
         this.nodes.forEach(clearMeasurements);
         return;
       }
@@ -19102,6 +20243,7 @@ function createProjectionNode$1({ attachResizeListener, defaultParent, measureSc
         this.nodes.forEach(clearIsLayoutDirty);
       } else {
         this.isUpdating = false;
+        this.nodes.forEach(ensureDraggedNodesSnapshotted);
         this.nodes.forEach(resetTransformStyle);
         this.nodes.forEach(updateLayout);
         this.nodes.forEach(notifyLayoutUpdate);
@@ -19168,7 +20310,8 @@ function createProjectionNode$1({ attachResizeListener, defaultParent, measureSc
       const prevLayout = this.layout;
       this.layout = this.measure(false);
       this.layoutVersion++;
-      this.layoutCorrected = createBox();
+      if (!this.layoutCorrected)
+        this.layoutCorrected = createBox();
       this.isLayoutDirty = false;
       this.projectionDelta = void 0;
       this.notifyListeners("measure", this.layout.layoutBox);
@@ -19256,40 +20399,40 @@ function createProjectionNode$1({ attachResizeListener, defaultParent, measureSc
       }
       return boxWithoutScroll;
     }
-    applyTransform(box, transformOnly = false) {
-      const withTransforms = createBox();
+    applyTransform(box, transformOnly = false, output) {
+      var _a2, _b2;
+      const withTransforms = output || createBox();
       copyBoxInto(withTransforms, box);
       for (let i = 0; i < this.path.length; i++) {
         const node = this.path[i];
         if (!transformOnly && node.options.layoutScroll && node.scroll && node !== node.root) {
-          transformBox(withTransforms, {
-            x: -node.scroll.offset.x,
-            y: -node.scroll.offset.y
-          });
+          translateAxis(withTransforms.x, -node.scroll.offset.x);
+          translateAxis(withTransforms.y, -node.scroll.offset.y);
         }
         if (!hasTransform(node.latestValues))
           continue;
-        transformBox(withTransforms, node.latestValues);
+        transformBox(withTransforms, node.latestValues, (_a2 = node.layout) == null ? void 0 : _a2.layoutBox);
       }
       if (hasTransform(this.latestValues)) {
-        transformBox(withTransforms, this.latestValues);
+        transformBox(withTransforms, this.latestValues, (_b2 = this.layout) == null ? void 0 : _b2.layoutBox);
       }
       return withTransforms;
     }
     removeTransform(box) {
+      var _a2;
       const boxWithoutTransform = createBox();
       copyBoxInto(boxWithoutTransform, box);
       for (let i = 0; i < this.path.length; i++) {
         const node = this.path[i];
-        if (!node.instance)
-          continue;
         if (!hasTransform(node.latestValues))
           continue;
-        hasScale(node.latestValues) && node.updateSnapshot();
-        const sourceBox = createBox();
-        const nodeBox = node.measurePageBox();
-        copyBoxInto(sourceBox, nodeBox);
-        removeBoxTransforms(boxWithoutTransform, node.latestValues, node.snapshot ? node.snapshot.layoutBox : void 0, sourceBox);
+        let sourceBox;
+        if (node.instance) {
+          hasScale(node.latestValues) && node.updateSnapshot();
+          sourceBox = createBox();
+          copyBoxInto(sourceBox, node.measurePageBox());
+        }
+        removeBoxTransforms(boxWithoutTransform, node.latestValues, (_a2 = node.snapshot) == null ? void 0 : _a2.layoutBox, sourceBox);
       }
       if (hasTransform(this.latestValues)) {
         removeBoxTransforms(boxWithoutTransform, this.latestValues);
@@ -19343,7 +20486,7 @@ function createProjectionNode$1({ attachResizeListener, defaultParent, measureSc
         this.removeRelativeTarget();
       }
       if (!this.targetDelta && !this.relativeTarget) {
-        if (relativeParent && relativeParent.layout) {
+        if (this.options.layoutAnchor !== false && relativeParent && relativeParent.layout) {
           this.createRelativeTarget(relativeParent, this.layout.layoutBox, relativeParent.layout.layoutBox);
         } else {
           this.removeRelativeTarget();
@@ -19357,10 +20500,10 @@ function createProjectionNode$1({ attachResizeListener, defaultParent, measureSc
       }
       if (this.relativeTarget && this.relativeTargetOrigin && this.relativeParent && this.relativeParent.target) {
         this.forceRelativeParentToResolveTarget();
-        calcRelativeBox(this.target, this.relativeTarget, this.relativeParent.target);
+        calcRelativeBox(this.target, this.relativeTarget, this.relativeParent.target, this.options.layoutAnchor || void 0);
       } else if (this.targetDelta) {
         if (Boolean(this.resumingFrom)) {
-          this.target = this.applyTransform(this.layout.layoutBox);
+          this.applyTransform(this.layout.layoutBox, false, this.target);
         } else {
           copyBoxInto(this.target, this.layout.layoutBox);
         }
@@ -19370,7 +20513,7 @@ function createProjectionNode$1({ attachResizeListener, defaultParent, measureSc
       }
       if (this.attemptToResolveRelativeTarget) {
         this.attemptToResolveRelativeTarget = false;
-        if (relativeParent && Boolean(relativeParent.resumingFrom) === Boolean(this.resumingFrom) && !relativeParent.options.layoutScroll && relativeParent.target && this.animationProgress !== 1) {
+        if (this.options.layoutAnchor !== false && relativeParent && Boolean(relativeParent.resumingFrom) === Boolean(this.resumingFrom) && !relativeParent.options.layoutScroll && relativeParent.target && this.animationProgress !== 1) {
           this.createRelativeTarget(relativeParent, this.target, relativeParent.target);
         } else {
           this.relativeParent = this.relativeTarget = void 0;
@@ -19396,7 +20539,7 @@ function createProjectionNode$1({ attachResizeListener, defaultParent, measureSc
       this.forceRelativeParentToResolveTarget();
       this.relativeTarget = createBox();
       this.relativeTargetOrigin = createBox();
-      calcRelativePosition(this.relativeTargetOrigin, layout2, parentLayout);
+      calcRelativePosition(this.relativeTargetOrigin, layout2, parentLayout, this.options.layoutAnchor || void 0);
       copyBoxInto(this.relativeTarget, this.relativeTargetOrigin);
     }
     removeRelativeTarget() {
@@ -19500,7 +20643,7 @@ function createProjectionNode$1({ attachResizeListener, defaultParent, measureSc
         mixAxisDelta(targetDelta.y, delta.y, progress2);
         this.setTargetDelta(targetDelta);
         if (this.relativeTarget && this.relativeTargetOrigin && this.layout && this.relativeParent && this.relativeParent.layout) {
-          calcRelativePosition(relativeLayout, this.layout.layoutBox, this.relativeParent.layout.layoutBox);
+          calcRelativePosition(relativeLayout, this.layout.layoutBox, this.relativeParent.layout.layoutBox, this.options.layoutAnchor || void 0);
           mixBox(this.relativeTarget, this.relativeTargetOrigin, relativeLayout, progress2);
           if (prevRelativeTarget && boxEquals(this.relativeTarget, prevRelativeTarget)) {
             this.isProjectionDirty = false;
@@ -19762,6 +20905,9 @@ function notifyLayoutUpdate(node) {
         axisSnapshot.min = layout2[axis].min;
         axisSnapshot.max = axisSnapshot.min + length;
       });
+    } else if (animationType === "x" || animationType === "y") {
+      const snapAxis = animationType === "x" ? "y" : "x";
+      copyAxisInto(isShared ? snapshot.measuredBox[snapAxis] : snapshot.layoutBox[snapAxis], layout2[snapAxis]);
     } else if (shouldAnimatePositionOnly(animationType, snapshot.layoutBox, layout2)) {
       eachAxis((axis) => {
         const axisSnapshot = isShared ? snapshot.measuredBox[axis] : snapshot.layoutBox[axis];
@@ -19788,10 +20934,11 @@ function notifyLayoutUpdate(node) {
       if (relativeParent && !relativeParent.resumeFrom) {
         const { snapshot: parentSnapshot, layout: parentLayout } = relativeParent;
         if (parentSnapshot && parentLayout) {
+          const anchor = node.options.layoutAnchor || void 0;
           const relativeSnapshot = createBox();
-          calcRelativePosition(relativeSnapshot, snapshot.layoutBox, parentSnapshot.layoutBox);
+          calcRelativePosition(relativeSnapshot, snapshot.layoutBox, parentSnapshot.layoutBox, anchor);
           const relativeLayout = createBox();
-          calcRelativePosition(relativeLayout, layout2, parentLayout.layoutBox);
+          calcRelativePosition(relativeLayout, layout2, parentLayout.layoutBox, anchor);
           if (!boxEqualsRounded(relativeSnapshot, relativeLayout)) {
             hasRelativeLayoutChanged = true;
           }
@@ -19835,8 +20982,18 @@ function clearSnapshot(node) {
 function clearMeasurements(node) {
   node.clearMeasurements();
 }
+function forceLayoutMeasure(node) {
+  node.isLayoutDirty = true;
+  node.updateLayout();
+}
 function clearIsLayoutDirty(node) {
   node.isLayoutDirty = false;
+}
+function ensureDraggedNodesSnapshotted(node) {
+  if (node.isAnimationBlocked && node.layout && !node.isLayoutDirty) {
+    node.snapshot = node.layout;
+    node.isLayoutDirty = true;
+  }
 }
 function resetTransformStyle(node) {
   const { visualElement } = node.options;
@@ -19938,18 +21095,18 @@ const MotionConfigContext = reactExports.createContext({
   isStatic: false,
   reducedMotion: "never"
 });
-function setRef(ref, value) {
+function setRef$1(ref, value) {
   if (typeof ref === "function") {
     return ref(value);
   } else if (ref !== null && ref !== void 0) {
     ref.current = value;
   }
 }
-function composeRefs(...refs) {
+function composeRefs$1(...refs) {
   return (node) => {
     let hasCleanup = false;
     const cleanups = refs.map((ref) => {
-      const cleanup = setRef(ref, node);
+      const cleanup = setRef$1(ref, node);
       if (!hasCleanup && typeof cleanup === "function") {
         hasCleanup = true;
       }
@@ -19962,7 +21119,7 @@ function composeRefs(...refs) {
           if (typeof cleanup === "function") {
             cleanup();
           } else {
-            setRef(refs[i], null);
+            setRef$1(refs[i], null);
           }
         }
       };
@@ -19970,18 +21127,19 @@ function composeRefs(...refs) {
   };
 }
 function useComposedRefs(...refs) {
-  return reactExports.useCallback(composeRefs(...refs), refs);
+  return reactExports.useCallback(composeRefs$1(...refs), refs);
 }
 class PopChildMeasure extends reactExports.Component {
   getSnapshotBeforeUpdate(prevProps) {
     const element = this.props.childRef.current;
-    if (element && prevProps.isPresent && !this.props.isPresent && this.props.pop !== false) {
+    if (isHTMLElement(element) && prevProps.isPresent && !this.props.isPresent && this.props.pop !== false) {
       const parent = element.offsetParent;
       const parentWidth = isHTMLElement(parent) ? parent.offsetWidth || 0 : 0;
       const parentHeight = isHTMLElement(parent) ? parent.offsetHeight || 0 : 0;
+      const computedStyle = getComputedStyle(element);
       const size = this.props.sizeRef.current;
-      size.height = element.offsetHeight || 0;
-      size.width = element.offsetWidth || 0;
+      size.height = parseFloat(computedStyle.height);
+      size.width = parseFloat(computedStyle.width);
       size.top = element.offsetTop;
       size.left = element.offsetLeft;
       size.right = parentWidth - size.width - size.left;
@@ -20037,6 +21195,8 @@ function PopChild({ children, isPresent, anchorX, anchorY, root: root2, pop: pop
         `);
     }
     return () => {
+      var _a3;
+      (_a3 = ref.current) == null ? void 0 : _a3.removeAttribute("data-motion-pop-id");
       if (parent.contains(style2)) {
         parent.removeChild(style2);
       }
@@ -20158,8 +21318,8 @@ const AnimatePresence = ({ children, custom, initial = true, onExitComplete, pre
       if (exitingComponents.current.has(key)) {
         return;
       }
-      exitingComponents.current.add(key);
       if (exitComplete.has(key)) {
+        exitingComponents.current.add(key);
         exitComplete.set(key, true);
       } else {
         return;
@@ -20270,13 +21430,16 @@ function loadExternalIsValidProp(isValidProp) {
   shouldForward = (key) => key.startsWith("on") ? !isValidMotionProp(key) : isValidProp(key);
 }
 try {
-  loadExternalIsValidProp(require("@emotion/is-prop-valid").default);
+  const emotionPkg = "@emotion/is-prop-valid";
+  loadExternalIsValidProp(require(emotionPkg).default);
 } catch {
 }
 function filterProps(props, isDom, forwardMotionProps) {
   const filteredProps = {};
   for (const key in props) {
     if (key === "values" && typeof props.values === "object")
+      continue;
+    if (isMotionValue(props[key]))
       continue;
     if (shouldForward(key) || forwardMotionProps === true && isValidMotionProp(key) || !isDom && !isValidMotionProp(key) || // If trying to use native HTML drag events, forward drag listeners
     props["draggable"] && key.startsWith("onDrag")) {
@@ -20503,9 +21666,6 @@ function useMotionRef(visualState, visualElement, externalRef) {
     if (instance) {
       (_a2 = visualState.onMount) == null ? void 0 : _a2.call(visualState, instance);
     }
-    if (visualElement) {
-      instance ? visualElement.mount(instance) : visualElement.unmount();
-    }
     const ref = externalRefContainer.current;
     if (typeof ref === "function") {
       if (instance) {
@@ -20521,6 +21681,9 @@ function useMotionRef(visualState, visualElement, externalRef) {
       }
     } else if (ref) {
       ref.current = instance;
+    }
+    if (visualElement) {
+      instance ? visualElement.mount(instance) : visualElement.unmount();
     }
   }, [visualElement]);
 }
@@ -20566,7 +21729,7 @@ function useVisualElement(Component2, visualState, props, createVisualElement, P
     }
   });
   const optimisedAppearId = props[optimizedAppearDataAttribute];
-  const wantsHandoff = reactExports.useRef(Boolean(optimisedAppearId) && !((_a2 = window.MotionHandoffIsComplete) == null ? void 0 : _a2.call(window, optimisedAppearId)) && ((_b2 = window.MotionHasOptimisedAnimation) == null ? void 0 : _b2.call(window, optimisedAppearId)));
+  const wantsHandoff = reactExports.useRef(Boolean(optimisedAppearId) && typeof window !== "undefined" && !((_a2 = window.MotionHandoffIsComplete) == null ? void 0 : _a2.call(window, optimisedAppearId)) && ((_b2 = window.MotionHasOptimisedAnimation) == null ? void 0 : _b2.call(window, optimisedAppearId)));
   useIsomorphicLayoutEffect(() => {
     hasMountedOnce.current = true;
     if (!visualElement)
@@ -20597,7 +21760,7 @@ function useVisualElement(Component2, visualState, props, createVisualElement, P
   return visualElement;
 }
 function createProjectionNode(visualElement, props, ProjectionNodeConstructor, initialPromotionConfig) {
-  const { layoutId, layout: layout2, drag: drag2, dragConstraints, layoutScroll, layoutRoot, layoutCrossfade } = props;
+  const { layoutId, layout: layout2, drag: drag2, dragConstraints, layoutScroll, layoutRoot, layoutAnchor, layoutCrossfade } = props;
   visualElement.projection = new ProjectionNodeConstructor(visualElement.latestValues, props["data-framer-portal-id"] ? void 0 : getClosestProjectingNode(visualElement.parent));
   visualElement.projection.setOptions({
     layoutId,
@@ -20615,7 +21778,8 @@ function createProjectionNode(visualElement, props, ProjectionNodeConstructor, i
     initialPromotionConfig,
     crossfade: layoutCrossfade,
     layoutScroll,
-    layoutRoot
+    layoutRoot,
+    layoutAnchor
   });
 }
 function getClosestProjectingNode(visualElement) {
@@ -20637,7 +21801,7 @@ function createMotionComponent(Component2, { forwardMotionProps = false, type } 
     const { isStatic } = configAndProps;
     const context = useCreateMotionContext(props);
     const visualState = useVisualState(props, isStatic);
-    if (!isStatic && isBrowser$2) {
+    if (!isStatic && typeof window !== "undefined") {
       useStrictMode();
       const layoutProjection = getProjectionFunctionality(configAndProps);
       MeasureLayout2 = layoutProjection.MeasureLayout;
@@ -20741,8 +21905,10 @@ class ExitAnimationFeature extends Feature {
   constructor() {
     super(...arguments);
     this.id = id++;
+    this.isExitComplete = false;
   }
   update() {
+    var _a2;
     if (!this.node.presenceContext)
       return;
     const { isPresent, onExitComplete } = this.node.presenceContext;
@@ -20750,9 +21916,30 @@ class ExitAnimationFeature extends Feature {
     if (!this.node.animationState || isPresent === prevIsPresent) {
       return;
     }
+    if (isPresent && prevIsPresent === false) {
+      if (this.isExitComplete) {
+        const { initial, custom } = this.node.getProps();
+        if (typeof initial === "string") {
+          const resolved = resolveVariant(this.node, initial, custom);
+          if (resolved) {
+            const { transition, transitionEnd, ...target } = resolved;
+            for (const key in target) {
+              (_a2 = this.node.getValue(key)) == null ? void 0 : _a2.jump(target[key]);
+            }
+          }
+        }
+        this.node.animationState.reset();
+        this.node.animationState.animateChanges();
+      } else {
+        this.node.animationState.setActive("exit", false);
+      }
+      this.isExitComplete = false;
+      return;
+    }
     const exitAnimation = this.node.animationState.setActive("exit", !isPresent);
     if (onExitComplete && !isPresent) {
       exitAnimation.then(() => {
+        this.isExitComplete = true;
         onExitComplete(this.id);
       });
     }
@@ -20785,9 +21972,7 @@ function extractEventInfo(event) {
     }
   };
 }
-const addPointerInfo = (handler) => {
-  return (event) => isPrimaryPointer(event) && handler(event, extractEventInfo(event));
-};
+const addPointerInfo = (handler) => (event) => isPrimaryPointer(event) && handler(event, extractEventInfo(event));
 function addPointerEvent(target, eventName, handler, options) {
   return addDomEvent(target, eventName, addPointerInfo(handler), options);
 }
@@ -20806,6 +21991,7 @@ class PanSession {
     this.startEvent = null;
     this.lastMoveEvent = null;
     this.lastMoveEventInfo = null;
+    this.lastRawMoveEventInfo = null;
     this.handlers = {};
     this.contextWindow = window;
     this.scrollPositions = /* @__PURE__ */ new Map();
@@ -20819,6 +22005,9 @@ class PanSession {
     this.updatePoint = () => {
       if (!(this.lastMoveEvent && this.lastMoveEventInfo))
         return;
+      if (this.lastRawMoveEventInfo) {
+        this.lastMoveEventInfo = transformPoint(this.lastRawMoveEventInfo, this.transformPagePoint);
+      }
       const info2 = getPanInfo(this.lastMoveEventInfo, this.history);
       const isPanStarted = this.startEvent !== null;
       const isDistancePastThreshold = distance2D(info2.offset, { x: 0, y: 0 }) >= this.distanceThreshold;
@@ -20836,6 +22025,7 @@ class PanSession {
     };
     this.handlePointerMove = (event2, info2) => {
       this.lastMoveEvent = event2;
+      this.lastRawMoveEventInfo = info2;
       this.lastMoveEventInfo = transformPoint(info2, this.transformPagePoint);
       frame.update(this.updatePoint, true);
     };
@@ -21295,7 +22485,7 @@ class VisualElementDragControls {
         return;
       }
       let transition = constraints && constraints[axis] || {};
-      if (dragSnapToOrigin)
+      if (dragSnapToOrigin === true || dragSnapToOrigin === axis)
         transition = { min: 0, max: 0 };
       const bounceStiffness = dragElastic ? 200 : 1e6;
       const bounceDamping = dragElastic ? 40 : 1e7;
@@ -21615,8 +22805,10 @@ class MeasureLayoutWithContext extends reactExports.Component {
     return null;
   }
   componentDidUpdate() {
-    const { projection } = this.props.visualElement;
+    const { visualElement, layoutAnchor } = this.props;
+    const { projection } = visualElement;
     if (projection) {
+      projection.options.layoutAnchor = layoutAnchor;
       projection.root.didUpdate();
       microtask.postRender(() => {
         if (!projection.currentAnimation && projection.isLead()) {
@@ -21785,7 +22977,8 @@ class InViewFeature extends Feature {
     this.isInView = false;
   }
   startObserver() {
-    this.unmount();
+    var _a2;
+    (_a2 = this.stopObserver) == null ? void 0 : _a2.call(this);
     const { viewport = {} } = this.node.getProps();
     const { root: root2, margin: rootMargin, amount = "some", once } = viewport;
     const options = {
@@ -21810,7 +23003,7 @@ class InViewFeature extends Feature {
       const callback = isIntersecting ? onViewportEnter : onViewportLeave;
       callback && callback(entry);
     };
-    return observeIntersection(this.node.current, options, onIntersectionUpdate);
+    this.stopObserver = observeIntersection(this.node.current, options, onIntersectionUpdate);
   }
   mount() {
     this.startObserver();
@@ -21825,6 +23018,10 @@ class InViewFeature extends Feature {
     }
   }
   unmount() {
+    var _a2;
+    (_a2 = this.stopObserver) == null ? void 0 : _a2.call(this);
+    this.hasEnteredView = false;
+    this.isInView = false;
   }
 }
 function hasViewportOptionChanged({ viewport = {} }, { viewport: prevViewport = {} } = {}) {
@@ -21857,774 +23054,3052 @@ const featureBundle = {
   ...layout
 };
 const motion = /* @__PURE__ */ createMotionProxy(featureBundle, createDomVisualElement);
-const personalInfo = {
-  name: "Ashish Sah",
-  title: "Senior Software Engineer",
-  email: "ashishsah51@gmail.com",
-  phone: "+91 8274849756",
-  linkedin: "linkedin.com/in/ashish-sah-444bb81b5",
-  github: "github.com/ashishsah51"
+const scriptRel = "modulepreload";
+const assetsURL = function(dep) {
+  return "/" + dep;
 };
-const profileSummary = "Strategic Senior Software Engineer with nearly 3 years of experience in enterprise cloud ecosystems and full-stack engineering. Specialist in real-time data integration, high-performance system architecture, and API-driven automation. Competitive programmer with 2,000+ problems solved (LeetCode Guardian), proven in optimizing complex backend logic to drive scalable financial technology solutions and AI-integrated products.";
-const skillCategories = [
-  {
-    category: "Engineering & Languages",
-    skills: [
-      "Core Java",
-      "JavaScript",
-      "SQL",
-      "REST APIs",
-      "Caching",
-      "CI/CD",
-      "OOP",
-      "DSA",
-      "Operating Systems",
-      "Computer Networks",
-      "Spring Boot",
-      "Microservices"
-    ]
-  },
-  {
-    category: "Cloud & Frontend Tools",
-    skills: [
-      "React",
-      "HTML",
-      "CSS",
-      "Git",
-      "Batch Apex",
-      "LWC",
-      "Triggers",
-      "Flow",
-      "SSJS",
-      "AmpScript",
-      "Marketing Cloud",
-      "Sales Cloud",
-      "CloudPages"
-    ]
-  },
-  {
-    category: "AI Technologies",
-    skills: [
-      "OpenAI API",
-      "Gemini LLM",
-      "Prompt Engineering",
-      "AI-Driven Analytics",
-      "Copilot"
-    ]
+const seen = {};
+const __vitePreload = function preload2(baseModule, deps, importerUrl) {
+  let promise = Promise.resolve();
+  if (deps && deps.length > 0) {
+    document.getElementsByTagName("link");
+    const cspNonceMeta = document.querySelector(
+      "meta[property=csp-nonce]"
+    );
+    const cspNonce = (cspNonceMeta == null ? void 0 : cspNonceMeta.nonce) || (cspNonceMeta == null ? void 0 : cspNonceMeta.getAttribute("nonce"));
+    promise = Promise.allSettled(
+      deps.map((dep) => {
+        dep = assetsURL(dep);
+        if (dep in seen) return;
+        seen[dep] = true;
+        const isCss = dep.endsWith(".css");
+        const cssSelector = isCss ? '[rel="stylesheet"]' : "";
+        if (document.querySelector(`link[href="${dep}"]${cssSelector}`)) {
+          return;
+        }
+        const link = document.createElement("link");
+        link.rel = isCss ? "stylesheet" : scriptRel;
+        if (!isCss) {
+          link.as = "script";
+        }
+        link.crossOrigin = "";
+        link.href = dep;
+        if (cspNonce) {
+          link.setAttribute("nonce", cspNonce);
+        }
+        document.head.appendChild(link);
+        if (isCss) {
+          return new Promise((res, rej) => {
+            link.addEventListener("load", res);
+            link.addEventListener(
+              "error",
+              () => rej(new Error(`Unable to preload CSS for ${dep}`))
+            );
+          });
+        }
+      })
+    );
   }
-];
-const experiences = [
-  {
-    role: "Senior Software Engineer",
-    company: "CloudKaptan",
-    startDate: "Jul 2025",
-    endDate: void 0,
-    description: [
-      "High-Volume Data Ingestion: Architected a robust solution for bulk importing multi-table record data via CSV, supporting 10,000-row batching and 50,000+ total records with full transactional integrity.",
-      "Campaign Orchestration: Monitoring execution of Marketing Cloud campaigns, ensuring effective automations and tracking mechanisms that increased loan bookings by 40% and drove significant revenue growth.",
-      "Real-Time Integrations: Designing near real-time (15-min) data integration solutions with Braze, facilitating accurate customer communication aligned with strategic marketing goals.",
-      "Cross-functional Leadership: Translating complex business requirements into technical specifications for Salesforce solutions; conducting thorough QA to ensure reliability and performance."
-    ]
-  },
-  {
-    role: "Software Engineer",
-    company: "CloudKaptan",
-    startDate: "Mar 2023",
-    endDate: "Jun 2025",
-    description: [
-      "Financial Services Delivery: Delivered enterprise-grade solutions for an Australian financial client managing a $200M+ loan portfolio, supporting scalable lifecycle operations and regulatory-ready workflows.",
-      "Advanced Automation: Engineered Apex triggers, batch processes, and REST-based integrations to streamline operations, improve system reliability, and significantly reduce manual intervention.",
-      "Sales Pipeline Engineering: Designed and implemented Sales Cloud solutions for a medical device organization, automating end-to-end lead-to-opportunity conversion.",
-      "Real-Time Personalization: Architected integrations connecting Marketing Cloud with Django Admin and Treasure Data using REST APIs, enabling data-driven, event-based customer engagement.",
-      "System Optimization: Optimized application architecture and codebase performance, accelerating customer onboarding and supporting faster loan book activation."
-    ]
+  function handlePreloadError(err) {
+    const e = new Event("vite:preloadError", {
+      cancelable: true
+    });
+    e.payload = err;
+    window.dispatchEvent(e);
+    if (!e.defaultPrevented) {
+      throw err;
+    }
   }
-];
-const projects = [
+  return promise.then((res) => {
+    for (const item of res || []) {
+      if (item.status !== "rejected") continue;
+      handlePreloadError(item.reason);
+    }
+    return baseModule().catch(handlePreloadError);
+  });
+};
+async function fetchPortfolio() {
   {
-    name: "AI-Powered Resume Analyzer",
-    description: "Designed and developed an AI-driven web application evaluating resumes against JDs, generating ATS compatibility scores and keyword alignment insights. Implemented LLM-based analysis using Gemini AI to enhance accuracy in skill matching and optimization. Built a scalable, cloud-hosted architecture ensuring high availability.",
-    technologies: ["React.js", "Gemini AI", "Firebase", "Vercel"],
-    link: ""
-  },
-  {
-    name: "Real-Time Chat Application",
-    description: "Engineered a feature-rich real-time communication platform supporting interactive messaging, media sharing, reactions, and social authentication. Implemented secure file/audio uploads with real-time synchronization. Designed for high scalability and responsiveness across all devices.",
-    technologies: ["React.js", "Rsuite", "Firebase"],
-    link: ""
+    const { default: data } = await __vitePreload(async () => {
+      const { default: data2 } = await import("./portfolio-seed-CNA7MB25.js");
+      return { default: data2 };
+    }, true ? [] : void 0);
+    return data;
   }
-];
-const certifications = [
-  {
-    name: "Agentforce Specialist",
-    issuer: "Salesforce",
-    date: "Dec 2025",
-    credentialId: "7316837",
-    description: "Autonomous customer service using AI agents and workflows"
-  },
-  {
-    name: "Data Cloud Consultant",
-    issuer: "Salesforce",
-    date: "Jan 2025",
-    credentialId: "5672465",
-    description: "Big data unification and real-time insights"
-  },
-  {
-    name: "Java Full Stack",
-    issuer: "Wipro Certified",
-    date: "2022",
-    credentialId: "",
-    description: "Enterprise backend and Spring Boot architecture"
-  },
-  {
-    name: "React Certification",
-    issuer: "Internshala",
-    date: "2022",
-    credentialId: "68724113-E0A9-28C5-A8EC-1977E9687E94",
-    description: "Front-end engineering"
+}
+const PortfolioContext = reactExports.createContext(null);
+function PortfolioProvider({ children }) {
+  const query = useQuery({
+    queryKey: ["portfolio"],
+    queryFn: fetchPortfolio,
+    staleTime: 6e4
+  });
+  if (query.isPending) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "min-h-screen flex items-center justify-center bg-[var(--pf-deep)] text-[var(--pf-text)]", children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm opacity-80", children: "Loading portfolio…" }) });
   }
-];
-const education = [
-  {
-    degree: "B.Tech in Computer Science",
-    institution: "Govt. College of Engineering & Ceramic Technology",
-    startYear: 2019,
-    endYear: 2023,
-    cgpa: "9.49/10",
-    location: "Kolkata, WB"
-  },
-  {
-    degree: "Schooling",
-    institution: "Kolkata, West Bengal",
-    startYear: 2007,
-    endYear: 2019,
-    cgpa: "",
-    location: "Kolkata, WB"
+  if (query.isError || !query.data) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-h-screen flex flex-col items-center justify-center gap-2 px-4 text-center bg-[var(--pf-deep)] text-[var(--pf-text)]", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-semibold", children: "Could not load portfolio" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-sm opacity-70 max-w-md", children: [
+        "For local dev: start the API (MongoDB + Express) so Vite can proxy ",
+        /* @__PURE__ */ jsxRuntimeExports.jsx("code", { className: "text-xs", children: "/api" }),
+        ", or set",
+        " ",
+        /* @__PURE__ */ jsxRuntimeExports.jsx("code", { className: "text-xs", children: "VITE_API_BASE_URL" }),
+        ". For a static deploy (e.g. Vercel only), set",
+        " ",
+        /* @__PURE__ */ jsxRuntimeExports.jsx("code", { className: "text-xs", children: "VITE_STATIC_PORTFOLIO=true" }),
+        " at build time."
+      ] })
+    ] });
   }
-];
-const codingAchievements = [
-  {
-    platform: "LeetCode",
-    rank: "Guardian",
-    rating: 2188,
-    detail: "2000+ problems solved",
-    color: "#F89F1B",
-    icon: "⚡"
-  },
-  {
-    platform: "CodeChef",
-    rank: "4★ Star",
-    rating: 1863,
-    detail: "Competitive Programming",
-    color: "#5B4638",
-    icon: "🏆"
-  },
-  {
-    platform: "CodeForces",
-    rank: "Pupil",
-    rating: 1362,
-    detail: "Algorithm & Data Structures",
-    color: "#1F8DD6",
-    icon: "🎯"
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(PortfolioContext.Provider, { value: query.data, children });
+}
+function usePortfolioData() {
+  const ctx = reactExports.useContext(PortfolioContext);
+  if (!ctx) {
+    throw new Error("usePortfolioData must be used within PortfolioProvider");
   }
-];
-const awards = [
-  {
-    title: "ICPC 2020 Regionalist",
-    detail: "Amritapuri Regional",
-    icon: "🏅"
-  },
-  {
-    title: "All India Rank 1 (AIR 1)",
-    detail: "AccioJob Full Stack Program",
-    icon: "🥇"
+  return ctx;
+}
+function setRef(ref, value) {
+  if (typeof ref === "function") {
+    return ref(value);
+  } else if (ref !== null && ref !== void 0) {
+    ref.current = value;
   }
-];
+}
+function composeRefs(...refs) {
+  return (node) => {
+    let hasCleanup = false;
+    const cleanups = refs.map((ref) => {
+      const cleanup = setRef(ref, node);
+      if (!hasCleanup && typeof cleanup == "function") {
+        hasCleanup = true;
+      }
+      return cleanup;
+    });
+    if (hasCleanup) {
+      return () => {
+        for (let i = 0; i < cleanups.length; i++) {
+          const cleanup = cleanups[i];
+          if (typeof cleanup == "function") {
+            cleanup();
+          } else {
+            setRef(refs[i], null);
+          }
+        }
+      };
+    }
+  };
+}
+var REACT_LAZY_TYPE = Symbol.for("react.lazy");
+var use = React$3[" use ".trim().toString()];
+function isPromiseLike(value) {
+  return typeof value === "object" && value !== null && "then" in value;
+}
+function isLazyComponent(element) {
+  return element != null && typeof element === "object" && "$$typeof" in element && element.$$typeof === REACT_LAZY_TYPE && "_payload" in element && isPromiseLike(element._payload);
+}
+// @__NO_SIDE_EFFECTS__
+function createSlot(ownerName) {
+  const SlotClone = /* @__PURE__ */ createSlotClone(ownerName);
+  const Slot2 = reactExports.forwardRef((props, forwardedRef) => {
+    let { children, ...slotProps } = props;
+    if (isLazyComponent(children) && typeof use === "function") {
+      children = use(children._payload);
+    }
+    const childrenArray = reactExports.Children.toArray(children);
+    const slottable = childrenArray.find(isSlottable);
+    if (slottable) {
+      const newElement = slottable.props.children;
+      const newChildren = childrenArray.map((child) => {
+        if (child === slottable) {
+          if (reactExports.Children.count(newElement) > 1) return reactExports.Children.only(null);
+          return reactExports.isValidElement(newElement) ? newElement.props.children : null;
+        } else {
+          return child;
+        }
+      });
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(SlotClone, { ...slotProps, ref: forwardedRef, children: reactExports.isValidElement(newElement) ? reactExports.cloneElement(newElement, void 0, newChildren) : null });
+    }
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(SlotClone, { ...slotProps, ref: forwardedRef, children });
+  });
+  Slot2.displayName = `${ownerName}.Slot`;
+  return Slot2;
+}
+var Slot = /* @__PURE__ */ createSlot("Slot");
+// @__NO_SIDE_EFFECTS__
+function createSlotClone(ownerName) {
+  const SlotClone = reactExports.forwardRef((props, forwardedRef) => {
+    let { children, ...slotProps } = props;
+    if (isLazyComponent(children) && typeof use === "function") {
+      children = use(children._payload);
+    }
+    if (reactExports.isValidElement(children)) {
+      const childrenRef = getElementRef(children);
+      const props2 = mergeProps(slotProps, children.props);
+      if (children.type !== reactExports.Fragment) {
+        props2.ref = forwardedRef ? composeRefs(forwardedRef, childrenRef) : childrenRef;
+      }
+      return reactExports.cloneElement(children, props2);
+    }
+    return reactExports.Children.count(children) > 1 ? reactExports.Children.only(null) : null;
+  });
+  SlotClone.displayName = `${ownerName}.SlotClone`;
+  return SlotClone;
+}
+var SLOTTABLE_IDENTIFIER = Symbol("radix.slottable");
+function isSlottable(child) {
+  return reactExports.isValidElement(child) && typeof child.type === "function" && "__radixId" in child.type && child.type.__radixId === SLOTTABLE_IDENTIFIER;
+}
+function mergeProps(slotProps, childProps) {
+  const overrideProps = { ...childProps };
+  for (const propName in childProps) {
+    const slotPropValue = slotProps[propName];
+    const childPropValue = childProps[propName];
+    const isHandler = /^on[A-Z]/.test(propName);
+    if (isHandler) {
+      if (slotPropValue && childPropValue) {
+        overrideProps[propName] = (...args) => {
+          const result = childPropValue(...args);
+          slotPropValue(...args);
+          return result;
+        };
+      } else if (slotPropValue) {
+        overrideProps[propName] = slotPropValue;
+      }
+    } else if (propName === "style") {
+      overrideProps[propName] = { ...slotPropValue, ...childPropValue };
+    } else if (propName === "className") {
+      overrideProps[propName] = [slotPropValue, childPropValue].filter(Boolean).join(" ");
+    }
+  }
+  return { ...slotProps, ...overrideProps };
+}
+function getElementRef(element) {
+  var _a2, _b2;
+  let getter = (_a2 = Object.getOwnPropertyDescriptor(element.props, "ref")) == null ? void 0 : _a2.get;
+  let mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+  if (mayWarn) {
+    return element.ref;
+  }
+  getter = (_b2 = Object.getOwnPropertyDescriptor(element, "ref")) == null ? void 0 : _b2.get;
+  mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+  if (mayWarn) {
+    return element.props.ref;
+  }
+  return element.props.ref || element.ref;
+}
+function r(e) {
+  var t, f, n = "";
+  if ("string" == typeof e || "number" == typeof e) n += e;
+  else if ("object" == typeof e) if (Array.isArray(e)) {
+    var o = e.length;
+    for (t = 0; t < o; t++) e[t] && (f = r(e[t])) && (n && (n += " "), n += f);
+  } else for (f in e) e[f] && (n && (n += " "), n += f);
+  return n;
+}
+function clsx() {
+  for (var e, t, f = 0, n = "", o = arguments.length; f < o; f++) (e = arguments[f]) && (t = r(e)) && (n && (n += " "), n += t);
+  return n;
+}
+const falsyToString = (value) => typeof value === "boolean" ? `${value}` : value === 0 ? "0" : value;
+const cx = clsx;
+const cva = (base, config) => (props) => {
+  var _config_compoundVariants;
+  if ((config === null || config === void 0 ? void 0 : config.variants) == null) return cx(base, props === null || props === void 0 ? void 0 : props.class, props === null || props === void 0 ? void 0 : props.className);
+  const { variants, defaultVariants } = config;
+  const getVariantClassNames = Object.keys(variants).map((variant) => {
+    const variantProp = props === null || props === void 0 ? void 0 : props[variant];
+    const defaultVariantProp = defaultVariants === null || defaultVariants === void 0 ? void 0 : defaultVariants[variant];
+    if (variantProp === null) return null;
+    const variantKey = falsyToString(variantProp) || falsyToString(defaultVariantProp);
+    return variants[variant][variantKey];
+  });
+  const propsWithoutUndefined = props && Object.entries(props).reduce((acc, param) => {
+    let [key, value] = param;
+    if (value === void 0) {
+      return acc;
+    }
+    acc[key] = value;
+    return acc;
+  }, {});
+  const getCompoundVariantClassNames = config === null || config === void 0 ? void 0 : (_config_compoundVariants = config.compoundVariants) === null || _config_compoundVariants === void 0 ? void 0 : _config_compoundVariants.reduce((acc, param) => {
+    let { class: cvClass, className: cvClassName, ...compoundVariantOptions } = param;
+    return Object.entries(compoundVariantOptions).every((param2) => {
+      let [key, value] = param2;
+      return Array.isArray(value) ? value.includes({
+        ...defaultVariants,
+        ...propsWithoutUndefined
+      }[key]) : {
+        ...defaultVariants,
+        ...propsWithoutUndefined
+      }[key] === value;
+    }) ? [
+      ...acc,
+      cvClass,
+      cvClassName
+    ] : acc;
+  }, []);
+  return cx(base, getVariantClassNames, getCompoundVariantClassNames, props === null || props === void 0 ? void 0 : props.class, props === null || props === void 0 ? void 0 : props.className);
+};
+const CLASS_PART_SEPARATOR = "-";
+const createClassGroupUtils = (config) => {
+  const classMap = createClassMap(config);
+  const {
+    conflictingClassGroups,
+    conflictingClassGroupModifiers
+  } = config;
+  const getClassGroupId = (className) => {
+    const classParts = className.split(CLASS_PART_SEPARATOR);
+    if (classParts[0] === "" && classParts.length !== 1) {
+      classParts.shift();
+    }
+    return getGroupRecursive(classParts, classMap) || getGroupIdForArbitraryProperty(className);
+  };
+  const getConflictingClassGroupIds = (classGroupId, hasPostfixModifier) => {
+    const conflicts = conflictingClassGroups[classGroupId] || [];
+    if (hasPostfixModifier && conflictingClassGroupModifiers[classGroupId]) {
+      return [...conflicts, ...conflictingClassGroupModifiers[classGroupId]];
+    }
+    return conflicts;
+  };
+  return {
+    getClassGroupId,
+    getConflictingClassGroupIds
+  };
+};
+const getGroupRecursive = (classParts, classPartObject) => {
+  var _a2;
+  if (classParts.length === 0) {
+    return classPartObject.classGroupId;
+  }
+  const currentClassPart = classParts[0];
+  const nextClassPartObject = classPartObject.nextPart.get(currentClassPart);
+  const classGroupFromNextClassPart = nextClassPartObject ? getGroupRecursive(classParts.slice(1), nextClassPartObject) : void 0;
+  if (classGroupFromNextClassPart) {
+    return classGroupFromNextClassPart;
+  }
+  if (classPartObject.validators.length === 0) {
+    return void 0;
+  }
+  const classRest = classParts.join(CLASS_PART_SEPARATOR);
+  return (_a2 = classPartObject.validators.find(({
+    validator
+  }) => validator(classRest))) == null ? void 0 : _a2.classGroupId;
+};
+const arbitraryPropertyRegex = /^\[(.+)\]$/;
+const getGroupIdForArbitraryProperty = (className) => {
+  if (arbitraryPropertyRegex.test(className)) {
+    const arbitraryPropertyClassName = arbitraryPropertyRegex.exec(className)[1];
+    const property = arbitraryPropertyClassName == null ? void 0 : arbitraryPropertyClassName.substring(0, arbitraryPropertyClassName.indexOf(":"));
+    if (property) {
+      return "arbitrary.." + property;
+    }
+  }
+};
+const createClassMap = (config) => {
+  const {
+    theme,
+    prefix: prefix2
+  } = config;
+  const classMap = {
+    nextPart: /* @__PURE__ */ new Map(),
+    validators: []
+  };
+  const prefixedClassGroupEntries = getPrefixedClassGroupEntries(Object.entries(config.classGroups), prefix2);
+  prefixedClassGroupEntries.forEach(([classGroupId, classGroup]) => {
+    processClassesRecursively(classGroup, classMap, classGroupId, theme);
+  });
+  return classMap;
+};
+const processClassesRecursively = (classGroup, classPartObject, classGroupId, theme) => {
+  classGroup.forEach((classDefinition) => {
+    if (typeof classDefinition === "string") {
+      const classPartObjectToEdit = classDefinition === "" ? classPartObject : getPart(classPartObject, classDefinition);
+      classPartObjectToEdit.classGroupId = classGroupId;
+      return;
+    }
+    if (typeof classDefinition === "function") {
+      if (isThemeGetter(classDefinition)) {
+        processClassesRecursively(classDefinition(theme), classPartObject, classGroupId, theme);
+        return;
+      }
+      classPartObject.validators.push({
+        validator: classDefinition,
+        classGroupId
+      });
+      return;
+    }
+    Object.entries(classDefinition).forEach(([key, classGroup2]) => {
+      processClassesRecursively(classGroup2, getPart(classPartObject, key), classGroupId, theme);
+    });
+  });
+};
+const getPart = (classPartObject, path) => {
+  let currentClassPartObject = classPartObject;
+  path.split(CLASS_PART_SEPARATOR).forEach((pathPart) => {
+    if (!currentClassPartObject.nextPart.has(pathPart)) {
+      currentClassPartObject.nextPart.set(pathPart, {
+        nextPart: /* @__PURE__ */ new Map(),
+        validators: []
+      });
+    }
+    currentClassPartObject = currentClassPartObject.nextPart.get(pathPart);
+  });
+  return currentClassPartObject;
+};
+const isThemeGetter = (func) => func.isThemeGetter;
+const getPrefixedClassGroupEntries = (classGroupEntries, prefix2) => {
+  if (!prefix2) {
+    return classGroupEntries;
+  }
+  return classGroupEntries.map(([classGroupId, classGroup]) => {
+    const prefixedClassGroup = classGroup.map((classDefinition) => {
+      if (typeof classDefinition === "string") {
+        return prefix2 + classDefinition;
+      }
+      if (typeof classDefinition === "object") {
+        return Object.fromEntries(Object.entries(classDefinition).map(([key, value]) => [prefix2 + key, value]));
+      }
+      return classDefinition;
+    });
+    return [classGroupId, prefixedClassGroup];
+  });
+};
+const createLruCache = (maxCacheSize) => {
+  if (maxCacheSize < 1) {
+    return {
+      get: () => void 0,
+      set: () => {
+      }
+    };
+  }
+  let cacheSize = 0;
+  let cache = /* @__PURE__ */ new Map();
+  let previousCache = /* @__PURE__ */ new Map();
+  const update = (key, value) => {
+    cache.set(key, value);
+    cacheSize++;
+    if (cacheSize > maxCacheSize) {
+      cacheSize = 0;
+      previousCache = cache;
+      cache = /* @__PURE__ */ new Map();
+    }
+  };
+  return {
+    get(key) {
+      let value = cache.get(key);
+      if (value !== void 0) {
+        return value;
+      }
+      if ((value = previousCache.get(key)) !== void 0) {
+        update(key, value);
+        return value;
+      }
+    },
+    set(key, value) {
+      if (cache.has(key)) {
+        cache.set(key, value);
+      } else {
+        update(key, value);
+      }
+    }
+  };
+};
+const IMPORTANT_MODIFIER = "!";
+const createParseClassName = (config) => {
+  const {
+    separator,
+    experimentalParseClassName
+  } = config;
+  const isSeparatorSingleCharacter = separator.length === 1;
+  const firstSeparatorCharacter = separator[0];
+  const separatorLength = separator.length;
+  const parseClassName = (className) => {
+    const modifiers = [];
+    let bracketDepth = 0;
+    let modifierStart = 0;
+    let postfixModifierPosition;
+    for (let index2 = 0; index2 < className.length; index2++) {
+      let currentCharacter = className[index2];
+      if (bracketDepth === 0) {
+        if (currentCharacter === firstSeparatorCharacter && (isSeparatorSingleCharacter || className.slice(index2, index2 + separatorLength) === separator)) {
+          modifiers.push(className.slice(modifierStart, index2));
+          modifierStart = index2 + separatorLength;
+          continue;
+        }
+        if (currentCharacter === "/") {
+          postfixModifierPosition = index2;
+          continue;
+        }
+      }
+      if (currentCharacter === "[") {
+        bracketDepth++;
+      } else if (currentCharacter === "]") {
+        bracketDepth--;
+      }
+    }
+    const baseClassNameWithImportantModifier = modifiers.length === 0 ? className : className.substring(modifierStart);
+    const hasImportantModifier = baseClassNameWithImportantModifier.startsWith(IMPORTANT_MODIFIER);
+    const baseClassName = hasImportantModifier ? baseClassNameWithImportantModifier.substring(1) : baseClassNameWithImportantModifier;
+    const maybePostfixModifierPosition = postfixModifierPosition && postfixModifierPosition > modifierStart ? postfixModifierPosition - modifierStart : void 0;
+    return {
+      modifiers,
+      hasImportantModifier,
+      baseClassName,
+      maybePostfixModifierPosition
+    };
+  };
+  if (experimentalParseClassName) {
+    return (className) => experimentalParseClassName({
+      className,
+      parseClassName
+    });
+  }
+  return parseClassName;
+};
+const sortModifiers = (modifiers) => {
+  if (modifiers.length <= 1) {
+    return modifiers;
+  }
+  const sortedModifiers = [];
+  let unsortedModifiers = [];
+  modifiers.forEach((modifier) => {
+    const isArbitraryVariant = modifier[0] === "[";
+    if (isArbitraryVariant) {
+      sortedModifiers.push(...unsortedModifiers.sort(), modifier);
+      unsortedModifiers = [];
+    } else {
+      unsortedModifiers.push(modifier);
+    }
+  });
+  sortedModifiers.push(...unsortedModifiers.sort());
+  return sortedModifiers;
+};
+const createConfigUtils = (config) => ({
+  cache: createLruCache(config.cacheSize),
+  parseClassName: createParseClassName(config),
+  ...createClassGroupUtils(config)
+});
+const SPLIT_CLASSES_REGEX = /\s+/;
+const mergeClassList = (classList, configUtils) => {
+  const {
+    parseClassName,
+    getClassGroupId,
+    getConflictingClassGroupIds
+  } = configUtils;
+  const classGroupsInConflict = [];
+  const classNames = classList.trim().split(SPLIT_CLASSES_REGEX);
+  let result = "";
+  for (let index2 = classNames.length - 1; index2 >= 0; index2 -= 1) {
+    const originalClassName = classNames[index2];
+    const {
+      modifiers,
+      hasImportantModifier,
+      baseClassName,
+      maybePostfixModifierPosition
+    } = parseClassName(originalClassName);
+    let hasPostfixModifier = Boolean(maybePostfixModifierPosition);
+    let classGroupId = getClassGroupId(hasPostfixModifier ? baseClassName.substring(0, maybePostfixModifierPosition) : baseClassName);
+    if (!classGroupId) {
+      if (!hasPostfixModifier) {
+        result = originalClassName + (result.length > 0 ? " " + result : result);
+        continue;
+      }
+      classGroupId = getClassGroupId(baseClassName);
+      if (!classGroupId) {
+        result = originalClassName + (result.length > 0 ? " " + result : result);
+        continue;
+      }
+      hasPostfixModifier = false;
+    }
+    const variantModifier = sortModifiers(modifiers).join(":");
+    const modifierId = hasImportantModifier ? variantModifier + IMPORTANT_MODIFIER : variantModifier;
+    const classId = modifierId + classGroupId;
+    if (classGroupsInConflict.includes(classId)) {
+      continue;
+    }
+    classGroupsInConflict.push(classId);
+    const conflictGroups = getConflictingClassGroupIds(classGroupId, hasPostfixModifier);
+    for (let i = 0; i < conflictGroups.length; ++i) {
+      const group = conflictGroups[i];
+      classGroupsInConflict.push(modifierId + group);
+    }
+    result = originalClassName + (result.length > 0 ? " " + result : result);
+  }
+  return result;
+};
+function twJoin() {
+  let index2 = 0;
+  let argument;
+  let resolvedValue;
+  let string = "";
+  while (index2 < arguments.length) {
+    if (argument = arguments[index2++]) {
+      if (resolvedValue = toValue(argument)) {
+        string && (string += " ");
+        string += resolvedValue;
+      }
+    }
+  }
+  return string;
+}
+const toValue = (mix2) => {
+  if (typeof mix2 === "string") {
+    return mix2;
+  }
+  let resolvedValue;
+  let string = "";
+  for (let k = 0; k < mix2.length; k++) {
+    if (mix2[k]) {
+      if (resolvedValue = toValue(mix2[k])) {
+        string && (string += " ");
+        string += resolvedValue;
+      }
+    }
+  }
+  return string;
+};
+function createTailwindMerge(createConfigFirst, ...createConfigRest) {
+  let configUtils;
+  let cacheGet;
+  let cacheSet;
+  let functionToCall = initTailwindMerge;
+  function initTailwindMerge(classList) {
+    const config = createConfigRest.reduce((previousConfig, createConfigCurrent) => createConfigCurrent(previousConfig), createConfigFirst());
+    configUtils = createConfigUtils(config);
+    cacheGet = configUtils.cache.get;
+    cacheSet = configUtils.cache.set;
+    functionToCall = tailwindMerge;
+    return tailwindMerge(classList);
+  }
+  function tailwindMerge(classList) {
+    const cachedResult = cacheGet(classList);
+    if (cachedResult) {
+      return cachedResult;
+    }
+    const result = mergeClassList(classList, configUtils);
+    cacheSet(classList, result);
+    return result;
+  }
+  return function callTailwindMerge() {
+    return functionToCall(twJoin.apply(null, arguments));
+  };
+}
+const fromTheme = (key) => {
+  const themeGetter = (theme) => theme[key] || [];
+  themeGetter.isThemeGetter = true;
+  return themeGetter;
+};
+const arbitraryValueRegex = /^\[(?:([a-z-]+):)?(.+)\]$/i;
+const fractionRegex = /^\d+\/\d+$/;
+const stringLengths = /* @__PURE__ */ new Set(["px", "full", "screen"]);
+const tshirtUnitRegex = /^(\d+(\.\d+)?)?(xs|sm|md|lg|xl)$/;
+const lengthUnitRegex = /\d+(%|px|r?em|[sdl]?v([hwib]|min|max)|pt|pc|in|cm|mm|cap|ch|ex|r?lh|cq(w|h|i|b|min|max))|\b(calc|min|max|clamp)\(.+\)|^0$/;
+const colorFunctionRegex = /^(rgba?|hsla?|hwb|(ok)?(lab|lch)|color-mix)\(.+\)$/;
+const shadowRegex = /^(inset_)?-?((\d+)?\.?(\d+)[a-z]+|0)_-?((\d+)?\.?(\d+)[a-z]+|0)/;
+const imageRegex = /^(url|image|image-set|cross-fade|element|(repeating-)?(linear|radial|conic)-gradient)\(.+\)$/;
+const isLength = (value) => isNumber(value) || stringLengths.has(value) || fractionRegex.test(value);
+const isArbitraryLength = (value) => getIsArbitraryValue(value, "length", isLengthOnly);
+const isNumber = (value) => Boolean(value) && !Number.isNaN(Number(value));
+const isArbitraryNumber = (value) => getIsArbitraryValue(value, "number", isNumber);
+const isInteger = (value) => Boolean(value) && Number.isInteger(Number(value));
+const isPercent = (value) => value.endsWith("%") && isNumber(value.slice(0, -1));
+const isArbitraryValue = (value) => arbitraryValueRegex.test(value);
+const isTshirtSize = (value) => tshirtUnitRegex.test(value);
+const sizeLabels = /* @__PURE__ */ new Set(["length", "size", "percentage"]);
+const isArbitrarySize = (value) => getIsArbitraryValue(value, sizeLabels, isNever);
+const isArbitraryPosition = (value) => getIsArbitraryValue(value, "position", isNever);
+const imageLabels = /* @__PURE__ */ new Set(["image", "url"]);
+const isArbitraryImage = (value) => getIsArbitraryValue(value, imageLabels, isImage);
+const isArbitraryShadow = (value) => getIsArbitraryValue(value, "", isShadow);
+const isAny = () => true;
+const getIsArbitraryValue = (value, label, testValue) => {
+  const result = arbitraryValueRegex.exec(value);
+  if (result) {
+    if (result[1]) {
+      return typeof label === "string" ? result[1] === label : label.has(result[1]);
+    }
+    return testValue(result[2]);
+  }
+  return false;
+};
+const isLengthOnly = (value) => (
+  // `colorFunctionRegex` check is necessary because color functions can have percentages in them which which would be incorrectly classified as lengths.
+  // For example, `hsl(0 0% 0%)` would be classified as a length without this check.
+  // I could also use lookbehind assertion in `lengthUnitRegex` but that isn't supported widely enough.
+  lengthUnitRegex.test(value) && !colorFunctionRegex.test(value)
+);
+const isNever = () => false;
+const isShadow = (value) => shadowRegex.test(value);
+const isImage = (value) => imageRegex.test(value);
+const getDefaultConfig = () => {
+  const colors = fromTheme("colors");
+  const spacing = fromTheme("spacing");
+  const blur = fromTheme("blur");
+  const brightness = fromTheme("brightness");
+  const borderColor = fromTheme("borderColor");
+  const borderRadius = fromTheme("borderRadius");
+  const borderSpacing = fromTheme("borderSpacing");
+  const borderWidth = fromTheme("borderWidth");
+  const contrast = fromTheme("contrast");
+  const grayscale = fromTheme("grayscale");
+  const hueRotate = fromTheme("hueRotate");
+  const invert = fromTheme("invert");
+  const gap = fromTheme("gap");
+  const gradientColorStops = fromTheme("gradientColorStops");
+  const gradientColorStopPositions = fromTheme("gradientColorStopPositions");
+  const inset = fromTheme("inset");
+  const margin = fromTheme("margin");
+  const opacity = fromTheme("opacity");
+  const padding = fromTheme("padding");
+  const saturate = fromTheme("saturate");
+  const scale2 = fromTheme("scale");
+  const sepia = fromTheme("sepia");
+  const skew = fromTheme("skew");
+  const space = fromTheme("space");
+  const translate = fromTheme("translate");
+  const getOverscroll = () => ["auto", "contain", "none"];
+  const getOverflow = () => ["auto", "hidden", "clip", "visible", "scroll"];
+  const getSpacingWithAutoAndArbitrary = () => ["auto", isArbitraryValue, spacing];
+  const getSpacingWithArbitrary = () => [isArbitraryValue, spacing];
+  const getLengthWithEmptyAndArbitrary = () => ["", isLength, isArbitraryLength];
+  const getNumberWithAutoAndArbitrary = () => ["auto", isNumber, isArbitraryValue];
+  const getPositions = () => ["bottom", "center", "left", "left-bottom", "left-top", "right", "right-bottom", "right-top", "top"];
+  const getLineStyles = () => ["solid", "dashed", "dotted", "double", "none"];
+  const getBlendModes = () => ["normal", "multiply", "screen", "overlay", "darken", "lighten", "color-dodge", "color-burn", "hard-light", "soft-light", "difference", "exclusion", "hue", "saturation", "color", "luminosity"];
+  const getAlign = () => ["start", "end", "center", "between", "around", "evenly", "stretch"];
+  const getZeroAndEmpty = () => ["", "0", isArbitraryValue];
+  const getBreaks = () => ["auto", "avoid", "all", "avoid-page", "page", "left", "right", "column"];
+  const getNumberAndArbitrary = () => [isNumber, isArbitraryValue];
+  return {
+    cacheSize: 500,
+    separator: ":",
+    theme: {
+      colors: [isAny],
+      spacing: [isLength, isArbitraryLength],
+      blur: ["none", "", isTshirtSize, isArbitraryValue],
+      brightness: getNumberAndArbitrary(),
+      borderColor: [colors],
+      borderRadius: ["none", "", "full", isTshirtSize, isArbitraryValue],
+      borderSpacing: getSpacingWithArbitrary(),
+      borderWidth: getLengthWithEmptyAndArbitrary(),
+      contrast: getNumberAndArbitrary(),
+      grayscale: getZeroAndEmpty(),
+      hueRotate: getNumberAndArbitrary(),
+      invert: getZeroAndEmpty(),
+      gap: getSpacingWithArbitrary(),
+      gradientColorStops: [colors],
+      gradientColorStopPositions: [isPercent, isArbitraryLength],
+      inset: getSpacingWithAutoAndArbitrary(),
+      margin: getSpacingWithAutoAndArbitrary(),
+      opacity: getNumberAndArbitrary(),
+      padding: getSpacingWithArbitrary(),
+      saturate: getNumberAndArbitrary(),
+      scale: getNumberAndArbitrary(),
+      sepia: getZeroAndEmpty(),
+      skew: getNumberAndArbitrary(),
+      space: getSpacingWithArbitrary(),
+      translate: getSpacingWithArbitrary()
+    },
+    classGroups: {
+      // Layout
+      /**
+       * Aspect Ratio
+       * @see https://tailwindcss.com/docs/aspect-ratio
+       */
+      aspect: [{
+        aspect: ["auto", "square", "video", isArbitraryValue]
+      }],
+      /**
+       * Container
+       * @see https://tailwindcss.com/docs/container
+       */
+      container: ["container"],
+      /**
+       * Columns
+       * @see https://tailwindcss.com/docs/columns
+       */
+      columns: [{
+        columns: [isTshirtSize]
+      }],
+      /**
+       * Break After
+       * @see https://tailwindcss.com/docs/break-after
+       */
+      "break-after": [{
+        "break-after": getBreaks()
+      }],
+      /**
+       * Break Before
+       * @see https://tailwindcss.com/docs/break-before
+       */
+      "break-before": [{
+        "break-before": getBreaks()
+      }],
+      /**
+       * Break Inside
+       * @see https://tailwindcss.com/docs/break-inside
+       */
+      "break-inside": [{
+        "break-inside": ["auto", "avoid", "avoid-page", "avoid-column"]
+      }],
+      /**
+       * Box Decoration Break
+       * @see https://tailwindcss.com/docs/box-decoration-break
+       */
+      "box-decoration": [{
+        "box-decoration": ["slice", "clone"]
+      }],
+      /**
+       * Box Sizing
+       * @see https://tailwindcss.com/docs/box-sizing
+       */
+      box: [{
+        box: ["border", "content"]
+      }],
+      /**
+       * Display
+       * @see https://tailwindcss.com/docs/display
+       */
+      display: ["block", "inline-block", "inline", "flex", "inline-flex", "table", "inline-table", "table-caption", "table-cell", "table-column", "table-column-group", "table-footer-group", "table-header-group", "table-row-group", "table-row", "flow-root", "grid", "inline-grid", "contents", "list-item", "hidden"],
+      /**
+       * Floats
+       * @see https://tailwindcss.com/docs/float
+       */
+      float: [{
+        float: ["right", "left", "none", "start", "end"]
+      }],
+      /**
+       * Clear
+       * @see https://tailwindcss.com/docs/clear
+       */
+      clear: [{
+        clear: ["left", "right", "both", "none", "start", "end"]
+      }],
+      /**
+       * Isolation
+       * @see https://tailwindcss.com/docs/isolation
+       */
+      isolation: ["isolate", "isolation-auto"],
+      /**
+       * Object Fit
+       * @see https://tailwindcss.com/docs/object-fit
+       */
+      "object-fit": [{
+        object: ["contain", "cover", "fill", "none", "scale-down"]
+      }],
+      /**
+       * Object Position
+       * @see https://tailwindcss.com/docs/object-position
+       */
+      "object-position": [{
+        object: [...getPositions(), isArbitraryValue]
+      }],
+      /**
+       * Overflow
+       * @see https://tailwindcss.com/docs/overflow
+       */
+      overflow: [{
+        overflow: getOverflow()
+      }],
+      /**
+       * Overflow X
+       * @see https://tailwindcss.com/docs/overflow
+       */
+      "overflow-x": [{
+        "overflow-x": getOverflow()
+      }],
+      /**
+       * Overflow Y
+       * @see https://tailwindcss.com/docs/overflow
+       */
+      "overflow-y": [{
+        "overflow-y": getOverflow()
+      }],
+      /**
+       * Overscroll Behavior
+       * @see https://tailwindcss.com/docs/overscroll-behavior
+       */
+      overscroll: [{
+        overscroll: getOverscroll()
+      }],
+      /**
+       * Overscroll Behavior X
+       * @see https://tailwindcss.com/docs/overscroll-behavior
+       */
+      "overscroll-x": [{
+        "overscroll-x": getOverscroll()
+      }],
+      /**
+       * Overscroll Behavior Y
+       * @see https://tailwindcss.com/docs/overscroll-behavior
+       */
+      "overscroll-y": [{
+        "overscroll-y": getOverscroll()
+      }],
+      /**
+       * Position
+       * @see https://tailwindcss.com/docs/position
+       */
+      position: ["static", "fixed", "absolute", "relative", "sticky"],
+      /**
+       * Top / Right / Bottom / Left
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      inset: [{
+        inset: [inset]
+      }],
+      /**
+       * Right / Left
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      "inset-x": [{
+        "inset-x": [inset]
+      }],
+      /**
+       * Top / Bottom
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      "inset-y": [{
+        "inset-y": [inset]
+      }],
+      /**
+       * Start
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      start: [{
+        start: [inset]
+      }],
+      /**
+       * End
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      end: [{
+        end: [inset]
+      }],
+      /**
+       * Top
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      top: [{
+        top: [inset]
+      }],
+      /**
+       * Right
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      right: [{
+        right: [inset]
+      }],
+      /**
+       * Bottom
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      bottom: [{
+        bottom: [inset]
+      }],
+      /**
+       * Left
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      left: [{
+        left: [inset]
+      }],
+      /**
+       * Visibility
+       * @see https://tailwindcss.com/docs/visibility
+       */
+      visibility: ["visible", "invisible", "collapse"],
+      /**
+       * Z-Index
+       * @see https://tailwindcss.com/docs/z-index
+       */
+      z: [{
+        z: ["auto", isInteger, isArbitraryValue]
+      }],
+      // Flexbox and Grid
+      /**
+       * Flex Basis
+       * @see https://tailwindcss.com/docs/flex-basis
+       */
+      basis: [{
+        basis: getSpacingWithAutoAndArbitrary()
+      }],
+      /**
+       * Flex Direction
+       * @see https://tailwindcss.com/docs/flex-direction
+       */
+      "flex-direction": [{
+        flex: ["row", "row-reverse", "col", "col-reverse"]
+      }],
+      /**
+       * Flex Wrap
+       * @see https://tailwindcss.com/docs/flex-wrap
+       */
+      "flex-wrap": [{
+        flex: ["wrap", "wrap-reverse", "nowrap"]
+      }],
+      /**
+       * Flex
+       * @see https://tailwindcss.com/docs/flex
+       */
+      flex: [{
+        flex: ["1", "auto", "initial", "none", isArbitraryValue]
+      }],
+      /**
+       * Flex Grow
+       * @see https://tailwindcss.com/docs/flex-grow
+       */
+      grow: [{
+        grow: getZeroAndEmpty()
+      }],
+      /**
+       * Flex Shrink
+       * @see https://tailwindcss.com/docs/flex-shrink
+       */
+      shrink: [{
+        shrink: getZeroAndEmpty()
+      }],
+      /**
+       * Order
+       * @see https://tailwindcss.com/docs/order
+       */
+      order: [{
+        order: ["first", "last", "none", isInteger, isArbitraryValue]
+      }],
+      /**
+       * Grid Template Columns
+       * @see https://tailwindcss.com/docs/grid-template-columns
+       */
+      "grid-cols": [{
+        "grid-cols": [isAny]
+      }],
+      /**
+       * Grid Column Start / End
+       * @see https://tailwindcss.com/docs/grid-column
+       */
+      "col-start-end": [{
+        col: ["auto", {
+          span: ["full", isInteger, isArbitraryValue]
+        }, isArbitraryValue]
+      }],
+      /**
+       * Grid Column Start
+       * @see https://tailwindcss.com/docs/grid-column
+       */
+      "col-start": [{
+        "col-start": getNumberWithAutoAndArbitrary()
+      }],
+      /**
+       * Grid Column End
+       * @see https://tailwindcss.com/docs/grid-column
+       */
+      "col-end": [{
+        "col-end": getNumberWithAutoAndArbitrary()
+      }],
+      /**
+       * Grid Template Rows
+       * @see https://tailwindcss.com/docs/grid-template-rows
+       */
+      "grid-rows": [{
+        "grid-rows": [isAny]
+      }],
+      /**
+       * Grid Row Start / End
+       * @see https://tailwindcss.com/docs/grid-row
+       */
+      "row-start-end": [{
+        row: ["auto", {
+          span: [isInteger, isArbitraryValue]
+        }, isArbitraryValue]
+      }],
+      /**
+       * Grid Row Start
+       * @see https://tailwindcss.com/docs/grid-row
+       */
+      "row-start": [{
+        "row-start": getNumberWithAutoAndArbitrary()
+      }],
+      /**
+       * Grid Row End
+       * @see https://tailwindcss.com/docs/grid-row
+       */
+      "row-end": [{
+        "row-end": getNumberWithAutoAndArbitrary()
+      }],
+      /**
+       * Grid Auto Flow
+       * @see https://tailwindcss.com/docs/grid-auto-flow
+       */
+      "grid-flow": [{
+        "grid-flow": ["row", "col", "dense", "row-dense", "col-dense"]
+      }],
+      /**
+       * Grid Auto Columns
+       * @see https://tailwindcss.com/docs/grid-auto-columns
+       */
+      "auto-cols": [{
+        "auto-cols": ["auto", "min", "max", "fr", isArbitraryValue]
+      }],
+      /**
+       * Grid Auto Rows
+       * @see https://tailwindcss.com/docs/grid-auto-rows
+       */
+      "auto-rows": [{
+        "auto-rows": ["auto", "min", "max", "fr", isArbitraryValue]
+      }],
+      /**
+       * Gap
+       * @see https://tailwindcss.com/docs/gap
+       */
+      gap: [{
+        gap: [gap]
+      }],
+      /**
+       * Gap X
+       * @see https://tailwindcss.com/docs/gap
+       */
+      "gap-x": [{
+        "gap-x": [gap]
+      }],
+      /**
+       * Gap Y
+       * @see https://tailwindcss.com/docs/gap
+       */
+      "gap-y": [{
+        "gap-y": [gap]
+      }],
+      /**
+       * Justify Content
+       * @see https://tailwindcss.com/docs/justify-content
+       */
+      "justify-content": [{
+        justify: ["normal", ...getAlign()]
+      }],
+      /**
+       * Justify Items
+       * @see https://tailwindcss.com/docs/justify-items
+       */
+      "justify-items": [{
+        "justify-items": ["start", "end", "center", "stretch"]
+      }],
+      /**
+       * Justify Self
+       * @see https://tailwindcss.com/docs/justify-self
+       */
+      "justify-self": [{
+        "justify-self": ["auto", "start", "end", "center", "stretch"]
+      }],
+      /**
+       * Align Content
+       * @see https://tailwindcss.com/docs/align-content
+       */
+      "align-content": [{
+        content: ["normal", ...getAlign(), "baseline"]
+      }],
+      /**
+       * Align Items
+       * @see https://tailwindcss.com/docs/align-items
+       */
+      "align-items": [{
+        items: ["start", "end", "center", "baseline", "stretch"]
+      }],
+      /**
+       * Align Self
+       * @see https://tailwindcss.com/docs/align-self
+       */
+      "align-self": [{
+        self: ["auto", "start", "end", "center", "stretch", "baseline"]
+      }],
+      /**
+       * Place Content
+       * @see https://tailwindcss.com/docs/place-content
+       */
+      "place-content": [{
+        "place-content": [...getAlign(), "baseline"]
+      }],
+      /**
+       * Place Items
+       * @see https://tailwindcss.com/docs/place-items
+       */
+      "place-items": [{
+        "place-items": ["start", "end", "center", "baseline", "stretch"]
+      }],
+      /**
+       * Place Self
+       * @see https://tailwindcss.com/docs/place-self
+       */
+      "place-self": [{
+        "place-self": ["auto", "start", "end", "center", "stretch"]
+      }],
+      // Spacing
+      /**
+       * Padding
+       * @see https://tailwindcss.com/docs/padding
+       */
+      p: [{
+        p: [padding]
+      }],
+      /**
+       * Padding X
+       * @see https://tailwindcss.com/docs/padding
+       */
+      px: [{
+        px: [padding]
+      }],
+      /**
+       * Padding Y
+       * @see https://tailwindcss.com/docs/padding
+       */
+      py: [{
+        py: [padding]
+      }],
+      /**
+       * Padding Start
+       * @see https://tailwindcss.com/docs/padding
+       */
+      ps: [{
+        ps: [padding]
+      }],
+      /**
+       * Padding End
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pe: [{
+        pe: [padding]
+      }],
+      /**
+       * Padding Top
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pt: [{
+        pt: [padding]
+      }],
+      /**
+       * Padding Right
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pr: [{
+        pr: [padding]
+      }],
+      /**
+       * Padding Bottom
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pb: [{
+        pb: [padding]
+      }],
+      /**
+       * Padding Left
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pl: [{
+        pl: [padding]
+      }],
+      /**
+       * Margin
+       * @see https://tailwindcss.com/docs/margin
+       */
+      m: [{
+        m: [margin]
+      }],
+      /**
+       * Margin X
+       * @see https://tailwindcss.com/docs/margin
+       */
+      mx: [{
+        mx: [margin]
+      }],
+      /**
+       * Margin Y
+       * @see https://tailwindcss.com/docs/margin
+       */
+      my: [{
+        my: [margin]
+      }],
+      /**
+       * Margin Start
+       * @see https://tailwindcss.com/docs/margin
+       */
+      ms: [{
+        ms: [margin]
+      }],
+      /**
+       * Margin End
+       * @see https://tailwindcss.com/docs/margin
+       */
+      me: [{
+        me: [margin]
+      }],
+      /**
+       * Margin Top
+       * @see https://tailwindcss.com/docs/margin
+       */
+      mt: [{
+        mt: [margin]
+      }],
+      /**
+       * Margin Right
+       * @see https://tailwindcss.com/docs/margin
+       */
+      mr: [{
+        mr: [margin]
+      }],
+      /**
+       * Margin Bottom
+       * @see https://tailwindcss.com/docs/margin
+       */
+      mb: [{
+        mb: [margin]
+      }],
+      /**
+       * Margin Left
+       * @see https://tailwindcss.com/docs/margin
+       */
+      ml: [{
+        ml: [margin]
+      }],
+      /**
+       * Space Between X
+       * @see https://tailwindcss.com/docs/space
+       */
+      "space-x": [{
+        "space-x": [space]
+      }],
+      /**
+       * Space Between X Reverse
+       * @see https://tailwindcss.com/docs/space
+       */
+      "space-x-reverse": ["space-x-reverse"],
+      /**
+       * Space Between Y
+       * @see https://tailwindcss.com/docs/space
+       */
+      "space-y": [{
+        "space-y": [space]
+      }],
+      /**
+       * Space Between Y Reverse
+       * @see https://tailwindcss.com/docs/space
+       */
+      "space-y-reverse": ["space-y-reverse"],
+      // Sizing
+      /**
+       * Width
+       * @see https://tailwindcss.com/docs/width
+       */
+      w: [{
+        w: ["auto", "min", "max", "fit", "svw", "lvw", "dvw", isArbitraryValue, spacing]
+      }],
+      /**
+       * Min-Width
+       * @see https://tailwindcss.com/docs/min-width
+       */
+      "min-w": [{
+        "min-w": [isArbitraryValue, spacing, "min", "max", "fit"]
+      }],
+      /**
+       * Max-Width
+       * @see https://tailwindcss.com/docs/max-width
+       */
+      "max-w": [{
+        "max-w": [isArbitraryValue, spacing, "none", "full", "min", "max", "fit", "prose", {
+          screen: [isTshirtSize]
+        }, isTshirtSize]
+      }],
+      /**
+       * Height
+       * @see https://tailwindcss.com/docs/height
+       */
+      h: [{
+        h: [isArbitraryValue, spacing, "auto", "min", "max", "fit", "svh", "lvh", "dvh"]
+      }],
+      /**
+       * Min-Height
+       * @see https://tailwindcss.com/docs/min-height
+       */
+      "min-h": [{
+        "min-h": [isArbitraryValue, spacing, "min", "max", "fit", "svh", "lvh", "dvh"]
+      }],
+      /**
+       * Max-Height
+       * @see https://tailwindcss.com/docs/max-height
+       */
+      "max-h": [{
+        "max-h": [isArbitraryValue, spacing, "min", "max", "fit", "svh", "lvh", "dvh"]
+      }],
+      /**
+       * Size
+       * @see https://tailwindcss.com/docs/size
+       */
+      size: [{
+        size: [isArbitraryValue, spacing, "auto", "min", "max", "fit"]
+      }],
+      // Typography
+      /**
+       * Font Size
+       * @see https://tailwindcss.com/docs/font-size
+       */
+      "font-size": [{
+        text: ["base", isTshirtSize, isArbitraryLength]
+      }],
+      /**
+       * Font Smoothing
+       * @see https://tailwindcss.com/docs/font-smoothing
+       */
+      "font-smoothing": ["antialiased", "subpixel-antialiased"],
+      /**
+       * Font Style
+       * @see https://tailwindcss.com/docs/font-style
+       */
+      "font-style": ["italic", "not-italic"],
+      /**
+       * Font Weight
+       * @see https://tailwindcss.com/docs/font-weight
+       */
+      "font-weight": [{
+        font: ["thin", "extralight", "light", "normal", "medium", "semibold", "bold", "extrabold", "black", isArbitraryNumber]
+      }],
+      /**
+       * Font Family
+       * @see https://tailwindcss.com/docs/font-family
+       */
+      "font-family": [{
+        font: [isAny]
+      }],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-normal": ["normal-nums"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-ordinal": ["ordinal"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-slashed-zero": ["slashed-zero"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-figure": ["lining-nums", "oldstyle-nums"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-spacing": ["proportional-nums", "tabular-nums"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-fraction": ["diagonal-fractions", "stacked-fractions"],
+      /**
+       * Letter Spacing
+       * @see https://tailwindcss.com/docs/letter-spacing
+       */
+      tracking: [{
+        tracking: ["tighter", "tight", "normal", "wide", "wider", "widest", isArbitraryValue]
+      }],
+      /**
+       * Line Clamp
+       * @see https://tailwindcss.com/docs/line-clamp
+       */
+      "line-clamp": [{
+        "line-clamp": ["none", isNumber, isArbitraryNumber]
+      }],
+      /**
+       * Line Height
+       * @see https://tailwindcss.com/docs/line-height
+       */
+      leading: [{
+        leading: ["none", "tight", "snug", "normal", "relaxed", "loose", isLength, isArbitraryValue]
+      }],
+      /**
+       * List Style Image
+       * @see https://tailwindcss.com/docs/list-style-image
+       */
+      "list-image": [{
+        "list-image": ["none", isArbitraryValue]
+      }],
+      /**
+       * List Style Type
+       * @see https://tailwindcss.com/docs/list-style-type
+       */
+      "list-style-type": [{
+        list: ["none", "disc", "decimal", isArbitraryValue]
+      }],
+      /**
+       * List Style Position
+       * @see https://tailwindcss.com/docs/list-style-position
+       */
+      "list-style-position": [{
+        list: ["inside", "outside"]
+      }],
+      /**
+       * Placeholder Color
+       * @deprecated since Tailwind CSS v3.0.0
+       * @see https://tailwindcss.com/docs/placeholder-color
+       */
+      "placeholder-color": [{
+        placeholder: [colors]
+      }],
+      /**
+       * Placeholder Opacity
+       * @see https://tailwindcss.com/docs/placeholder-opacity
+       */
+      "placeholder-opacity": [{
+        "placeholder-opacity": [opacity]
+      }],
+      /**
+       * Text Alignment
+       * @see https://tailwindcss.com/docs/text-align
+       */
+      "text-alignment": [{
+        text: ["left", "center", "right", "justify", "start", "end"]
+      }],
+      /**
+       * Text Color
+       * @see https://tailwindcss.com/docs/text-color
+       */
+      "text-color": [{
+        text: [colors]
+      }],
+      /**
+       * Text Opacity
+       * @see https://tailwindcss.com/docs/text-opacity
+       */
+      "text-opacity": [{
+        "text-opacity": [opacity]
+      }],
+      /**
+       * Text Decoration
+       * @see https://tailwindcss.com/docs/text-decoration
+       */
+      "text-decoration": ["underline", "overline", "line-through", "no-underline"],
+      /**
+       * Text Decoration Style
+       * @see https://tailwindcss.com/docs/text-decoration-style
+       */
+      "text-decoration-style": [{
+        decoration: [...getLineStyles(), "wavy"]
+      }],
+      /**
+       * Text Decoration Thickness
+       * @see https://tailwindcss.com/docs/text-decoration-thickness
+       */
+      "text-decoration-thickness": [{
+        decoration: ["auto", "from-font", isLength, isArbitraryLength]
+      }],
+      /**
+       * Text Underline Offset
+       * @see https://tailwindcss.com/docs/text-underline-offset
+       */
+      "underline-offset": [{
+        "underline-offset": ["auto", isLength, isArbitraryValue]
+      }],
+      /**
+       * Text Decoration Color
+       * @see https://tailwindcss.com/docs/text-decoration-color
+       */
+      "text-decoration-color": [{
+        decoration: [colors]
+      }],
+      /**
+       * Text Transform
+       * @see https://tailwindcss.com/docs/text-transform
+       */
+      "text-transform": ["uppercase", "lowercase", "capitalize", "normal-case"],
+      /**
+       * Text Overflow
+       * @see https://tailwindcss.com/docs/text-overflow
+       */
+      "text-overflow": ["truncate", "text-ellipsis", "text-clip"],
+      /**
+       * Text Wrap
+       * @see https://tailwindcss.com/docs/text-wrap
+       */
+      "text-wrap": [{
+        text: ["wrap", "nowrap", "balance", "pretty"]
+      }],
+      /**
+       * Text Indent
+       * @see https://tailwindcss.com/docs/text-indent
+       */
+      indent: [{
+        indent: getSpacingWithArbitrary()
+      }],
+      /**
+       * Vertical Alignment
+       * @see https://tailwindcss.com/docs/vertical-align
+       */
+      "vertical-align": [{
+        align: ["baseline", "top", "middle", "bottom", "text-top", "text-bottom", "sub", "super", isArbitraryValue]
+      }],
+      /**
+       * Whitespace
+       * @see https://tailwindcss.com/docs/whitespace
+       */
+      whitespace: [{
+        whitespace: ["normal", "nowrap", "pre", "pre-line", "pre-wrap", "break-spaces"]
+      }],
+      /**
+       * Word Break
+       * @see https://tailwindcss.com/docs/word-break
+       */
+      break: [{
+        break: ["normal", "words", "all", "keep"]
+      }],
+      /**
+       * Hyphens
+       * @see https://tailwindcss.com/docs/hyphens
+       */
+      hyphens: [{
+        hyphens: ["none", "manual", "auto"]
+      }],
+      /**
+       * Content
+       * @see https://tailwindcss.com/docs/content
+       */
+      content: [{
+        content: ["none", isArbitraryValue]
+      }],
+      // Backgrounds
+      /**
+       * Background Attachment
+       * @see https://tailwindcss.com/docs/background-attachment
+       */
+      "bg-attachment": [{
+        bg: ["fixed", "local", "scroll"]
+      }],
+      /**
+       * Background Clip
+       * @see https://tailwindcss.com/docs/background-clip
+       */
+      "bg-clip": [{
+        "bg-clip": ["border", "padding", "content", "text"]
+      }],
+      /**
+       * Background Opacity
+       * @deprecated since Tailwind CSS v3.0.0
+       * @see https://tailwindcss.com/docs/background-opacity
+       */
+      "bg-opacity": [{
+        "bg-opacity": [opacity]
+      }],
+      /**
+       * Background Origin
+       * @see https://tailwindcss.com/docs/background-origin
+       */
+      "bg-origin": [{
+        "bg-origin": ["border", "padding", "content"]
+      }],
+      /**
+       * Background Position
+       * @see https://tailwindcss.com/docs/background-position
+       */
+      "bg-position": [{
+        bg: [...getPositions(), isArbitraryPosition]
+      }],
+      /**
+       * Background Repeat
+       * @see https://tailwindcss.com/docs/background-repeat
+       */
+      "bg-repeat": [{
+        bg: ["no-repeat", {
+          repeat: ["", "x", "y", "round", "space"]
+        }]
+      }],
+      /**
+       * Background Size
+       * @see https://tailwindcss.com/docs/background-size
+       */
+      "bg-size": [{
+        bg: ["auto", "cover", "contain", isArbitrarySize]
+      }],
+      /**
+       * Background Image
+       * @see https://tailwindcss.com/docs/background-image
+       */
+      "bg-image": [{
+        bg: ["none", {
+          "gradient-to": ["t", "tr", "r", "br", "b", "bl", "l", "tl"]
+        }, isArbitraryImage]
+      }],
+      /**
+       * Background Color
+       * @see https://tailwindcss.com/docs/background-color
+       */
+      "bg-color": [{
+        bg: [colors]
+      }],
+      /**
+       * Gradient Color Stops From Position
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-from-pos": [{
+        from: [gradientColorStopPositions]
+      }],
+      /**
+       * Gradient Color Stops Via Position
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-via-pos": [{
+        via: [gradientColorStopPositions]
+      }],
+      /**
+       * Gradient Color Stops To Position
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-to-pos": [{
+        to: [gradientColorStopPositions]
+      }],
+      /**
+       * Gradient Color Stops From
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-from": [{
+        from: [gradientColorStops]
+      }],
+      /**
+       * Gradient Color Stops Via
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-via": [{
+        via: [gradientColorStops]
+      }],
+      /**
+       * Gradient Color Stops To
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-to": [{
+        to: [gradientColorStops]
+      }],
+      // Borders
+      /**
+       * Border Radius
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      rounded: [{
+        rounded: [borderRadius]
+      }],
+      /**
+       * Border Radius Start
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-s": [{
+        "rounded-s": [borderRadius]
+      }],
+      /**
+       * Border Radius End
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-e": [{
+        "rounded-e": [borderRadius]
+      }],
+      /**
+       * Border Radius Top
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-t": [{
+        "rounded-t": [borderRadius]
+      }],
+      /**
+       * Border Radius Right
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-r": [{
+        "rounded-r": [borderRadius]
+      }],
+      /**
+       * Border Radius Bottom
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-b": [{
+        "rounded-b": [borderRadius]
+      }],
+      /**
+       * Border Radius Left
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-l": [{
+        "rounded-l": [borderRadius]
+      }],
+      /**
+       * Border Radius Start Start
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-ss": [{
+        "rounded-ss": [borderRadius]
+      }],
+      /**
+       * Border Radius Start End
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-se": [{
+        "rounded-se": [borderRadius]
+      }],
+      /**
+       * Border Radius End End
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-ee": [{
+        "rounded-ee": [borderRadius]
+      }],
+      /**
+       * Border Radius End Start
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-es": [{
+        "rounded-es": [borderRadius]
+      }],
+      /**
+       * Border Radius Top Left
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-tl": [{
+        "rounded-tl": [borderRadius]
+      }],
+      /**
+       * Border Radius Top Right
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-tr": [{
+        "rounded-tr": [borderRadius]
+      }],
+      /**
+       * Border Radius Bottom Right
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-br": [{
+        "rounded-br": [borderRadius]
+      }],
+      /**
+       * Border Radius Bottom Left
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-bl": [{
+        "rounded-bl": [borderRadius]
+      }],
+      /**
+       * Border Width
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w": [{
+        border: [borderWidth]
+      }],
+      /**
+       * Border Width X
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-x": [{
+        "border-x": [borderWidth]
+      }],
+      /**
+       * Border Width Y
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-y": [{
+        "border-y": [borderWidth]
+      }],
+      /**
+       * Border Width Start
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-s": [{
+        "border-s": [borderWidth]
+      }],
+      /**
+       * Border Width End
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-e": [{
+        "border-e": [borderWidth]
+      }],
+      /**
+       * Border Width Top
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-t": [{
+        "border-t": [borderWidth]
+      }],
+      /**
+       * Border Width Right
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-r": [{
+        "border-r": [borderWidth]
+      }],
+      /**
+       * Border Width Bottom
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-b": [{
+        "border-b": [borderWidth]
+      }],
+      /**
+       * Border Width Left
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-l": [{
+        "border-l": [borderWidth]
+      }],
+      /**
+       * Border Opacity
+       * @see https://tailwindcss.com/docs/border-opacity
+       */
+      "border-opacity": [{
+        "border-opacity": [opacity]
+      }],
+      /**
+       * Border Style
+       * @see https://tailwindcss.com/docs/border-style
+       */
+      "border-style": [{
+        border: [...getLineStyles(), "hidden"]
+      }],
+      /**
+       * Divide Width X
+       * @see https://tailwindcss.com/docs/divide-width
+       */
+      "divide-x": [{
+        "divide-x": [borderWidth]
+      }],
+      /**
+       * Divide Width X Reverse
+       * @see https://tailwindcss.com/docs/divide-width
+       */
+      "divide-x-reverse": ["divide-x-reverse"],
+      /**
+       * Divide Width Y
+       * @see https://tailwindcss.com/docs/divide-width
+       */
+      "divide-y": [{
+        "divide-y": [borderWidth]
+      }],
+      /**
+       * Divide Width Y Reverse
+       * @see https://tailwindcss.com/docs/divide-width
+       */
+      "divide-y-reverse": ["divide-y-reverse"],
+      /**
+       * Divide Opacity
+       * @see https://tailwindcss.com/docs/divide-opacity
+       */
+      "divide-opacity": [{
+        "divide-opacity": [opacity]
+      }],
+      /**
+       * Divide Style
+       * @see https://tailwindcss.com/docs/divide-style
+       */
+      "divide-style": [{
+        divide: getLineStyles()
+      }],
+      /**
+       * Border Color
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color": [{
+        border: [borderColor]
+      }],
+      /**
+       * Border Color X
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-x": [{
+        "border-x": [borderColor]
+      }],
+      /**
+       * Border Color Y
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-y": [{
+        "border-y": [borderColor]
+      }],
+      /**
+       * Border Color S
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-s": [{
+        "border-s": [borderColor]
+      }],
+      /**
+       * Border Color E
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-e": [{
+        "border-e": [borderColor]
+      }],
+      /**
+       * Border Color Top
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-t": [{
+        "border-t": [borderColor]
+      }],
+      /**
+       * Border Color Right
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-r": [{
+        "border-r": [borderColor]
+      }],
+      /**
+       * Border Color Bottom
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-b": [{
+        "border-b": [borderColor]
+      }],
+      /**
+       * Border Color Left
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-l": [{
+        "border-l": [borderColor]
+      }],
+      /**
+       * Divide Color
+       * @see https://tailwindcss.com/docs/divide-color
+       */
+      "divide-color": [{
+        divide: [borderColor]
+      }],
+      /**
+       * Outline Style
+       * @see https://tailwindcss.com/docs/outline-style
+       */
+      "outline-style": [{
+        outline: ["", ...getLineStyles()]
+      }],
+      /**
+       * Outline Offset
+       * @see https://tailwindcss.com/docs/outline-offset
+       */
+      "outline-offset": [{
+        "outline-offset": [isLength, isArbitraryValue]
+      }],
+      /**
+       * Outline Width
+       * @see https://tailwindcss.com/docs/outline-width
+       */
+      "outline-w": [{
+        outline: [isLength, isArbitraryLength]
+      }],
+      /**
+       * Outline Color
+       * @see https://tailwindcss.com/docs/outline-color
+       */
+      "outline-color": [{
+        outline: [colors]
+      }],
+      /**
+       * Ring Width
+       * @see https://tailwindcss.com/docs/ring-width
+       */
+      "ring-w": [{
+        ring: getLengthWithEmptyAndArbitrary()
+      }],
+      /**
+       * Ring Width Inset
+       * @see https://tailwindcss.com/docs/ring-width
+       */
+      "ring-w-inset": ["ring-inset"],
+      /**
+       * Ring Color
+       * @see https://tailwindcss.com/docs/ring-color
+       */
+      "ring-color": [{
+        ring: [colors]
+      }],
+      /**
+       * Ring Opacity
+       * @see https://tailwindcss.com/docs/ring-opacity
+       */
+      "ring-opacity": [{
+        "ring-opacity": [opacity]
+      }],
+      /**
+       * Ring Offset Width
+       * @see https://tailwindcss.com/docs/ring-offset-width
+       */
+      "ring-offset-w": [{
+        "ring-offset": [isLength, isArbitraryLength]
+      }],
+      /**
+       * Ring Offset Color
+       * @see https://tailwindcss.com/docs/ring-offset-color
+       */
+      "ring-offset-color": [{
+        "ring-offset": [colors]
+      }],
+      // Effects
+      /**
+       * Box Shadow
+       * @see https://tailwindcss.com/docs/box-shadow
+       */
+      shadow: [{
+        shadow: ["", "inner", "none", isTshirtSize, isArbitraryShadow]
+      }],
+      /**
+       * Box Shadow Color
+       * @see https://tailwindcss.com/docs/box-shadow-color
+       */
+      "shadow-color": [{
+        shadow: [isAny]
+      }],
+      /**
+       * Opacity
+       * @see https://tailwindcss.com/docs/opacity
+       */
+      opacity: [{
+        opacity: [opacity]
+      }],
+      /**
+       * Mix Blend Mode
+       * @see https://tailwindcss.com/docs/mix-blend-mode
+       */
+      "mix-blend": [{
+        "mix-blend": [...getBlendModes(), "plus-lighter", "plus-darker"]
+      }],
+      /**
+       * Background Blend Mode
+       * @see https://tailwindcss.com/docs/background-blend-mode
+       */
+      "bg-blend": [{
+        "bg-blend": getBlendModes()
+      }],
+      // Filters
+      /**
+       * Filter
+       * @deprecated since Tailwind CSS v3.0.0
+       * @see https://tailwindcss.com/docs/filter
+       */
+      filter: [{
+        filter: ["", "none"]
+      }],
+      /**
+       * Blur
+       * @see https://tailwindcss.com/docs/blur
+       */
+      blur: [{
+        blur: [blur]
+      }],
+      /**
+       * Brightness
+       * @see https://tailwindcss.com/docs/brightness
+       */
+      brightness: [{
+        brightness: [brightness]
+      }],
+      /**
+       * Contrast
+       * @see https://tailwindcss.com/docs/contrast
+       */
+      contrast: [{
+        contrast: [contrast]
+      }],
+      /**
+       * Drop Shadow
+       * @see https://tailwindcss.com/docs/drop-shadow
+       */
+      "drop-shadow": [{
+        "drop-shadow": ["", "none", isTshirtSize, isArbitraryValue]
+      }],
+      /**
+       * Grayscale
+       * @see https://tailwindcss.com/docs/grayscale
+       */
+      grayscale: [{
+        grayscale: [grayscale]
+      }],
+      /**
+       * Hue Rotate
+       * @see https://tailwindcss.com/docs/hue-rotate
+       */
+      "hue-rotate": [{
+        "hue-rotate": [hueRotate]
+      }],
+      /**
+       * Invert
+       * @see https://tailwindcss.com/docs/invert
+       */
+      invert: [{
+        invert: [invert]
+      }],
+      /**
+       * Saturate
+       * @see https://tailwindcss.com/docs/saturate
+       */
+      saturate: [{
+        saturate: [saturate]
+      }],
+      /**
+       * Sepia
+       * @see https://tailwindcss.com/docs/sepia
+       */
+      sepia: [{
+        sepia: [sepia]
+      }],
+      /**
+       * Backdrop Filter
+       * @deprecated since Tailwind CSS v3.0.0
+       * @see https://tailwindcss.com/docs/backdrop-filter
+       */
+      "backdrop-filter": [{
+        "backdrop-filter": ["", "none"]
+      }],
+      /**
+       * Backdrop Blur
+       * @see https://tailwindcss.com/docs/backdrop-blur
+       */
+      "backdrop-blur": [{
+        "backdrop-blur": [blur]
+      }],
+      /**
+       * Backdrop Brightness
+       * @see https://tailwindcss.com/docs/backdrop-brightness
+       */
+      "backdrop-brightness": [{
+        "backdrop-brightness": [brightness]
+      }],
+      /**
+       * Backdrop Contrast
+       * @see https://tailwindcss.com/docs/backdrop-contrast
+       */
+      "backdrop-contrast": [{
+        "backdrop-contrast": [contrast]
+      }],
+      /**
+       * Backdrop Grayscale
+       * @see https://tailwindcss.com/docs/backdrop-grayscale
+       */
+      "backdrop-grayscale": [{
+        "backdrop-grayscale": [grayscale]
+      }],
+      /**
+       * Backdrop Hue Rotate
+       * @see https://tailwindcss.com/docs/backdrop-hue-rotate
+       */
+      "backdrop-hue-rotate": [{
+        "backdrop-hue-rotate": [hueRotate]
+      }],
+      /**
+       * Backdrop Invert
+       * @see https://tailwindcss.com/docs/backdrop-invert
+       */
+      "backdrop-invert": [{
+        "backdrop-invert": [invert]
+      }],
+      /**
+       * Backdrop Opacity
+       * @see https://tailwindcss.com/docs/backdrop-opacity
+       */
+      "backdrop-opacity": [{
+        "backdrop-opacity": [opacity]
+      }],
+      /**
+       * Backdrop Saturate
+       * @see https://tailwindcss.com/docs/backdrop-saturate
+       */
+      "backdrop-saturate": [{
+        "backdrop-saturate": [saturate]
+      }],
+      /**
+       * Backdrop Sepia
+       * @see https://tailwindcss.com/docs/backdrop-sepia
+       */
+      "backdrop-sepia": [{
+        "backdrop-sepia": [sepia]
+      }],
+      // Tables
+      /**
+       * Border Collapse
+       * @see https://tailwindcss.com/docs/border-collapse
+       */
+      "border-collapse": [{
+        border: ["collapse", "separate"]
+      }],
+      /**
+       * Border Spacing
+       * @see https://tailwindcss.com/docs/border-spacing
+       */
+      "border-spacing": [{
+        "border-spacing": [borderSpacing]
+      }],
+      /**
+       * Border Spacing X
+       * @see https://tailwindcss.com/docs/border-spacing
+       */
+      "border-spacing-x": [{
+        "border-spacing-x": [borderSpacing]
+      }],
+      /**
+       * Border Spacing Y
+       * @see https://tailwindcss.com/docs/border-spacing
+       */
+      "border-spacing-y": [{
+        "border-spacing-y": [borderSpacing]
+      }],
+      /**
+       * Table Layout
+       * @see https://tailwindcss.com/docs/table-layout
+       */
+      "table-layout": [{
+        table: ["auto", "fixed"]
+      }],
+      /**
+       * Caption Side
+       * @see https://tailwindcss.com/docs/caption-side
+       */
+      caption: [{
+        caption: ["top", "bottom"]
+      }],
+      // Transitions and Animation
+      /**
+       * Tranisition Property
+       * @see https://tailwindcss.com/docs/transition-property
+       */
+      transition: [{
+        transition: ["none", "all", "", "colors", "opacity", "shadow", "transform", isArbitraryValue]
+      }],
+      /**
+       * Transition Duration
+       * @see https://tailwindcss.com/docs/transition-duration
+       */
+      duration: [{
+        duration: getNumberAndArbitrary()
+      }],
+      /**
+       * Transition Timing Function
+       * @see https://tailwindcss.com/docs/transition-timing-function
+       */
+      ease: [{
+        ease: ["linear", "in", "out", "in-out", isArbitraryValue]
+      }],
+      /**
+       * Transition Delay
+       * @see https://tailwindcss.com/docs/transition-delay
+       */
+      delay: [{
+        delay: getNumberAndArbitrary()
+      }],
+      /**
+       * Animation
+       * @see https://tailwindcss.com/docs/animation
+       */
+      animate: [{
+        animate: ["none", "spin", "ping", "pulse", "bounce", isArbitraryValue]
+      }],
+      // Transforms
+      /**
+       * Transform
+       * @see https://tailwindcss.com/docs/transform
+       */
+      transform: [{
+        transform: ["", "gpu", "none"]
+      }],
+      /**
+       * Scale
+       * @see https://tailwindcss.com/docs/scale
+       */
+      scale: [{
+        scale: [scale2]
+      }],
+      /**
+       * Scale X
+       * @see https://tailwindcss.com/docs/scale
+       */
+      "scale-x": [{
+        "scale-x": [scale2]
+      }],
+      /**
+       * Scale Y
+       * @see https://tailwindcss.com/docs/scale
+       */
+      "scale-y": [{
+        "scale-y": [scale2]
+      }],
+      /**
+       * Rotate
+       * @see https://tailwindcss.com/docs/rotate
+       */
+      rotate: [{
+        rotate: [isInteger, isArbitraryValue]
+      }],
+      /**
+       * Translate X
+       * @see https://tailwindcss.com/docs/translate
+       */
+      "translate-x": [{
+        "translate-x": [translate]
+      }],
+      /**
+       * Translate Y
+       * @see https://tailwindcss.com/docs/translate
+       */
+      "translate-y": [{
+        "translate-y": [translate]
+      }],
+      /**
+       * Skew X
+       * @see https://tailwindcss.com/docs/skew
+       */
+      "skew-x": [{
+        "skew-x": [skew]
+      }],
+      /**
+       * Skew Y
+       * @see https://tailwindcss.com/docs/skew
+       */
+      "skew-y": [{
+        "skew-y": [skew]
+      }],
+      /**
+       * Transform Origin
+       * @see https://tailwindcss.com/docs/transform-origin
+       */
+      "transform-origin": [{
+        origin: ["center", "top", "top-right", "right", "bottom-right", "bottom", "bottom-left", "left", "top-left", isArbitraryValue]
+      }],
+      // Interactivity
+      /**
+       * Accent Color
+       * @see https://tailwindcss.com/docs/accent-color
+       */
+      accent: [{
+        accent: ["auto", colors]
+      }],
+      /**
+       * Appearance
+       * @see https://tailwindcss.com/docs/appearance
+       */
+      appearance: [{
+        appearance: ["none", "auto"]
+      }],
+      /**
+       * Cursor
+       * @see https://tailwindcss.com/docs/cursor
+       */
+      cursor: [{
+        cursor: ["auto", "default", "pointer", "wait", "text", "move", "help", "not-allowed", "none", "context-menu", "progress", "cell", "crosshair", "vertical-text", "alias", "copy", "no-drop", "grab", "grabbing", "all-scroll", "col-resize", "row-resize", "n-resize", "e-resize", "s-resize", "w-resize", "ne-resize", "nw-resize", "se-resize", "sw-resize", "ew-resize", "ns-resize", "nesw-resize", "nwse-resize", "zoom-in", "zoom-out", isArbitraryValue]
+      }],
+      /**
+       * Caret Color
+       * @see https://tailwindcss.com/docs/just-in-time-mode#caret-color-utilities
+       */
+      "caret-color": [{
+        caret: [colors]
+      }],
+      /**
+       * Pointer Events
+       * @see https://tailwindcss.com/docs/pointer-events
+       */
+      "pointer-events": [{
+        "pointer-events": ["none", "auto"]
+      }],
+      /**
+       * Resize
+       * @see https://tailwindcss.com/docs/resize
+       */
+      resize: [{
+        resize: ["none", "y", "x", ""]
+      }],
+      /**
+       * Scroll Behavior
+       * @see https://tailwindcss.com/docs/scroll-behavior
+       */
+      "scroll-behavior": [{
+        scroll: ["auto", "smooth"]
+      }],
+      /**
+       * Scroll Margin
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-m": [{
+        "scroll-m": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin X
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-mx": [{
+        "scroll-mx": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Y
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-my": [{
+        "scroll-my": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Start
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-ms": [{
+        "scroll-ms": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin End
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-me": [{
+        "scroll-me": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Top
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-mt": [{
+        "scroll-mt": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Right
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-mr": [{
+        "scroll-mr": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Bottom
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-mb": [{
+        "scroll-mb": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Left
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-ml": [{
+        "scroll-ml": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-p": [{
+        "scroll-p": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding X
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-px": [{
+        "scroll-px": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Y
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-py": [{
+        "scroll-py": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Start
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-ps": [{
+        "scroll-ps": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding End
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pe": [{
+        "scroll-pe": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Top
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pt": [{
+        "scroll-pt": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Right
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pr": [{
+        "scroll-pr": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Bottom
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pb": [{
+        "scroll-pb": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Left
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pl": [{
+        "scroll-pl": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Snap Align
+       * @see https://tailwindcss.com/docs/scroll-snap-align
+       */
+      "snap-align": [{
+        snap: ["start", "end", "center", "align-none"]
+      }],
+      /**
+       * Scroll Snap Stop
+       * @see https://tailwindcss.com/docs/scroll-snap-stop
+       */
+      "snap-stop": [{
+        snap: ["normal", "always"]
+      }],
+      /**
+       * Scroll Snap Type
+       * @see https://tailwindcss.com/docs/scroll-snap-type
+       */
+      "snap-type": [{
+        snap: ["none", "x", "y", "both"]
+      }],
+      /**
+       * Scroll Snap Type Strictness
+       * @see https://tailwindcss.com/docs/scroll-snap-type
+       */
+      "snap-strictness": [{
+        snap: ["mandatory", "proximity"]
+      }],
+      /**
+       * Touch Action
+       * @see https://tailwindcss.com/docs/touch-action
+       */
+      touch: [{
+        touch: ["auto", "none", "manipulation"]
+      }],
+      /**
+       * Touch Action X
+       * @see https://tailwindcss.com/docs/touch-action
+       */
+      "touch-x": [{
+        "touch-pan": ["x", "left", "right"]
+      }],
+      /**
+       * Touch Action Y
+       * @see https://tailwindcss.com/docs/touch-action
+       */
+      "touch-y": [{
+        "touch-pan": ["y", "up", "down"]
+      }],
+      /**
+       * Touch Action Pinch Zoom
+       * @see https://tailwindcss.com/docs/touch-action
+       */
+      "touch-pz": ["touch-pinch-zoom"],
+      /**
+       * User Select
+       * @see https://tailwindcss.com/docs/user-select
+       */
+      select: [{
+        select: ["none", "text", "all", "auto"]
+      }],
+      /**
+       * Will Change
+       * @see https://tailwindcss.com/docs/will-change
+       */
+      "will-change": [{
+        "will-change": ["auto", "scroll", "contents", "transform", isArbitraryValue]
+      }],
+      // SVG
+      /**
+       * Fill
+       * @see https://tailwindcss.com/docs/fill
+       */
+      fill: [{
+        fill: [colors, "none"]
+      }],
+      /**
+       * Stroke Width
+       * @see https://tailwindcss.com/docs/stroke-width
+       */
+      "stroke-w": [{
+        stroke: [isLength, isArbitraryLength, isArbitraryNumber]
+      }],
+      /**
+       * Stroke
+       * @see https://tailwindcss.com/docs/stroke
+       */
+      stroke: [{
+        stroke: [colors, "none"]
+      }],
+      // Accessibility
+      /**
+       * Screen Readers
+       * @see https://tailwindcss.com/docs/screen-readers
+       */
+      sr: ["sr-only", "not-sr-only"],
+      /**
+       * Forced Color Adjust
+       * @see https://tailwindcss.com/docs/forced-color-adjust
+       */
+      "forced-color-adjust": [{
+        "forced-color-adjust": ["auto", "none"]
+      }]
+    },
+    conflictingClassGroups: {
+      overflow: ["overflow-x", "overflow-y"],
+      overscroll: ["overscroll-x", "overscroll-y"],
+      inset: ["inset-x", "inset-y", "start", "end", "top", "right", "bottom", "left"],
+      "inset-x": ["right", "left"],
+      "inset-y": ["top", "bottom"],
+      flex: ["basis", "grow", "shrink"],
+      gap: ["gap-x", "gap-y"],
+      p: ["px", "py", "ps", "pe", "pt", "pr", "pb", "pl"],
+      px: ["pr", "pl"],
+      py: ["pt", "pb"],
+      m: ["mx", "my", "ms", "me", "mt", "mr", "mb", "ml"],
+      mx: ["mr", "ml"],
+      my: ["mt", "mb"],
+      size: ["w", "h"],
+      "font-size": ["leading"],
+      "fvn-normal": ["fvn-ordinal", "fvn-slashed-zero", "fvn-figure", "fvn-spacing", "fvn-fraction"],
+      "fvn-ordinal": ["fvn-normal"],
+      "fvn-slashed-zero": ["fvn-normal"],
+      "fvn-figure": ["fvn-normal"],
+      "fvn-spacing": ["fvn-normal"],
+      "fvn-fraction": ["fvn-normal"],
+      "line-clamp": ["display", "overflow"],
+      rounded: ["rounded-s", "rounded-e", "rounded-t", "rounded-r", "rounded-b", "rounded-l", "rounded-ss", "rounded-se", "rounded-ee", "rounded-es", "rounded-tl", "rounded-tr", "rounded-br", "rounded-bl"],
+      "rounded-s": ["rounded-ss", "rounded-es"],
+      "rounded-e": ["rounded-se", "rounded-ee"],
+      "rounded-t": ["rounded-tl", "rounded-tr"],
+      "rounded-r": ["rounded-tr", "rounded-br"],
+      "rounded-b": ["rounded-br", "rounded-bl"],
+      "rounded-l": ["rounded-tl", "rounded-bl"],
+      "border-spacing": ["border-spacing-x", "border-spacing-y"],
+      "border-w": ["border-w-s", "border-w-e", "border-w-t", "border-w-r", "border-w-b", "border-w-l"],
+      "border-w-x": ["border-w-r", "border-w-l"],
+      "border-w-y": ["border-w-t", "border-w-b"],
+      "border-color": ["border-color-s", "border-color-e", "border-color-t", "border-color-r", "border-color-b", "border-color-l"],
+      "border-color-x": ["border-color-r", "border-color-l"],
+      "border-color-y": ["border-color-t", "border-color-b"],
+      "scroll-m": ["scroll-mx", "scroll-my", "scroll-ms", "scroll-me", "scroll-mt", "scroll-mr", "scroll-mb", "scroll-ml"],
+      "scroll-mx": ["scroll-mr", "scroll-ml"],
+      "scroll-my": ["scroll-mt", "scroll-mb"],
+      "scroll-p": ["scroll-px", "scroll-py", "scroll-ps", "scroll-pe", "scroll-pt", "scroll-pr", "scroll-pb", "scroll-pl"],
+      "scroll-px": ["scroll-pr", "scroll-pl"],
+      "scroll-py": ["scroll-pt", "scroll-pb"],
+      touch: ["touch-x", "touch-y", "touch-pz"],
+      "touch-x": ["touch"],
+      "touch-y": ["touch"],
+      "touch-pz": ["touch"]
+    },
+    conflictingClassGroupModifiers: {
+      "font-size": ["leading"]
+    }
+  };
+};
+const twMerge = /* @__PURE__ */ createTailwindMerge(getDefaultConfig);
+function cn(...inputs) {
+  return twMerge(clsx(inputs));
+}
+const badgeVariants = cva(
+  "inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden",
+  {
+    variants: {
+      variant: {
+        default: "border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
+        secondary: "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
+        destructive: "border-transparent bg-destructive text-destructive-foreground [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+        outline: "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+        blue: "border border-[oklch(0.62_0.2_195/0.45)] bg-[oklch(0.55_0.18_195/0.14)] text-[var(--pf-accent)] [a&]:hover:bg-[oklch(0.55_0.2_195/0.22)]",
+        muted: "border border-[oklch(0.3_0.06_285)] bg-[oklch(0.14_0.04_285)] text-[oklch(0.72_0.04_95)]",
+        ghost: "border border-[oklch(0.3_0.06_285/0.6)] bg-transparent text-[oklch(0.78_0.03_95)]"
+      }
+    },
+    defaultVariants: {
+      variant: "default"
+    }
+  }
+);
+function Badge({
+  className,
+  variant,
+  asChild = false,
+  ...props
+}) {
+  const Comp = asChild ? Slot : "span";
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    Comp,
+    {
+      "data-slot": "badge",
+      className: cn(badgeVariants({ variant }), className),
+      ...props
+    }
+  );
+}
+const slideOffset = {
+  left: { x: -36, y: 0 },
+  right: { x: 36, y: 0 },
+  up: { x: 0, y: 40 },
+  down: { x: 0, y: -40 },
+  none: { x: 0, y: 0 }
+};
+function Card({ className, delay: delay2 = 0, slideFrom = "up", children, ...props }) {
+  const off = slideOffset[slideFrom];
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    motion.div,
+    {
+      "data-slot": "card",
+      initial: { opacity: 0, ...off },
+      whileInView: { opacity: 1, x: 0, y: 0 },
+      viewport: { once: true, margin: "-32px 0px -8% 0px" },
+      transition: {
+        duration: 0.55,
+        delay: delay2,
+        ease: [0.22, 1, 0.36, 1]
+      },
+      whileHover: {
+        y: -6,
+        transition: { type: "spring", stiffness: 420, damping: 28 }
+      },
+      whileTap: { scale: 0.992 },
+      className: cn(
+        "portfolio-card pf-card-shell flex flex-col gap-6 rounded-2xl py-6 shadow-none text-[var(--pf-text)] overflow-hidden will-change-transform",
+        className
+      ),
+      ...props,
+      children
+    }
+  );
+}
+function Section({ id: id2, children, className = "", alt = false }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("section", { id: id2, className: `py-16 px-4 sm:px-6 lg:px-10 ${alt ? "section-alt" : ""} ${className}`, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-7xl mx-auto", children }) });
+}
+function SectionHeader({ title, highlight, subtitle }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    motion.div,
+    {
+      initial: { opacity: 0, y: 20 },
+      whileInView: { opacity: 1, y: 0 },
+      viewport: { once: true },
+      transition: { duration: 0.5 },
+      className: "mb-10",
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("h2", { className: "section-heading", children: [
+          title,
+          " ",
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: highlight })
+        ] }),
+        subtitle && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm mt-1", style: { color: "var(--pf-text-muted)" }, children: subtitle })
+      ]
+    }
+  );
+}
+function externalHref$2(raw) {
+  const t = raw.trim();
+  if (!t) return "";
+  return /^https?:\/\//i.test(t) ? t : `https://${t}`;
+}
 function Achievements() {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("section", { id: "achievements", className: "py-14 px-4 sm:px-6", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-[1100px] mx-auto", children: [
+  const { awards, codingAchievements, personalInfo } = usePortfolioData();
+  const leetcodeUrl = (personalInfo.leetcode ?? "").trim();
+  if (codingAchievements.length === 0 && awards.length === 0) {
+    return null;
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Section, { id: "achievements", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(
-      motion.div,
+      SectionHeader,
       {
-        initial: { opacity: 0, y: 20 },
-        whileInView: { opacity: 1, y: 0 },
-        viewport: { once: true },
-        transition: { duration: 0.5 },
-        children: /* @__PURE__ */ jsxRuntimeExports.jsxs("h2", { className: "section-heading", children: [
-          "Coding ",
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Achievements" })
-        ] })
+        title: "Coding",
+        highlight: "Achievements",
+        subtitle: "Competitive programming rankings and honors"
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8", children: codingAchievements.map((ach, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-      motion.div,
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10", children: codingAchievements.map((ach, i) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Card,
       {
-        initial: { opacity: 0, y: 20 },
-        whileInView: { opacity: 1, y: 0 },
-        viewport: { once: true },
-        transition: { duration: 0.4, delay: i * 0.1 },
-        className: "rounded-2xl p-6 flex flex-col gap-3",
-        style: {
-          background: "oklch(0.15 0.028 255)",
-          border: "1px solid oklch(0.24 0.038 250)"
-        },
+        delay: i * 0.1,
+        slideFrom: "up",
         "data-ocid": `achievements.item.${i + 1}`,
-        children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-2xl", children: ach.icon }),
+        className: "p-0 gap-0",
+        children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-6 flex flex-col gap-4", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between gap-3", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "div",
+              motion.span,
               {
-                className: "text-2xl font-extrabold tabular-nums",
-                style: { color: "#2F80FF" },
+                className: "text-3xl",
+                initial: { scale: 0, rotate: -25 },
+                whileInView: { scale: 1, rotate: 0 },
+                viewport: { once: true },
+                transition: { type: "spring", stiffness: 260, damping: 16, delay: i * 0.08 },
+                children: ach.icon
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              motion.span,
+              {
+                className: "text-2xl font-extrabold tabular-nums font-syne",
+                style: { color: "var(--pf-accent)" },
+                initial: { opacity: 0, x: 12 },
+                whileInView: { opacity: 1, x: 0 },
+                viewport: { once: true },
+                transition: { delay: i * 0.1 + 0.15, duration: 0.45 },
                 children: ach.rating
               }
             )
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "h3",
-              {
-                className: "text-base font-bold",
-                style: { color: "oklch(0.94 0.018 255)" },
-                children: ach.platform
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-2 mt-1", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "span",
-              {
-                className: "text-xs px-2 py-0.5 rounded-full font-semibold",
-                style: {
-                  background: "oklch(0.55 0.18 255 / 0.15)",
-                  color: "#2F80FF",
-                  border: "1px solid oklch(0.55 0.18 255 / 0.3)"
-                },
-                children: ach.rank
-              }
-            ) })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-base font-bold font-syne", style: { color: "var(--pf-text)" }, children: ach.platform }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-2", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "blue", children: ach.rank }) })
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs", style: { color: "oklch(0.62 0.018 255)" }, children: ach.detail })
-        ]
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs leading-relaxed", style: { color: "var(--pf-text-muted)" }, children: ach.detail }),
+          leetcodeUrl && /leetcode/i.test(ach.platform) ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            motion.a,
+            {
+              href: externalHref$2(leetcodeUrl),
+              target: "_blank",
+              rel: "noreferrer",
+              className: "inline-flex items-center gap-1.5 text-xs font-semibold mt-1 w-fit rounded-lg px-2 py-1.5 -ml-2 transition-colors",
+              style: { color: "var(--pf-accent)" },
+              whileHover: { x: 2 },
+              "data-ocid": "achievements.leetcode.profile",
+              children: [
+                "LeetCode profile",
+                /* @__PURE__ */ jsxRuntimeExports.jsx(ExternalLink, { className: "w-3 h-3 opacity-80" })
+              ]
+            }
+          ) : null
+        ] })
       },
       ach.platform
     )) }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "h3",
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "sub-section-label mb-5", children: "Awards & Honors" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-5", children: awards.map((award, i) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Card,
         {
-          className: "text-sm font-semibold uppercase tracking-widest mb-5",
-          style: { color: "oklch(0.55 0.18 255)" },
-          children: "Awards & Honors"
-        }
-      ),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-4", children: awards.map((award, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        motion.div,
-        {
-          initial: { opacity: 0, x: -10 },
-          whileInView: { opacity: 1, x: 0 },
-          viewport: { once: true },
-          transition: { duration: 0.4, delay: i * 0.1 },
-          className: "flex items-center gap-4 rounded-xl p-4",
-          style: {
-            background: "oklch(0.15 0.028 255)",
-            border: "1px solid oklch(0.24 0.038 250)"
-          },
+          delay: i * 0.1,
+          slideFrom: "left",
           "data-ocid": `awards.item.${i + 1}`,
-          children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-2xl", children: award.icon }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "h4",
-                {
-                  className: "text-sm font-bold",
-                  style: { color: "oklch(0.94 0.018 255)" },
-                  children: award.title
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "p",
-                {
-                  className: "text-xs mt-0.5",
-                  style: { color: "oklch(0.62 0.018 255)" },
-                  children: award.detail
-                }
-              )
+          className: "p-0 gap-0",
+          children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-5 flex items-center gap-4", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              motion.span,
+              {
+                className: "pf-card-icon-tile w-12 h-12 text-2xl shrink-0",
+                whileHover: { scale: 1.08, rotate: [0, -6, 6, 0] },
+                transition: { duration: 0.45 },
+                children: award.icon
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: "text-sm font-bold font-syne", style: { color: "var(--pf-text)" }, children: award.title }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs mt-1 leading-relaxed", style: { color: "var(--pf-text-muted)" }, children: award.detail })
             ] })
-          ]
+          ] })
         },
         award.title
       )) })
     ] })
-  ] }) });
+  ] });
 }
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const toKebabCase = (string) => string.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
-const toCamelCase = (string) => string.replace(
-  /^([A-Z])|[\s-_]+(\w)/g,
-  (match, p1, p2) => p2 ? p2.toUpperCase() : p1.toLowerCase()
-);
-const toPascalCase = (string) => {
-  const camelCase = toCamelCase(string);
-  return camelCase.charAt(0).toUpperCase() + camelCase.slice(1);
-};
-const mergeClasses = (...classes) => classes.filter((className, index2, array) => {
-  return Boolean(className) && className.trim() !== "" && array.indexOf(className) === index2;
-}).join(" ").trim();
-const hasA11yProp = (props) => {
-  for (const prop in props) {
-    if (prop.startsWith("aria-") || prop === "role" || prop === "title") {
-      return true;
-    }
-  }
-};
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-var defaultAttributes = {
-  xmlns: "http://www.w3.org/2000/svg",
-  width: 24,
-  height: 24,
-  viewBox: "0 0 24 24",
-  fill: "none",
-  stroke: "currentColor",
-  strokeWidth: 2,
-  strokeLinecap: "round",
-  strokeLinejoin: "round"
-};
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const Icon = reactExports.forwardRef(
-  ({
-    color: color2 = "currentColor",
-    size = 24,
-    strokeWidth = 2,
-    absoluteStrokeWidth,
-    className = "",
-    children,
-    iconNode,
-    ...rest
-  }, ref) => reactExports.createElement(
-    "svg",
-    {
-      ref,
-      ...defaultAttributes,
-      width: size,
-      height: size,
-      stroke: color2,
-      strokeWidth: absoluteStrokeWidth ? Number(strokeWidth) * 24 / Number(size) : strokeWidth,
-      className: mergeClasses("lucide", className),
-      ...!children && !hasA11yProp(rest) && { "aria-hidden": "true" },
-      ...rest
-    },
-    [
-      ...iconNode.map(([tag, attrs]) => reactExports.createElement(tag, attrs)),
-      ...Array.isArray(children) ? children : [children]
-    ]
-  )
-);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const createLucideIcon = (iconName, iconNode) => {
-  const Component2 = reactExports.forwardRef(
-    ({ className, ...props }, ref) => reactExports.createElement(Icon, {
-      ref,
-      iconNode,
-      className: mergeClasses(
-        `lucide-${toKebabCase(toPascalCase(iconName))}`,
-        `lucide-${iconName}`,
-        className
-      ),
-      ...props
-    })
-  );
-  Component2.displayName = toPascalCase(iconName);
-  return Component2;
-};
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$b = [
-  [
-    "path",
-    {
-      d: "m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526",
-      key: "1yiouv"
-    }
-  ],
-  ["circle", { cx: "12", cy: "8", r: "6", key: "1vp47v" }]
-];
-const Award = createLucideIcon("award", __iconNode$b);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$a = [
-  ["path", { d: "M12 15V3", key: "m9g1x1" }],
-  ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
-  ["path", { d: "m7 10 5 5 5-5", key: "brsn70" }]
-];
-const Download = createLucideIcon("download", __iconNode$a);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$9 = [
-  ["path", { d: "M15 3h6v6", key: "1q9fwt" }],
-  ["path", { d: "M10 14 21 3", key: "gplh6r" }],
-  ["path", { d: "M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6", key: "a6xqqp" }]
-];
-const ExternalLink = createLucideIcon("external-link", __iconNode$9);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$8 = [
-  [
-    "path",
-    {
-      d: "M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4",
-      key: "tonef"
-    }
-  ],
-  ["path", { d: "M9 18c-4.51 2-5-2-7-2", key: "9comsn" }]
-];
-const Github = createLucideIcon("github", __iconNode$8);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$7 = [
-  [
-    "path",
-    {
-      d: "M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z",
-      key: "j76jl0"
-    }
-  ],
-  ["path", { d: "M22 10v6", key: "1lu8f3" }],
-  ["path", { d: "M6 12.5V16a6 3 0 0 0 12 0v-3.5", key: "1r8lef" }]
-];
-const GraduationCap = createLucideIcon("graduation-cap", __iconNode$7);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$6 = [
-  [
-    "path",
-    {
-      d: "M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z",
-      key: "c2jq9f"
-    }
-  ],
-  ["rect", { width: "4", height: "12", x: "2", y: "9", key: "mk3on5" }],
-  ["circle", { cx: "4", cy: "4", r: "2", key: "bt5ra8" }]
-];
-const Linkedin = createLucideIcon("linkedin", __iconNode$6);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$5 = [
-  ["path", { d: "m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7", key: "132q7q" }],
-  ["rect", { x: "2", y: "4", width: "20", height: "16", rx: "2", key: "izxlao" }]
-];
-const Mail = createLucideIcon("mail", __iconNode$5);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$4 = [
-  [
-    "path",
-    {
-      d: "M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0",
-      key: "1r0f0z"
-    }
-  ],
-  ["circle", { cx: "12", cy: "10", r: "3", key: "ilqhr7" }]
-];
-const MapPin = createLucideIcon("map-pin", __iconNode$4);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$3 = [
-  ["path", { d: "M4 12h16", key: "1lakjw" }],
-  ["path", { d: "M4 18h16", key: "19g7jn" }],
-  ["path", { d: "M4 6h16", key: "1o0s65" }]
-];
-const Menu = createLucideIcon("menu", __iconNode$3);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$2 = [
-  ["path", { d: "M7.9 20A9 9 0 1 0 4 16.1L2 22Z", key: "vv11sd" }]
-];
-const MessageCircle = createLucideIcon("message-circle", __iconNode$2);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$1 = [
-  [
-    "path",
-    {
-      d: "M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384",
-      key: "9njp5v"
-    }
-  ]
-];
-const Phone = createLucideIcon("phone", __iconNode$1);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode = [
-  ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
-  ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
-];
-const X = createLucideIcon("x", __iconNode);
 function Certifications() {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("section", { id: "certifications", className: "py-14 px-4 sm:px-6", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-[1100px] mx-auto", children: [
+  const { certifications, education } = usePortfolioData();
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Section, { id: "certifications", className: "section-alt", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(
-      motion.div,
+      SectionHeader,
       {
-        initial: { opacity: 0, y: 20 },
-        whileInView: { opacity: 1, y: 0 },
-        viewport: { once: true },
-        transition: { duration: 0.5 },
-        children: /* @__PURE__ */ jsxRuntimeExports.jsxs("h2", { className: "section-heading", children: [
-          "Certifications & ",
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Education" })
-        ] })
+        title: "Certifications &",
+        highlight: "Education",
+        subtitle: "Credentials and academic background"
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-10", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "h3",
+    certifications.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-12", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "sub-section-label mb-5", children: "Certifications" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5", children: certifications.map((cert, i) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Card,
         {
-          className: "text-sm font-semibold uppercase tracking-widest mb-5",
-          style: { color: "oklch(0.55 0.18 255)" },
-          children: "Certifications"
-        }
-      ),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4", children: certifications.map((cert, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        motion.div,
-        {
-          initial: { opacity: 0, y: 20 },
-          whileInView: { opacity: 1, y: 0 },
-          viewport: { once: true },
-          transition: { duration: 0.4, delay: i * 0.08 },
-          className: "rounded-xl p-4 flex flex-col gap-3",
-          style: {
-            background: "oklch(0.15 0.028 255)",
-            border: "1px solid oklch(0.24 0.038 250)"
-          },
+          delay: i * 0.08,
+          slideFrom: "up",
           "data-ocid": `certifications.item.${i + 1}`,
-          children: [
+          className: "p-0 gap-0",
+          children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-5 flex flex-col gap-4 h-full", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "div",
+              motion.div,
               {
-                className: "w-8 h-8 rounded-lg flex items-center justify-center",
-                style: { background: "oklch(0.55 0.18 255 / 0.15)" },
-                children: /* @__PURE__ */ jsxRuntimeExports.jsx(Award, { className: "w-4 h-4", style: { color: "#2F80FF" } })
+                className: "pf-card-icon-tile w-10 h-10 rounded-xl shrink-0",
+                initial: { scale: 0.85, rotate: -8 },
+                whileInView: { scale: 1, rotate: 0 },
+                viewport: { once: true },
+                transition: { type: "spring", stiffness: 400, damping: 20, delay: i * 0.05 },
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(Award, { className: "w-4 h-4", style: { color: "var(--pf-accent)" } })
               }
             ),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "h4",
-                {
-                  className: "text-sm font-bold leading-snug mb-1",
-                  style: { color: "oklch(0.94 0.018 255)" },
-                  children: cert.name
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "p",
-                {
-                  className: "text-xs font-medium mb-1",
-                  style: { color: "#2F80FF" },
-                  children: cert.issuer
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "p",
-                {
-                  className: "text-xs",
-                  style: { color: "oklch(0.62 0.018 255)" },
-                  children: cert.description
-                }
-              )
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 flex flex-col gap-2 min-h-0", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: "text-sm font-bold leading-snug font-syne", style: { color: "var(--pf-text)" }, children: cert.name }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-semibold", style: { color: "var(--pf-accent)" }, children: cert.issuer }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs leading-relaxed flex-1", style: { color: "var(--pf-text-muted)" }, children: cert.description })
             ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center justify-between mt-auto", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "span",
-              {
-                className: "text-xs px-2 py-0.5 rounded-full",
-                style: {
-                  background: "oklch(0.18 0.03 255)",
-                  color: "oklch(0.70 0.022 255)"
-                },
-                children: cert.date
-              }
-            ) })
-          ]
+            cert.date ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-2 border-t border-[oklch(0.28_0.06_285/0.45)]", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "muted", className: "self-start", children: cert.date }) }) : null
+          ] })
         },
         cert.name
       )) })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "h3",
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "sub-section-label mb-5", children: "Education" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 lg:grid-cols-2 gap-5", children: education.map((edu, i) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Card,
         {
-          className: "text-sm font-semibold uppercase tracking-widest mb-5",
-          style: { color: "oklch(0.55 0.18 255)" },
-          children: "Education"
-        }
-      ),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-4", children: education.map((edu, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        motion.div,
-        {
-          initial: { opacity: 0, y: 20 },
-          whileInView: { opacity: 1, y: 0 },
-          viewport: { once: true },
-          transition: { duration: 0.4, delay: i * 0.1 },
-          className: "rounded-xl p-5 flex gap-4",
-          style: {
-            background: "oklch(0.15 0.028 255)",
-            border: "1px solid oklch(0.24 0.038 250)"
-          },
+          delay: i * 0.1,
+          slideFrom: "right",
           "data-ocid": `education.item.${i + 1}`,
-          children: [
+          className: "p-0 gap-0",
+          children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-5 flex gap-4", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "div",
+              motion.div,
               {
-                className: "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
-                style: { background: "oklch(0.55 0.18 255 / 0.15)" },
-                children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  GraduationCap,
-                  {
-                    className: "w-5 h-5",
-                    style: { color: "#2F80FF" }
-                  }
-                )
+                className: "pf-card-icon-tile w-12 h-12 rounded-xl flex-shrink-0",
+                whileHover: { scale: 1.05 },
+                transition: { type: "spring", stiffness: 400, damping: 18 },
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(GraduationCap, { className: "w-5 h-5", style: { color: "var(--pf-accent)" } })
               }
             ),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "h4",
-                {
-                  className: "text-sm font-bold mb-1",
-                  style: { color: "oklch(0.94 0.018 255)" },
-                  children: edu.degree
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "p",
-                {
-                  className: "text-xs font-medium mb-2",
-                  style: { color: "#2F80FF" },
-                  children: edu.institution
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3 flex-wrap", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  "span",
-                  {
-                    className: "text-xs px-2 py-0.5 rounded-full",
-                    style: {
-                      background: "oklch(0.18 0.03 255)",
-                      color: "oklch(0.70 0.022 255)"
-                    },
-                    children: [
-                      edu.startYear,
-                      " – ",
-                      edu.endYear
-                    ]
-                  }
-                ),
-                edu.cgpa && /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  "span",
-                  {
-                    className: "text-xs font-semibold",
-                    style: { color: "oklch(0.75 0.15 140)" },
-                    children: [
-                      "CGPA: ",
-                      edu.cgpa
-                    ]
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "span",
-                  {
-                    className: "text-xs",
-                    style: { color: "oklch(0.60 0.018 255)" },
-                    children: edu.location
-                  }
-                )
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0 flex-1", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: "text-sm font-bold mb-1 font-syne", style: { color: "var(--pf-text)" }, children: edu.degree }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-medium mb-3", style: { color: "var(--pf-accent)" }, children: edu.institution }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 flex-wrap", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(Badge, { variant: "muted", children: [
+                  edu.startYear,
+                  " — ",
+                  edu.endYear
+                ] }),
+                edu.cgpa ? /* @__PURE__ */ jsxRuntimeExports.jsxs(Badge, { variant: "ghost", children: [
+                  "GPA: ",
+                  edu.cgpa
+                ] }) : null
               ] })
             ] })
-          ]
+          ] })
         },
         edu.degree
       )) })
     ] })
-  ] }) });
+  ] });
 }
-function Experience$1() {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("section", { id: "experience", className: "py-14 px-4 sm:px-6", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-[1100px] mx-auto", children: [
+function Experience() {
+  const { experiences } = usePortfolioData();
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Section, { id: "experience", className: "section-alt", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(
-      motion.div,
+      SectionHeader,
       {
-        initial: { opacity: 0, y: 20 },
-        whileInView: { opacity: 1, y: 0 },
-        viewport: { once: true },
-        transition: { duration: 0.5 },
-        children: /* @__PURE__ */ jsxRuntimeExports.jsxs("h2", { className: "section-heading", children: [
-          "Work ",
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Experience" })
-        ] })
+        title: "Work",
+        highlight: "Experience",
+        subtitle: "My professional journey and key contributions"
       }
     ),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative", children: [
@@ -22633,91 +26108,70 @@ function Experience$1() {
         {
           className: "absolute left-[7px] top-2 bottom-2 w-0.5 hidden sm:block",
           style: {
-            background: "linear-gradient(to bottom, #2F80FF, oklch(0.24 0.038 250))"
+            background: "linear-gradient(to bottom, var(--pf-accent) 0%, oklch(0.55 0.22 312) 45%, oklch(0.28 0.06 285) 100%)"
           }
         }
       ),
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-col gap-8", children: experiences.map((exp, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        motion.div,
+        Card,
         {
-          initial: { opacity: 0, x: -20 },
-          whileInView: { opacity: 1, x: 0 },
-          viewport: { once: true },
-          transition: { duration: 0.4, delay: i * 0.1 },
-          className: "sm:pl-10 relative",
+          delay: i * 0.12,
+          slideFrom: "left",
           "data-ocid": `experience.item.${i + 1}`,
+          className: "sm:ml-10 p-0 gap-0 overflow-visible",
           children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute -left-3 top-7 w-3.5 h-3.5 rounded-full timeline-dot hidden sm:block ring-4 ring-[oklch(0.1_0.05_292)]" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-6 pb-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 border-b border-[oklch(0.28_0.06_285/0.45)]", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-lg font-bold font-syne tracking-tight", style: { color: "var(--pf-text)" }, children: exp.role }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-semibold", style: { color: "var(--pf-accent)" }, children: exp.company })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs(Badge, { variant: "blue", className: "flex-shrink-0 self-start sm:self-center", children: [
+                exp.startDate,
+                " — ",
+                exp.endDate ?? "Present"
+              ] })
+            ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "div",
+              motion.ul,
               {
-                className: "absolute left-0 top-5 w-3.5 h-3.5 rounded-full timeline-dot hidden sm:block",
-                style: { transform: "translateY(-50%)" }
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "div",
-              {
-                className: "rounded-2xl p-6",
-                style: {
-                  background: "oklch(0.15 0.028 255)",
-                  border: "1px solid oklch(0.24 0.038 250)"
+                className: "flex flex-col gap-3 px-6 pb-6 pt-5",
+                initial: "hidden",
+                whileInView: "visible",
+                viewport: { once: true, margin: "-20px" },
+                variants: {
+                  hidden: { opacity: 0 },
+                  visible: {
+                    opacity: 1,
+                    transition: { staggerChildren: 0.055, delayChildren: 0.08 }
+                  }
                 },
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-4", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                children: exp.description.map((bullet) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  motion.li,
+                  {
+                    variants: {
+                      hidden: { opacity: 0, x: -14 },
+                      visible: { opacity: 1, x: 0 }
+                    },
+                    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
+                    className: "flex gap-3 text-sm leading-relaxed",
+                    style: { color: "var(--pf-text-secondary)" },
+                    children: [
                       /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "h3",
-                        {
-                          className: "text-lg font-bold",
-                          style: { color: "oklch(0.94 0.018 255)" },
-                          children: exp.role
-                        }
-                      ),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-2 mt-1", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
                         "span",
                         {
-                          className: "text-sm font-semibold",
-                          style: { color: "#2F80FF" },
-                          children: exp.company
-                        }
-                      ) })
-                    ] }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                      "div",
-                      {
-                        className: "flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium flex-shrink-0",
-                        style: {
-                          background: "oklch(0.55 0.18 255 / 0.1)",
-                          border: "1px solid oklch(0.55 0.18 255 / 0.3)",
-                          color: "#2F80FF"
-                        },
-                        children: [
-                          exp.startDate,
-                          " — ",
-                          exp.endDate ?? "Present"
-                        ]
-                      }
-                    )
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "flex flex-col gap-2.5", children: exp.description.map((bullet) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                    "li",
-                    {
-                      className: "flex gap-3 text-sm leading-relaxed",
-                      style: { color: "oklch(0.72 0.022 255)" },
-                      children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          "span",
-                          {
-                            className: "mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0",
-                            style: { background: "#2F80FF" }
+                          className: "mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0",
+                          style: {
+                            background: "linear-gradient(135deg, var(--pf-accent), var(--pf-accent-2))",
+                            boxShadow: "0 0 10px oklch(0.55 0.2 195 / 0.45)"
                           }
-                        ),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: bullet })
-                      ]
-                    },
-                    bullet
-                  )) })
-                ]
+                        }
+                      ),
+                      bullet
+                    ]
+                  },
+                  bullet
+                ))
               }
             )
           ]
@@ -22725,6712 +26179,975 @@ function Experience$1() {
         `${exp.role}-${exp.company}`
       )) })
     ] })
-  ] }) });
+  ] });
+}
+var DefaultContext = {
+  color: void 0,
+  size: void 0,
+  className: void 0,
+  style: void 0,
+  attr: void 0
+};
+var IconContext = React$2.createContext && /* @__PURE__ */ React$2.createContext(DefaultContext);
+var _excluded = ["attr", "size", "title"];
+function _objectWithoutProperties(e, t) {
+  if (null == e) return {};
+  var o, r2, i = _objectWithoutPropertiesLoose(e, t);
+  if (Object.getOwnPropertySymbols) {
+    var n = Object.getOwnPropertySymbols(e);
+    for (r2 = 0; r2 < n.length; r2++) o = n[r2], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]);
+  }
+  return i;
+}
+function _objectWithoutPropertiesLoose(r2, e) {
+  if (null == r2) return {};
+  var t = {};
+  for (var n in r2) if ({}.hasOwnProperty.call(r2, n)) {
+    if (-1 !== e.indexOf(n)) continue;
+    t[n] = r2[n];
+  }
+  return t;
+}
+function _extends() {
+  return _extends = Object.assign ? Object.assign.bind() : function(n) {
+    for (var e = 1; e < arguments.length; e++) {
+      var t = arguments[e];
+      for (var r2 in t) ({}).hasOwnProperty.call(t, r2) && (n[r2] = t[r2]);
+    }
+    return n;
+  }, _extends.apply(null, arguments);
+}
+function ownKeys(e, r2) {
+  var t = Object.keys(e);
+  if (Object.getOwnPropertySymbols) {
+    var o = Object.getOwnPropertySymbols(e);
+    r2 && (o = o.filter(function(r3) {
+      return Object.getOwnPropertyDescriptor(e, r3).enumerable;
+    })), t.push.apply(t, o);
+  }
+  return t;
+}
+function _objectSpread(e) {
+  for (var r2 = 1; r2 < arguments.length; r2++) {
+    var t = null != arguments[r2] ? arguments[r2] : {};
+    r2 % 2 ? ownKeys(Object(t), true).forEach(function(r3) {
+      _defineProperty(e, r3, t[r3]);
+    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function(r3) {
+      Object.defineProperty(e, r3, Object.getOwnPropertyDescriptor(t, r3));
+    });
+  }
+  return e;
+}
+function _defineProperty(e, r2, t) {
+  return (r2 = _toPropertyKey(r2)) in e ? Object.defineProperty(e, r2, { value: t, enumerable: true, configurable: true, writable: true }) : e[r2] = t, e;
+}
+function _toPropertyKey(t) {
+  var i = _toPrimitive(t, "string");
+  return "symbol" == typeof i ? i : i + "";
+}
+function _toPrimitive(t, r2) {
+  if ("object" != typeof t || !t) return t;
+  var e = t[Symbol.toPrimitive];
+  if (void 0 !== e) {
+    var i = e.call(t, r2);
+    if ("object" != typeof i) return i;
+    throw new TypeError("@@toPrimitive must return a primitive value.");
+  }
+  return ("string" === r2 ? String : Number)(t);
+}
+function Tree2Element(tree) {
+  return tree && tree.map((node, i) => /* @__PURE__ */ React$2.createElement(node.tag, _objectSpread({
+    key: i
+  }, node.attr), Tree2Element(node.child)));
+}
+function GenIcon(data) {
+  return (props) => /* @__PURE__ */ React$2.createElement(IconBase, _extends({
+    attr: _objectSpread({}, data.attr)
+  }, props), Tree2Element(data.child));
+}
+function IconBase(props) {
+  var elem = (conf) => {
+    var {
+      attr,
+      size,
+      title
+    } = props, svgProps = _objectWithoutProperties(props, _excluded);
+    var computedSize = size || conf.size || "1em";
+    var className;
+    if (conf.className) className = conf.className;
+    if (props.className) className = (className ? className + " " : "") + props.className;
+    return /* @__PURE__ */ React$2.createElement("svg", _extends({
+      stroke: "currentColor",
+      fill: "currentColor",
+      strokeWidth: "0"
+    }, conf.attr, attr, svgProps, {
+      className,
+      style: _objectSpread(_objectSpread({
+        color: props.color || conf.color
+      }, conf.style), props.style),
+      height: computedSize,
+      width: computedSize,
+      xmlns: "http://www.w3.org/2000/svg"
+    }), title && /* @__PURE__ */ React$2.createElement("title", null, title), props.children);
+  };
+  return IconContext !== void 0 ? /* @__PURE__ */ React$2.createElement(IconContext.Consumer, null, (conf) => elem(conf)) : elem(DefaultContext);
+}
+function SiLeetcode(props) {
+  return GenIcon({ "attr": { "role": "img", "viewBox": "0 0 24 24" }, "child": [{ "tag": "path", "attr": { "d": "M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a5.266 5.266 0 0 0-1.209 2.104 5.35 5.35 0 0 0-.125.513 5.527 5.527 0 0 0 .062 2.362 5.83 5.83 0 0 0 .349 1.017 5.938 5.938 0 0 0 1.271 1.818l4.277 4.193.039.038c2.248 2.165 5.852 2.133 8.063-.074l2.396-2.392c.54-.54.54-1.414.003-1.955a1.378 1.378 0 0 0-1.951-.003l-2.396 2.392a3.021 3.021 0 0 1-4.205.038l-.02-.019-4.276-4.193c-.652-.64-.972-1.469-.948-2.263a2.68 2.68 0 0 1 .066-.523 2.545 2.545 0 0 1 .619-1.164L9.13 8.114c1.058-1.134 3.204-1.27 4.43-.278l3.501 2.831c.593.48 1.461.387 1.94-.207a1.384 1.384 0 0 0-.207-1.943l-3.5-2.831c-.8-.647-1.766-1.045-2.774-1.202l2.015-2.158A1.384 1.384 0 0 0 13.483 0zm-2.866 12.815a1.38 1.38 0 0 0-1.38 1.382 1.38 1.38 0 0 0 1.38 1.382H20.79a1.38 1.38 0 0 0 1.38-1.382 1.38 1.38 0 0 0-1.38-1.382z" }, "child": [] }] })(props);
+}
+function initialsFromName(name) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+function externalHref$1(raw) {
+  const t = raw.trim();
+  if (!t) return "";
+  return /^https?:\/\//i.test(t) ? t : `https://${t}`;
 }
 function Footer() {
-  const year = (/* @__PURE__ */ new Date()).getFullYear();
-  const hostname = encodeURIComponent(window.location.hostname);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(
-    "footer",
-    {
-      id: "footer",
-      className: "py-10 px-4 sm:px-6 border-t",
-      style: { borderColor: "oklch(0.24 0.038 250)" },
-      children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-[1100px] mx-auto", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col sm:flex-row items-center justify-between gap-6", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "div",
-              {
-                className: "w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm font-bold",
-                style: {
-                  background: "linear-gradient(135deg, #2F80FF, #1a5fd4)"
-                },
-                children: "AS"
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "div",
-                {
-                  className: "text-sm font-bold",
-                  style: { color: "oklch(0.94 0.018 255)" },
-                  children: "Ashish Sah"
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "div",
-                {
-                  className: "text-xs",
-                  style: { color: "oklch(0.62 0.018 255)" },
-                  children: "Senior Software Engineer"
-                }
-              )
-            ] })
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-4", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "a",
-              {
-                href: `mailto:${personalInfo.email}`,
-                className: "flex items-center gap-1.5 text-xs transition-colors hover:text-white",
-                style: { color: "oklch(0.62 0.018 255)" },
-                "aria-label": "Email",
-                "data-ocid": "footer.email.link",
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(Mail, { className: "w-4 h-4", style: { color: "#2F80FF" } }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: personalInfo.email })
-                ]
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "a",
-              {
-                href: `tel:${personalInfo.phone}`,
-                className: "flex items-center gap-1.5 text-xs transition-colors hover:text-white",
-                style: { color: "oklch(0.62 0.018 255)" },
-                "aria-label": "Phone",
-                "data-ocid": "footer.phone.link",
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(Phone, { className: "w-4 h-4", style: { color: "#2F80FF" } }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: personalInfo.phone })
-                ]
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "a",
-              {
-                href: `https://${personalInfo.github}`,
-                target: "_blank",
-                rel: "noreferrer",
-                className: "p-2 rounded-lg transition-colors hover:bg-white/5",
-                style: { color: "oklch(0.70 0.022 255)" },
-                "aria-label": "GitHub",
-                "data-ocid": "footer.github.link",
-                children: /* @__PURE__ */ jsxRuntimeExports.jsx(Github, { className: "w-4 h-4" })
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "a",
-              {
-                href: `https://${personalInfo.linkedin}`,
-                target: "_blank",
-                rel: "noreferrer",
-                className: "p-2 rounded-lg transition-colors hover:bg-white/5",
-                style: { color: "oklch(0.70 0.022 255)" },
-                "aria-label": "LinkedIn",
-                "data-ocid": "footer.linkedin.link",
-                children: /* @__PURE__ */ jsxRuntimeExports.jsx(Linkedin, { className: "w-4 h-4" })
-              }
-            )
-          ] })
-        ] }),
+  const { personalInfo, profileSummary, codingAchievements, awards } = usePortfolioData();
+  const initials = reactExports.useMemo(() => initialsFromName(personalInfo.name), [personalInfo.name]);
+  const footerBio = reactExports.useMemo(() => {
+    const t = profileSummary.trim();
+    if (t.length <= 220) return t;
+    return `${t.slice(0, 217).trim()}…`;
+  }, [profileSummary]);
+  const showAchievements = codingAchievements.length > 0 || awards.length > 0;
+  const navSections = reactExports.useMemo(() => {
+    const portfolioLinks = [
+      { text: "Home", href: "#hero" },
+      { text: "Skills", href: "#skills" },
+      { text: "Experience", href: "#experience" },
+      { text: "Projects", href: "#projects" },
+      { text: "Certifications", href: "#certifications" }
+    ];
+    if (showAchievements) portfolioLinks.push({ text: "Achievements", href: "#achievements" });
+    const connectLinks = [
+      { text: "Email Me", href: `mailto:${personalInfo.email}` }
+    ];
+    if (personalInfo.linkedin.trim()) {
+      connectLinks.push({ text: "LinkedIn", href: externalHref$1(personalInfo.linkedin) });
+    }
+    if (personalInfo.github.trim()) {
+      connectLinks.push({ text: "GitHub", href: externalHref$1(personalInfo.github) });
+    }
+    const lc = (personalInfo.leetcode ?? "").trim();
+    if (lc) {
+      connectLinks.push({ text: "LeetCode", href: externalHref$1(lc) });
+    }
+    connectLinks.push({ text: "Notes", href: "#notes" }, { text: "Summary", href: "#summary" });
+    return [
+      { label: "Portfolio", links: portfolioLinks },
+      { label: "Connect", links: connectLinks }
+    ];
+  }, [personalInfo, showAchievements]);
+  const contactDetails = reactExports.useMemo(
+    () => [
+      { icon: Mail, text: personalInfo.email, href: `mailto:${personalInfo.email}` },
+      { icon: Phone, text: personalInfo.phone, href: void 0 },
+      { icon: MapPin, text: personalInfo.location, href: void 0 }
+    ],
+    [personalInfo]
+  );
+  const social = reactExports.useMemo(() => {
+    const items = [];
+    if (personalInfo.linkedin.trim()) {
+      items.push({ icon: Linkedin, href: externalHref$1(personalInfo.linkedin), label: "LinkedIn" });
+    }
+    if (personalInfo.github.trim()) {
+      items.push({ icon: Github, href: externalHref$1(personalInfo.github), label: "GitHub" });
+    }
+    const lc = (personalInfo.leetcode ?? "").trim();
+    if (lc) {
+      items.push({ icon: SiLeetcode, href: externalHref$1(lc), label: "LeetCode" });
+    }
+    items.push({ icon: Mail, href: `mailto:${personalInfo.email}`, label: "Email" });
+    return items;
+  }, [personalInfo]);
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("footer", { id: "footer", className: "relative overflow-hidden", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "footer-top-glow" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "footer-body", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-10", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "footer-grid", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          "div",
+          motion.div,
           {
-            className: "mt-6 pt-6 border-t text-center text-xs",
-            style: {
-              borderColor: "oklch(0.20 0.03 255)",
-              color: "oklch(0.50 0.015 255)"
-            },
+            initial: { opacity: 0, y: 20 },
+            whileInView: { opacity: 1, y: 0 },
+            viewport: { once: true },
+            transition: { duration: 0.5 },
+            className: "footer-brand-col",
             children: [
-              "© ",
-              year,
-              ". Built with ❤️ using",
-              " ",
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "a",
-                {
-                  href: `https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${hostname}`,
-                  target: "_blank",
-                  rel: "noreferrer",
-                  className: "transition-colors hover:text-white",
-                  style: { color: "#2F80FF" },
-                  children: "caffeine.ai"
-                }
-              )
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3 mb-4", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "footer-avatar", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: initials }) }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-lg font-bold leading-tight font-syne", style: { color: "var(--pf-text)" }, children: personalInfo.name }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs", style: { color: "var(--pf-text-muted)" }, children: personalInfo.title })
+                ] })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm leading-relaxed mb-6 max-w-sm", style: { color: "var(--pf-text-secondary)" }, children: footerBio }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-3", children: social.map((s) => {
+                const Icon2 = s.icon;
+                return /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "a",
+                  {
+                    href: s.href,
+                    target: "_blank",
+                    rel: "noreferrer",
+                    "aria-label": s.label,
+                    className: "footer-social-icon",
+                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(Icon2, { className: "w-4 h-4" })
+                  },
+                  s.label
+                );
+              }) })
+            ]
+          }
+        ),
+        navSections.map((section, si) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          motion.div,
+          {
+            initial: { opacity: 0, y: 20 },
+            whileInView: { opacity: 1, y: 0 },
+            viewport: { once: true },
+            transition: { duration: 0.5, delay: 0.1 + si * 0.1 },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "footer-nav-heading", children: section.label }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "space-y-2.5", children: section.links.map((link) => /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: link.href, className: "footer-nav-link", children: link.text }) }, link.text)) })
+            ]
+          },
+          section.label
+        )),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          motion.div,
+          {
+            initial: { opacity: 0, y: 20 },
+            whileInView: { opacity: 1, y: 0 },
+            viewport: { once: true },
+            transition: { duration: 0.5, delay: 0.3 },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "footer-nav-heading", children: "Get in Touch" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "space-y-4", children: contactDetails.map((c) => {
+                const Icon2 = c.icon;
+                const inner = /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start gap-3", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "footer-contact-icon-wrap", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Icon2, { className: "w-3.5 h-3.5" }) }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-sm break-all", style: { color: "var(--pf-text-secondary)" }, children: c.text })
+                ] });
+                return /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: c.href ? /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: c.href, className: "hover:opacity-80 transition-opacity", children: inner }) : inner }, c.text);
+              }) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "footer-availability mt-6", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "relative flex h-2 w-2", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "relative inline-flex rounded-full h-2 w-2 bg-emerald-400" })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-medium", style: { color: "oklch(0.82 0.12 165)" }, children: "Open to new opportunities" })
+              ] })
             ]
           }
         )
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "footer-divider" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "footer-bottom", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs", style: { color: "var(--pf-text-muted)" }, children: [
+          "© ",
+          (/* @__PURE__ */ new Date()).getFullYear(),
+          " ",
+          personalInfo.name,
+          " — All rights reserved"
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs flex items-center gap-1", style: { color: "var(--pf-text-muted)" }, children: [
+          "Built with ",
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Heart, { className: "w-3 h-3 text-rose-400" }),
+          " and",
+          /* @__PURE__ */ jsxRuntimeExports.jsx(CodeXml, { className: "w-3 h-3", style: { color: "var(--pf-accent)" } }),
+          "React + Vite"
+        ] })
       ] })
-    }
-  );
+    ] }) })
+  ] });
 }
-const contactItems = [
+const STATS = [
   {
-    icon: Mail,
-    text: "ashishsah51@gmail.com",
-    href: `mailto:${"ashishsah51@gmail.com"}`,
-    ocid: "hero.email.link"
+    value: "~3 yrs",
+    label: "Experience",
+    bg: "oklch(0.55 0.2 195 / 0.1)",
+    border: "oklch(0.62 0.2 195 / 0.45)",
+    color: "oklch(0.82 0.16 195)",
+    glow: "oklch(0.55 0.22 195 / 0.4)"
   },
   {
-    icon: Phone,
-    text: "+91 8274849756",
-    href: void 0,
-    ocid: void 0
+    value: "10K+",
+    label: "Users (payments)",
+    bg: "oklch(0.48 0.14 165 / 0.12)",
+    border: "oklch(0.55 0.15 165 / 0.45)",
+    color: "oklch(0.85 0.13 165)",
+    glow: "oklch(0.5 0.14 165 / 0.35)"
   },
   {
-    icon: MapPin,
-    text: "Kolkata, India",
-    href: void 0,
-    ocid: void 0
-  },
-  {
-    icon: Linkedin,
-    text: "LinkedIn Profile",
-    href: `https://${personalInfo.linkedin}`,
-    ocid: "hero.linkedin.link"
-  },
-  {
-    icon: Github,
-    text: "GitHub Profile",
-    href: `https://${personalInfo.github}`,
-    ocid: "hero.github.link"
+    value: "2",
+    label: "Major projects",
+    bg: "oklch(0.55 0.12 72 / 0.12)",
+    border: "oklch(0.72 0.14 72 / 0.5)",
+    color: "oklch(0.92 0.12 72)",
+    glow: "oklch(0.65 0.14 72 / 0.35)"
   }
 ];
-const stats = [
-  { value: "~3 yrs", label: "Experience" },
-  { value: "2000+", label: "Problems Solved" },
-  { value: "$200M+", label: "Portfolio Managed" }
-];
-function Hero() {
-  const handleDownload = () => {
-    window.print();
-  };
-  const handleConnect = () => {
-    const footer = document.querySelector("#footer");
-    if (footer) footer.scrollIntoView({ behavior: "smooth" });
-  };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-    "section",
+function externalHref(raw) {
+  const t = raw.trim();
+  if (!t) return "";
+  return /^https?:\/\//i.test(t) ? t : `https://${t}`;
+}
+function RotatingRole({ roles }) {
+  const [index2, setIndex] = reactExports.useState(0);
+  reactExports.useEffect(() => {
+    if (roles.length === 0) return;
+    const interval = setInterval(() => {
+      setIndex((i) => (i + 1) % roles.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [roles.length]);
+  if (roles.length === 0) return null;
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "relative h-8 sm:h-9 flex items-center justify-center overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { mode: "wait", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+    motion.p,
     {
-      id: "hero",
-      className: "relative py-20 sm:py-28 px-4 sm:px-6 overflow-hidden",
-      children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "absolute inset-0 pointer-events-none", "aria-hidden": true, children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-orb hero-orb-1" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-orb hero-orb-2" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-orb hero-orb-3" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-grid-dots" })
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-[1100px] mx-auto relative z-10", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-1 md:grid-cols-[260px_1fr] lg:grid-cols-[280px_1fr] gap-12 items-center", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            motion.div,
-            {
-              initial: { opacity: 0, x: -40 },
-              animate: { opacity: 1, x: 0 },
-              transition: { duration: 0.7, ease: "easeOut" },
-              className: "flex flex-col items-center md:items-start gap-6",
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative flex items-center justify-center", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "avatar-ring-outer" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "avatar-ring-spin" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      initial: { opacity: 0, y: 20 },
+      animate: { opacity: 1, y: 0 },
+      exit: { opacity: 0, y: -20 },
+      transition: { duration: 0.45, ease: "easeInOut" },
+      className: "absolute text-lg sm:text-xl font-semibold gradient-text whitespace-nowrap",
+      children: roles[index2]
+    },
+    roles[index2]
+  ) }) });
+}
+function scrollToFooter() {
+  var _a2;
+  (_a2 = document.querySelector("#footer")) == null ? void 0 : _a2.scrollIntoView({ behavior: "smooth" });
+}
+function Hero() {
+  const { personalInfo, heroRoles } = usePortfolioData();
+  const initials = reactExports.useMemo(() => initialsFromName(personalInfo.name), [personalInfo.name]);
+  const contactItems = reactExports.useMemo(() => {
+    const items = [
+      { icon: Mail, text: personalInfo.email, href: `mailto:${personalInfo.email}`, external: false },
+      { icon: Phone, text: personalInfo.phone, href: void 0, external: false },
+      { icon: MapPin, text: personalInfo.location, href: void 0, external: false }
+    ];
+    if (personalInfo.linkedin.trim()) {
+      items.push({
+        icon: Linkedin,
+        text: "LinkedIn",
+        href: externalHref(personalInfo.linkedin),
+        external: true
+      });
+    }
+    if (personalInfo.github.trim()) {
+      items.push({
+        icon: Github,
+        text: "GitHub",
+        href: externalHref(personalInfo.github),
+        external: true
+      });
+    }
+    const lc = (personalInfo.leetcode ?? "").trim();
+    if (lc) {
+      items.push({
+        icon: SiLeetcode,
+        text: "LeetCode",
+        href: externalHref(lc),
+        external: true
+      });
+    }
+    return items;
+  }, [personalInfo]);
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "section",
+      {
+        id: "hero",
+        className: "relative pt-24 pb-16 sm:pt-32 sm:pb-24 px-4 sm:px-6 lg:px-10 overflow-hidden",
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "absolute inset-0 pointer-events-none", "aria-hidden": true, children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-orb-1" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-orb-2" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-orb-3" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-grid-dots" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-scanlines" })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-7xl mx-auto relative z-10", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col items-center text-center gap-7", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              motion.div,
+              {
+                initial: { opacity: 0, y: -12 },
+                animate: { opacity: 1, y: 0 },
+                transition: { duration: 0.5 },
+                className: "flex flex-wrap items-center justify-center gap-3",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "hero-badge-green", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "relative flex h-1.5 w-1.5", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" })
+                    ] }),
+                    "Open to opportunities"
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "hero-badge-blue", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full animate-pulse", style: { background: "var(--pf-accent-2)" } }),
+                    "SDE-1 @ MONKSPACES.AI"
+                  ] })
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              motion.div,
+              {
+                initial: { opacity: 0, scale: 0.85 },
+                animate: { opacity: 1, scale: 1 },
+                transition: { duration: 0.7, delay: 0.1, ease: "easeOut" },
+                className: "relative flex items-center justify-center",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "avatar-ring-outer-v2" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "avatar-ring-spin-v2" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
                     "div",
                     {
-                      className: "relative w-44 h-44 rounded-full overflow-hidden z-10",
+                      className: "relative w-44 h-44 sm:w-52 sm:h-52 rounded-full z-10 flex items-center justify-center",
                       style: {
-                        boxShadow: "0 0 40px oklch(0.55 0.18 255 / 0.45), 0 0 80px oklch(0.55 0.18 255 / 0.15)"
+                        background: "linear-gradient(145deg, oklch(0.12 0.06 292) 0%, oklch(0.09 0.05 305) 100%)",
+                        boxShadow: "0 0 56px oklch(0.5 0.2 195 / 0.35), 0 0 100px oklch(0.45 0.18 310 / 0.2), inset 0 1px 0 oklch(1 0 0 / 0.06)",
+                        border: "2px solid oklch(0.35 0.1 285 / 0.55)"
                       },
+                      children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-syne font-black text-5xl sm:text-6xl hero-name-gradient select-none", children: initials })
+                    }
+                  )
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              motion.div,
+              {
+                initial: { opacity: 0, y: 16 },
+                animate: { opacity: 1, y: 0 },
+                transition: { duration: 0.6, delay: 0.25 },
+                className: "flex flex-col items-center gap-2",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "font-syne text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-none tracking-tight hero-name-gradient", children: personalInfo.name }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(RotatingRole, { roles: heroRoles })
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              motion.div,
+              {
+                initial: { opacity: 0, y: 10 },
+                animate: { opacity: 1, y: 0 },
+                transition: { duration: 0.5, delay: 0.45 },
+                className: "flex flex-wrap items-center justify-center gap-3",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => window.print(),
+                      className: "hero-btn-primary",
+                      "data-ocid": "hero.download_resume.button",
                       children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          "img",
-                          {
-                            src: "/assets/generated/avatar-as-transparent.dim_200x200.png",
-                            alt: "Ashish Sah",
-                            className: "w-full h-full object-cover"
-                          }
-                        ),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          "div",
-                          {
-                            className: "absolute inset-0 rounded-full",
-                            style: {
-                              background: "linear-gradient(135deg, rgba(15,27,44,0.2) 0%, rgba(47,128,255,0.08) 100%)"
-                            }
-                          }
-                        )
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(Download, { className: "w-4 h-4" }),
+                        "Download Resume"
                       ]
                     }
                   ),
                   /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                    "div",
+                    "button",
                     {
-                      className: "absolute -bottom-1 -right-1 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold",
-                      style: {
-                        background: "oklch(0.14 0.028 255)",
-                        border: "1px solid oklch(0.48 0.17 145 / 0.5)",
-                        color: "oklch(0.78 0.16 145)",
-                        boxShadow: "0 0 12px oklch(0.48 0.17 145 / 0.3)"
-                      },
+                      type: "button",
+                      onClick: scrollToFooter,
+                      className: "hero-btn-outline",
+                      "data-ocid": "hero.lets_connect.button",
                       children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" }),
-                        "Open"
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(MessageCircle, { className: "w-4 h-4" }),
+                        "Let's Connect"
                       ]
                     }
                   )
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "md:hidden text-center", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-4xl font-extrabold hero-name-gradient mb-1", children: personalInfo.name }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-base font-semibold gradient-text", children: personalInfo.title })
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-col gap-2.5 w-full", children: contactItems.map((item, i) => {
-                  const Icon2 = item.icon;
-                  const content = /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "contact-chip-icon", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Icon2, { className: "w-3.5 h-3.5" }) }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate text-xs", children: item.text })
-                  ] });
-                  return /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    motion.div,
-                    {
-                      initial: { opacity: 0, x: -20 },
-                      animate: { opacity: 1, x: 0 },
-                      transition: {
-                        duration: 0.5,
-                        delay: 0.3 + i * 0.08,
-                        ease: "easeOut"
-                      },
-                      children: item.href ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "a",
-                        {
-                          href: item.href,
-                          target: item.href.startsWith("http") ? "_blank" : void 0,
-                          rel: "noreferrer",
-                          className: "contact-chip",
-                          "data-ocid": item.ocid,
-                          children: content
-                        }
-                      ) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "contact-chip cursor-default", children: content })
-                    },
-                    item.text
-                  );
-                }) })
-              ]
-            }
-          ),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            motion.div,
-            {
-              initial: { opacity: 0, x: 30 },
-              animate: { opacity: 1, x: 0 },
-              transition: { duration: 0.7, delay: 0.1, ease: "easeOut" },
-              className: "flex flex-col gap-6",
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              motion.div,
+              {
+                initial: { opacity: 0, y: 18 },
+                animate: { opacity: 1, y: 0 },
+                transition: { duration: 0.6, delay: 0.58 },
+                className: "grid grid-cols-3 gap-3 sm:gap-4 w-full max-w-lg",
+                children: STATS.map((stat, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
                   motion.div,
                   {
-                    initial: { opacity: 0, y: -10 },
-                    animate: { opacity: 1, y: 0 },
-                    transition: { duration: 0.5, delay: 0.2 },
-                    className: "inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full text-xs font-semibold w-fit",
-                    style: {
-                      background: "oklch(0.48 0.17 145 / 0.12)",
-                      border: "1px solid oklch(0.48 0.17 145 / 0.4)",
-                      color: "oklch(0.78 0.16 145)",
-                      boxShadow: "0 0 20px oklch(0.48 0.17 145 / 0.15)"
-                    },
+                    initial: { opacity: 0, scale: 0.88 },
+                    animate: { opacity: 1, scale: 1 },
+                    transition: { duration: 0.4, delay: 0.64 + i * 0.1 },
+                    className: "stat-card-v2 flex flex-col items-center py-4 px-3 rounded-2xl",
+                    style: { background: stat.bg, border: `1px solid ${stat.border}` },
                     children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "relative flex h-2 w-2", children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" }),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "relative inline-flex rounded-full h-2 w-2 bg-emerald-400" })
-                      ] }),
-                      "Available for opportunities"
-                    ]
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "hidden md:block", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    motion.h1,
-                    {
-                      initial: { opacity: 0, y: 20 },
-                      animate: { opacity: 1, y: 0 },
-                      transition: { duration: 0.6, delay: 0.25 },
-                      className: "text-5xl lg:text-[64px] font-extrabold leading-[1.05] tracking-tight hero-name-gradient mb-2",
-                      children: personalInfo.name
-                    }
-                  ),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    motion.h2,
-                    {
-                      initial: { opacity: 0, y: 10 },
-                      animate: { opacity: 1, y: 0 },
-                      transition: { duration: 0.5, delay: 0.35 },
-                      className: "text-xl sm:text-2xl font-semibold gradient-text",
-                      children: personalInfo.title
-                    }
-                  )
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  motion.p,
-                  {
-                    initial: { opacity: 0 },
-                    animate: { opacity: 1 },
-                    transition: { duration: 0.6, delay: 0.45 },
-                    className: "text-sm sm:text-base leading-relaxed max-w-2xl",
-                    style: { color: "oklch(0.72 0.022 255)" },
-                    children: profileSummary
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  motion.div,
-                  {
-                    initial: { opacity: 0, y: 10 },
-                    animate: { opacity: 1, y: 0 },
-                    transition: { duration: 0.5, delay: 0.55 },
-                    className: "flex flex-wrap gap-3 pt-1",
-                    children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                        "button",
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "span",
                         {
-                          type: "button",
-                          onClick: handleDownload,
-                          className: "hero-btn-primary",
-                          "data-ocid": "hero.download_resume.button",
-                          children: [
-                            /* @__PURE__ */ jsxRuntimeExports.jsx(Download, { className: "w-4 h-4" }),
-                            "Download Resume"
-                          ]
+                          className: "text-2xl sm:text-3xl font-extrabold leading-none",
+                          style: { color: stat.color, textShadow: `0 0 20px ${stat.glow}` },
+                          children: stat.value
                         }
                       ),
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                        "button",
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "span",
                         {
-                          type: "button",
-                          onClick: handleConnect,
-                          className: "hero-btn-outline",
-                          "data-ocid": "hero.lets_connect.button",
-                          children: [
-                            /* @__PURE__ */ jsxRuntimeExports.jsx(MessageCircle, { className: "w-4 h-4" }),
-                            "Let's Connect"
-                          ]
+                          className: "text-[10px] sm:text-[11px] font-medium mt-1.5 text-center leading-tight",
+                          style: { color: "var(--pf-text-muted)" },
+                          children: stat.label
                         }
                       )
                     ]
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  motion.div,
-                  {
-                    initial: { opacity: 0, y: 15 },
-                    animate: { opacity: 1, y: 0 },
-                    transition: { duration: 0.6, delay: 0.65 },
-                    className: "grid grid-cols-3 gap-3 pt-2 mt-1",
-                    children: stats.map((stat, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                      motion.div,
-                      {
-                        initial: { opacity: 0, scale: 0.9 },
-                        animate: { opacity: 1, scale: 1 },
-                        transition: { duration: 0.4, delay: 0.7 + i * 0.1 },
-                        className: "stat-card",
-                        children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xl font-extrabold hero-name-gradient", children: stat.value }),
-                          /* @__PURE__ */ jsxRuntimeExports.jsx(
-                            "span",
-                            {
-                              className: "text-[11px] font-medium mt-0.5",
-                              style: { color: "oklch(0.62 0.018 255)" },
-                              children: stat.label
-                            }
-                          )
-                        ]
-                      },
-                      stat.label
-                    ))
-                  }
-                )
-              ]
-            }
-          )
-        ] }) })
-      ]
-    }
-  );
+                  },
+                  stat.label
+                ))
+              }
+            )
+          ] }) })
+        ]
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      motion.div,
+      {
+        initial: { opacity: 0, y: 8 },
+        animate: { opacity: 1, y: 0 },
+        transition: { duration: 0.5, delay: 0.85 },
+        className: "contact-bar",
+        "data-ocid": "contact_bar.panel",
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-2 px-4", children: contactItems.map((item) => {
+          const Icon2 = item.icon;
+          const inner = /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "contact-bar-item", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "contact-bar-icon-wrap", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Icon2, { className: "w-3 h-3" }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: item.text })
+          ] });
+          return item.href ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "a",
+            {
+              href: item.href,
+              target: item.external ? "_blank" : void 0,
+              rel: "noreferrer",
+              children: inner
+            },
+            item.text
+          ) : /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: inner }, item.text);
+        }) })
+      }
+    )
+  ] });
 }
-const navLinks = [
-  { label: "Home", href: "#hero" },
-  { label: "Skills", href: "#skills" },
-  { label: "Experience", href: "#experience" },
-  { label: "Projects", href: "#projects" },
-  { label: "Certifications", href: "#certifications" },
-  { label: "Achievements", href: "#achievements" }
-];
+function scrollTo(href) {
+  var _a2;
+  (_a2 = document.querySelector(href)) == null ? void 0 : _a2.scrollIntoView({ behavior: "smooth" });
+}
 function Navbar() {
+  const { personalInfo, codingAchievements, awards } = usePortfolioData();
   const [mobileOpen, setMobileOpen] = reactExports.useState(false);
+  const initials = reactExports.useMemo(() => initialsFromName(personalInfo.name), [personalInfo.name]);
+  const showAchievements = codingAchievements.length > 0 || awards.length > 0;
+  const navLinks = reactExports.useMemo(() => {
+    const base = [
+      { label: "Home", href: "#hero" },
+      { label: "Skills", href: "#skills" },
+      { label: "Experience", href: "#experience" },
+      { label: "Projects", href: "#projects" },
+      { label: "Certifications", href: "#certifications" }
+    ];
+    if (showAchievements) {
+      return [...base, { label: "Achievements", href: "#achievements" }];
+    }
+    return [...base];
+  }, [showAchievements]);
   const handleNavClick = (href) => {
     setMobileOpen(false);
-    const el = document.querySelector(href);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+    scrollTo(href);
   };
-  const handleGetInTouch = () => {
-    window.location.href = "mailto:ashishsah51@gmail.com";
-  };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-    "header",
-    {
-      className: "sticky top-0 z-50",
-      style: {
-        background: "oklch(0.11 0.025 255 / 0.92)",
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-        borderBottom: "1px solid oklch(0.22 0.038 250 / 0.6)",
-        boxShadow: "0 1px 0 oklch(0.22 0.038 250 / 0.4), 0 4px 24px oklch(0.07 0.02 255 / 0.5)"
-      },
-      children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "navbar-accent-line" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-[1100px] mx-auto px-4 sm:px-6", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between h-16", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            motion.div,
-            {
-              initial: { opacity: 0, x: -20 },
-              animate: { opacity: 1, x: 0 },
-              transition: { duration: 0.5 },
-              className: "flex items-center gap-3",
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "navbar-logo-box", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-black tracking-widest text-white", children: "AS" }) }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "span",
-                    {
-                      className: "text-sm font-bold leading-none tracking-tight",
-                      style: { color: "oklch(0.96 0.018 255)" },
-                      children: "Ashish Sah"
-                    }
-                  ),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "span",
-                    {
-                      className: "text-[10px] font-medium",
-                      style: { color: "oklch(0.55 0.18 255)" },
-                      children: "Senior Software Engineer"
-                    }
-                  )
-                ] })
-              ]
-            }
-          ),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "nav",
-            {
-              className: "hidden md:flex items-center gap-1",
-              "aria-label": "Main navigation",
-              children: navLinks.map((link, i) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-                motion.button,
-                {
-                  type: "button",
-                  onClick: () => handleNavClick(link.href),
-                  initial: { opacity: 0, y: -10 },
-                  animate: { opacity: 1, y: 0 },
-                  transition: { duration: 0.4, delay: 0.1 + i * 0.06 },
-                  className: "nav-link px-3 py-2 rounded-lg cursor-pointer",
-                  "data-ocid": `nav.${link.label.toLowerCase()}.link`,
-                  children: link.label
-                },
-                link.href
-              ))
-            }
-          ),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            motion.div,
-            {
-              initial: { opacity: 0, x: 20 },
-              animate: { opacity: 1, x: 0 },
-              transition: { duration: 0.5, delay: 0.2 },
-              className: "hidden md:flex items-center",
-              children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "button",
-                {
-                  type: "button",
-                  onClick: handleGetInTouch,
-                  className: "navbar-cta-btn",
-                  "data-ocid": "nav.get_in_touch.button",
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(Mail, { className: "w-3.5 h-3.5" }),
-                    "GET IN TOUCH"
-                  ]
-                }
-              )
-            }
-          ),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: "sticky top-0 z-50 navbar-root", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "navbar-accent-line" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-10", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between h-16", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        motion.div,
+        {
+          initial: { opacity: 0, x: -20 },
+          animate: { opacity: 1, x: 0 },
+          transition: { duration: 0.5 },
+          className: "flex items-center gap-3",
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "navbar-logo-box", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-black tracking-widest text-white", children: initials }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-bold leading-none font-syne", style: { color: "var(--pf-text)" }, children: personalInfo.name }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] font-medium", style: { color: "var(--pf-accent)" }, children: personalInfo.title })
+            ] })
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("nav", { className: "hidden md:flex items-center gap-1", "aria-label": "Main navigation", children: navLinks.map((link, i) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+        motion.button,
+        {
+          type: "button",
+          onClick: () => handleNavClick(link.href),
+          initial: { opacity: 0, y: -10 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.4, delay: 0.1 + i * 0.06 },
+          className: "nav-link px-3 py-2 rounded-lg cursor-pointer",
+          children: link.label
+        },
+        link.href
+      )) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        motion.div,
+        {
+          initial: { opacity: 0, x: 20 },
+          animate: { opacity: 1, x: 0 },
+          transition: { duration: 0.5, delay: 0.2 },
+          className: "hidden md:flex",
+          children: /* @__PURE__ */ jsxRuntimeExports.jsxs("a", { href: `mailto:${personalInfo.email}`, className: "navbar-cta-btn", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Mail, { className: "w-3.5 h-3.5" }),
+            "GET IN TOUCH"
+          ] })
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "button",
+        {
+          type: "button",
+          className: "md:hidden p-2 rounded-lg transition-colors",
+          style: { color: "var(--pf-text-secondary)" },
+          onClick: () => setMobileOpen((v) => !v),
+          "aria-label": mobileOpen ? "Close menu" : "Open menu",
+          children: mobileOpen ? /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "w-5 h-5" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Menu, { className: "w-5 h-5" })
+        }
+      )
+    ] }) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { children: mobileOpen && /* @__PURE__ */ jsxRuntimeExports.jsx(
+      motion.div,
+      {
+        initial: { opacity: 0, height: 0 },
+        animate: { opacity: 1, height: "auto" },
+        exit: { opacity: 0, height: 0 },
+        className: "md:hidden border-t overflow-hidden",
+        style: {
+          background: "oklch(0.08 0.045 292 / 0.98)",
+          borderColor: "oklch(0.3 0.07 285 / 0.55)"
+        },
+        children: /* @__PURE__ */ jsxRuntimeExports.jsxs("nav", { className: "flex flex-col px-4 py-4 gap-1", children: [
+          navLinks.map((link) => /* @__PURE__ */ jsxRuntimeExports.jsx(
             "button",
             {
               type: "button",
-              className: "md:hidden p-2 rounded-lg transition-colors",
-              style: { color: "oklch(0.70 0.022 255)" },
-              onClick: () => setMobileOpen((v) => !v),
-              "aria-label": mobileOpen ? "Close menu" : "Open menu",
-              "data-ocid": "nav.mobile_menu.toggle",
-              children: mobileOpen ? /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "w-5 h-5" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Menu, { className: "w-5 h-5" })
-            }
-          )
-        ] }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { children: mobileOpen && /* @__PURE__ */ jsxRuntimeExports.jsx(
-          motion.div,
-          {
-            initial: { opacity: 0, height: 0 },
-            animate: { opacity: 1, height: "auto" },
-            exit: { opacity: 0, height: 0 },
-            className: "md:hidden border-t overflow-hidden",
-            style: {
-              background: "oklch(0.11 0.025 255 / 0.97)",
-              borderColor: "oklch(0.22 0.038 250 / 0.6)"
+              onClick: () => handleNavClick(link.href),
+              className: "text-left py-2.5 px-3 rounded-lg text-sm font-medium transition-colors hover:bg-white/5",
+              style: { color: "var(--pf-text-secondary)" },
+              children: link.label
             },
-            children: /* @__PURE__ */ jsxRuntimeExports.jsxs("nav", { className: "flex flex-col px-4 py-4 gap-1", children: [
-              navLinks.map((link) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "button",
-                {
-                  type: "button",
-                  onClick: () => handleNavClick(link.href),
-                  className: "text-left py-2.5 px-3 rounded-lg text-sm font-medium transition-colors hover:bg-white/5",
-                  style: { color: "oklch(0.70 0.022 255)" },
-                  children: link.label
-                },
-                link.href
-              )),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "button",
-                {
-                  type: "button",
-                  onClick: handleGetInTouch,
-                  className: "mt-3 flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white w-fit navbar-cta-btn",
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(Mail, { className: "w-3.5 h-3.5" }),
-                    "GET IN TOUCH"
-                  ]
-                }
-              )
-            ] })
-          }
-        ) })
-      ]
-    }
-  );
+            link.href
+          )),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("a", { href: `mailto:${personalInfo.email}`, className: "mt-3 navbar-cta-btn w-fit", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Mail, { className: "w-3.5 h-3.5" }),
+            "GET IN TOUCH"
+          ] })
+        ] })
+      }
+    ) })
+  ] });
 }
-function Projects() {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("section", { id: "projects", className: "py-14 px-4 sm:px-6", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-[1100px] mx-auto", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(
+function Notes() {
+  const [notes, setNotes] = reactExports.useState([]);
+  const [draft, setDraft] = reactExports.useState("");
+  const addNote = () => {
+    const trimmed = draft.trim();
+    if (!trimmed) return;
+    setNotes((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        text: trimmed,
+        createdAt: (/* @__PURE__ */ new Date()).toLocaleString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit"
+        })
+      }
+    ]);
+    setDraft("");
+  };
+  const deleteNote = (id2) => {
+    setNotes((prev) => prev.filter((n) => n.id !== id2));
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("section", { id: "notes", className: "py-16 px-4 sm:px-6 lg:px-10", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-7xl mx-auto", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(
       motion.div,
       {
         initial: { opacity: 0, y: 20 },
         whileInView: { opacity: 1, y: 0 },
         viewport: { once: true },
         transition: { duration: 0.5 },
-        children: /* @__PURE__ */ jsxRuntimeExports.jsxs("h2", { className: "section-heading", children: [
-          "Key ",
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Projects" })
-        ] })
+        className: "mb-8",
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("h2", { className: "section-heading", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(StickyNote, { className: "inline-block w-7 h-7 mr-2 mb-1", style: { color: "var(--pf-accent)" } }),
+            "Personal ",
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Notes" })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm", style: { color: "var(--pf-text-muted)" }, children: "Jot down reminders, ideas, or anything you want to remember. Notes are stored in this session only." })
+        ]
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-6", children: projects.map((project, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(
       motion.div,
       {
-        initial: { opacity: 0, y: 20 },
+        initial: { opacity: 0, y: 10 },
         whileInView: { opacity: 1, y: 0 },
         viewport: { once: true },
-        transition: { duration: 0.4, delay: i * 0.1 },
-        className: "rounded-2xl p-6 flex flex-col gap-4 group",
-        style: {
-          background: "oklch(0.15 0.028 255)",
-          border: "1px solid oklch(0.24 0.038 250)",
-          transition: "border-color 0.2s"
-        },
-        "data-ocid": `projects.item.${i + 1}`,
+        transition: { duration: 0.4, delay: 0.1 },
+        className: "flex gap-3 mb-8",
         children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start justify-between gap-3", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "div",
-              {
-                className: "w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0",
-                style: { background: "oklch(0.55 0.18 255 / 0.15)" },
-                children: i === 0 ? "🤖" : "💬"
-              }
-            ),
-            project.link && /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "a",
-              {
-                href: project.link,
-                target: "_blank",
-                rel: "noreferrer",
-                className: "opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg",
-                style: {
-                  color: "#2F80FF",
-                  background: "oklch(0.55 0.18 255 / 0.1)"
-                },
-                "data-ocid": `projects.item.${i + 1}.link`,
-                children: /* @__PURE__ */ jsxRuntimeExports.jsx(ExternalLink, { className: "w-4 h-4" })
-              }
-            )
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "h3",
-              {
-                className: "text-base font-bold mb-2",
-                style: { color: "oklch(0.94 0.018 255)" },
-                children: project.name
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "p",
-              {
-                className: "text-sm leading-relaxed",
-                style: { color: "oklch(0.70 0.022 255)" },
-                children: project.description
-              }
-            )
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-wrap gap-2 mt-auto", children: project.technologies.map((tech) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "span",
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "textarea",
             {
-              className: "text-xs px-2.5 py-1 rounded-full font-medium",
-              style: {
-                background: "oklch(0.55 0.18 255 / 0.12)",
-                border: "1px solid oklch(0.55 0.18 255 / 0.3)",
-                color: "#2F80FF"
+              value: draft,
+              onChange: (e) => setDraft(e.target.value),
+              onKeyDown: (e) => {
+                if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) addNote();
               },
-              children: tech
-            },
-            tech
-          )) })
+              rows: 2,
+              placeholder: "Write a note… (Ctrl+Enter to add)",
+              className: "notes-input flex-1"
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: addNote,
+              disabled: !draft.trim(),
+              className: "notes-add-btn",
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "w-5 h-5" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-semibold", children: "Add" })
+              ]
+            }
+          )
+        ]
+      }
+    ),
+    notes.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      motion.div,
+      {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        className: "flex flex-col items-center gap-3 py-14",
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(StickyNote, { className: "w-10 h-10 opacity-25", style: { color: "var(--pf-accent)" } }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm", style: { color: "var(--pf-text-muted)" }, children: "No notes yet — add your first one above" })
+        ]
+      }
+    ) : /* @__PURE__ */ jsxRuntimeExports.jsx(motion.div, { layout: true, className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4", children: /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { children: notes.map((note) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      motion.div,
+      {
+        layout: true,
+        initial: { opacity: 0, scale: 0.9, y: 10 },
+        animate: { opacity: 1, scale: 1, y: 0 },
+        exit: { opacity: 0, scale: 0.85, y: -10 },
+        transition: { duration: 0.3 },
+        className: "note-card group",
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start justify-between gap-2 mb-3", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(StickyNote, { className: "w-4 h-4 mt-0.5 flex-shrink-0", style: { color: "var(--pf-accent)" } }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                type: "button",
+                onClick: () => deleteNote(note.id),
+                className: "opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-red-500/10",
+                style: { color: "oklch(0.65 0.22 27)" },
+                "aria-label": "Delete note",
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "w-3.5 h-3.5" })
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm leading-relaxed flex-1", style: { color: "var(--pf-text-secondary)" }, children: note.text }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] mt-3", style: { color: "var(--pf-text-muted)" }, children: note.createdAt })
+        ]
+      },
+      note.id
+    )) }) })
+  ] }) });
+}
+function Projects() {
+  const { projects } = usePortfolioData();
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Section, { id: "projects", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      SectionHeader,
+      {
+        title: "Featured",
+        highlight: "Projects",
+        subtitle: "Things I have built and shipped"
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6", children: projects.map((project, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      Card,
+      {
+        delay: i * 0.1,
+        slideFrom: "up",
+        "data-ocid": `projects.item.${i + 1}`,
+        className: "p-0 gap-0 group",
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-6 flex flex-col gap-4 flex-1", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start justify-between gap-3", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                motion.div,
+                {
+                  className: "pf-card-icon-tile w-11 h-11 rounded-xl font-bold text-base",
+                  style: { color: "var(--pf-accent)" },
+                  whileHover: { rotate: [0, -4, 4, 0] },
+                  transition: { duration: 0.5 },
+                  children: project.name.charAt(0)
+                }
+              ),
+              project.link ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                motion.a,
+                {
+                  href: project.link,
+                  target: "_blank",
+                  rel: "noreferrer",
+                  className: "opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-2 rounded-xl",
+                  style: { color: "var(--pf-accent)", background: "oklch(0.55 0.18 195 / 0.14)" },
+                  "data-ocid": `projects.item.${i + 1}.link`,
+                  "aria-label": `Open ${project.name}`,
+                  whileHover: { scale: 1.08 },
+                  whileTap: { scale: 0.95 },
+                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(ExternalLink, { className: "w-4 h-4" })
+                }
+              ) : null
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-px w-full bg-gradient-to-r from-transparent via-[oklch(0.45_0.15_195/0.35)] to-transparent" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-base font-bold font-syne mb-2", style: { color: "var(--pf-text)" }, children: project.name }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm leading-relaxed", style: { color: "var(--pf-text-secondary)" }, children: project.description })
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "div",
+            {
+              className: "px-6 py-4 mt-auto border-t flex flex-wrap gap-2",
+              style: {
+                borderColor: "oklch(0.28 0.06 285 / 0.5)",
+                background: "linear-gradient(180deg, oklch(0.08 0.04 292 / 0.5) 0%, transparent 100%)"
+              },
+              children: project.technologies.map((tech, ti) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+                motion.span,
+                {
+                  initial: { opacity: 0, y: 6 },
+                  whileInView: { opacity: 1, y: 0 },
+                  viewport: { once: true },
+                  transition: { delay: i * 0.08 + ti * 0.04, duration: 0.35 },
+                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "blue", children: tech })
+                },
+                tech
+              ))
+            }
+          )
         ]
       },
       project.name
     )) })
-  ] }) });
-}
-function SectionDivider() {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-[1100px] mx-auto px-4 sm:px-6", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-    "div",
-    {
-      className: "h-px",
-      style: {
-        background: "linear-gradient(to right, transparent, oklch(0.24 0.038 250), transparent)"
-      }
-    }
-  ) });
+  ] });
 }
 function Skills() {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("section", { id: "skills", className: "py-14 px-4 sm:px-6", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-[1100px] mx-auto", children: [
+  const { skillCategories } = usePortfolioData();
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Section, { id: "skills", alt: true, children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(
-      motion.div,
+      SectionHeader,
       {
-        initial: { opacity: 0, y: 20 },
-        whileInView: { opacity: 1, y: 0 },
-        viewport: { once: true },
-        transition: { duration: 0.5 },
-        children: /* @__PURE__ */ jsxRuntimeExports.jsxs("h2", { className: "section-heading", children: [
-          "Technical ",
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Skills" })
-        ] })
+        title: "Technical",
+        highlight: "Skills",
+        subtitle: "Languages, frameworks, and platforms I use to ship production systems"
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 md:grid-cols-3 gap-6", children: skillCategories.map((cat, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-      motion.div,
-      {
-        initial: { opacity: 0, y: 20 },
-        whileInView: { opacity: 1, y: 0 },
-        viewport: { once: true },
-        transition: { duration: 0.4, delay: i * 0.1 },
-        className: "rounded-2xl p-5",
-        style: {
-          background: "oklch(0.15 0.028 255)",
-          border: "1px solid oklch(0.24 0.038 250)"
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5", children: skillCategories.map((cat, i) => /* @__PURE__ */ jsxRuntimeExports.jsx(Card, { delay: i * 0.07, slideFrom: "up", className: "p-0 gap-0", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-5 flex flex-col gap-4", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          motion.span,
+          {
+            className: "pf-card-icon-tile w-11 h-11 text-xl shrink-0",
+            role: "img",
+            "aria-label": cat.category,
+            whileHover: { scale: 1.06 },
+            transition: { type: "spring", stiffness: 400, damping: 22 },
+            children: cat.icon
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0 flex-1", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-px w-full max-w-[48px] rounded-full bg-[oklch(0.55_0.2_195/0.5)] mb-2" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-[13px] font-semibold leading-tight font-syne", style: { color: "var(--pf-text)" }, children: cat.category })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-wrap gap-1.5", children: cat.skills.map((skill, si) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+        motion.span,
+        {
+          initial: { opacity: 0, scale: 0.88, y: 6 },
+          whileInView: { opacity: 1, scale: 1, y: 0 },
+          viewport: { once: true },
+          transition: {
+            type: "spring",
+            stiffness: 380,
+            damping: 22,
+            delay: i * 0.05 + si * 0.025
+          },
+          className: "skill-pill",
+          children: skill
         },
-        children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 mb-4", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "div",
-              {
-                className: "w-2 h-6 rounded-full",
-                style: { background: "#2F80FF" }
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "h3",
-              {
-                className: "text-sm font-semibold",
-                style: { color: "oklch(0.94 0.018 255)" },
-                children: cat.category
-              }
-            )
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-wrap gap-2", children: cat.skills.map((skill) => /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "skill-pill", children: skill }, skill)) })
-        ]
-      },
-      cat.category
-    )) })
-  ] }) });
+        skill
+      )) })
+    ] }) }, cat.category)) })
+  ] });
+}
+function Summary() {
+  const { profileSummary } = usePortfolioData();
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("section", { id: "summary", className: "py-12 px-4 sm:px-6 lg:px-10 section-alt", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-7xl mx-auto", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    motion.div,
+    {
+      initial: { opacity: 0, y: 20 },
+      whileInView: { opacity: 1, y: 0 },
+      viewport: { once: true },
+      transition: { duration: 0.5 },
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("h2", { className: "section-heading mb-5", children: [
+          "Profile ",
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Summary" })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "summary-display-static", children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm sm:text-base leading-relaxed", style: { color: "var(--pf-text-secondary)" }, children: profileSummary }) })
+      ]
+    }
+  ) }) });
 }
 function App() {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(
-    "div",
-    {
-      className: "min-h-screen",
-      style: {
-        background: "linear-gradient(135deg, #0B1220 0%, #0F1A2B 100%)"
-      },
-      children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        "div",
-        {
-          className: "max-w-[1100px] mx-auto my-4 sm:my-8 rounded-2xl overflow-hidden",
-          style: {
-            background: "oklch(0.125 0.026 255)",
-            boxShadow: "0 0 0 1px oklch(0.24 0.038 250), 0 8px 48px oklch(0.06 0.02 255 / 0.7), inset 0 1px 0 oklch(0.30 0.04 255 / 0.3)"
-          },
-          children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Navbar, {}),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("main", { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Hero, {}),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(SectionDivider, {}),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Skills, {}),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(SectionDivider, {}),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Experience$1, {}),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(SectionDivider, {}),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Projects, {}),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(SectionDivider, {}),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Certifications, {}),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(SectionDivider, {}),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Achievements, {})
-            ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Footer, {})
-          ]
-        }
-      )
-    }
-  );
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-h-screen relative z-[1]", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Navbar, {}),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("main", { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Hero, {}),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Summary, {}),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Skills, {}),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Experience, {}),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Projects, {}),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Certifications, {}),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Achievements, {}),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Notes, {})
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Footer, {})
+  ] });
 }
-const alphabet = "abcdefghijklmnopqrstuvwxyz234567";
-const lookupTable = /* @__PURE__ */ Object.create(null);
-for (let i = 0; i < alphabet.length; i++) {
-  lookupTable[alphabet[i]] = i;
-}
-lookupTable["0"] = lookupTable.o;
-lookupTable["1"] = lookupTable.i;
-function base32Encode(input) {
-  let skip = 0;
-  let bits = 0;
-  let output = "";
-  function encodeByte(byte) {
-    if (skip < 0) {
-      bits |= byte >> -skip;
-    } else {
-      bits = byte << skip & 248;
-    }
-    if (skip > 3) {
-      skip -= 8;
-      return 1;
-    }
-    if (skip < 4) {
-      output += alphabet[bits >> 3];
-      skip += 5;
-    }
-    return 0;
-  }
-  for (let i = 0; i < input.length; ) {
-    i += encodeByte(input[i]);
-  }
-  return output + (skip < 0 ? alphabet[bits >> 3] : "");
-}
-function base32Decode(input) {
-  let skip = 0;
-  let byte = 0;
-  const output = new Uint8Array(input.length * 4 / 3 | 0);
-  let o = 0;
-  function decodeChar(char) {
-    let val = lookupTable[char.toLowerCase()];
-    if (val === void 0) {
-      throw new Error(`Invalid character: ${JSON.stringify(char)}`);
-    }
-    val <<= 3;
-    byte |= val >>> skip;
-    skip += 5;
-    if (skip >= 8) {
-      output[o++] = byte;
-      skip -= 8;
-      if (skip > 0) {
-        byte = val << 5 - skip & 255;
-      } else {
-        byte = 0;
-      }
-    }
-  }
-  for (const c of input) {
-    decodeChar(c);
-  }
-  return output.slice(0, o);
-}
-const lookUpTable = new Uint32Array([
-  0,
-  1996959894,
-  3993919788,
-  2567524794,
-  124634137,
-  1886057615,
-  3915621685,
-  2657392035,
-  249268274,
-  2044508324,
-  3772115230,
-  2547177864,
-  162941995,
-  2125561021,
-  3887607047,
-  2428444049,
-  498536548,
-  1789927666,
-  4089016648,
-  2227061214,
-  450548861,
-  1843258603,
-  4107580753,
-  2211677639,
-  325883990,
-  1684777152,
-  4251122042,
-  2321926636,
-  335633487,
-  1661365465,
-  4195302755,
-  2366115317,
-  997073096,
-  1281953886,
-  3579855332,
-  2724688242,
-  1006888145,
-  1258607687,
-  3524101629,
-  2768942443,
-  901097722,
-  1119000684,
-  3686517206,
-  2898065728,
-  853044451,
-  1172266101,
-  3705015759,
-  2882616665,
-  651767980,
-  1373503546,
-  3369554304,
-  3218104598,
-  565507253,
-  1454621731,
-  3485111705,
-  3099436303,
-  671266974,
-  1594198024,
-  3322730930,
-  2970347812,
-  795835527,
-  1483230225,
-  3244367275,
-  3060149565,
-  1994146192,
-  31158534,
-  2563907772,
-  4023717930,
-  1907459465,
-  112637215,
-  2680153253,
-  3904427059,
-  2013776290,
-  251722036,
-  2517215374,
-  3775830040,
-  2137656763,
-  141376813,
-  2439277719,
-  3865271297,
-  1802195444,
-  476864866,
-  2238001368,
-  4066508878,
-  1812370925,
-  453092731,
-  2181625025,
-  4111451223,
-  1706088902,
-  314042704,
-  2344532202,
-  4240017532,
-  1658658271,
-  366619977,
-  2362670323,
-  4224994405,
-  1303535960,
-  984961486,
-  2747007092,
-  3569037538,
-  1256170817,
-  1037604311,
-  2765210733,
-  3554079995,
-  1131014506,
-  879679996,
-  2909243462,
-  3663771856,
-  1141124467,
-  855842277,
-  2852801631,
-  3708648649,
-  1342533948,
-  654459306,
-  3188396048,
-  3373015174,
-  1466479909,
-  544179635,
-  3110523913,
-  3462522015,
-  1591671054,
-  702138776,
-  2966460450,
-  3352799412,
-  1504918807,
-  783551873,
-  3082640443,
-  3233442989,
-  3988292384,
-  2596254646,
-  62317068,
-  1957810842,
-  3939845945,
-  2647816111,
-  81470997,
-  1943803523,
-  3814918930,
-  2489596804,
-  225274430,
-  2053790376,
-  3826175755,
-  2466906013,
-  167816743,
-  2097651377,
-  4027552580,
-  2265490386,
-  503444072,
-  1762050814,
-  4150417245,
-  2154129355,
-  426522225,
-  1852507879,
-  4275313526,
-  2312317920,
-  282753626,
-  1742555852,
-  4189708143,
-  2394877945,
-  397917763,
-  1622183637,
-  3604390888,
-  2714866558,
-  953729732,
-  1340076626,
-  3518719985,
-  2797360999,
-  1068828381,
-  1219638859,
-  3624741850,
-  2936675148,
-  906185462,
-  1090812512,
-  3747672003,
-  2825379669,
-  829329135,
-  1181335161,
-  3412177804,
-  3160834842,
-  628085408,
-  1382605366,
-  3423369109,
-  3138078467,
-  570562233,
-  1426400815,
-  3317316542,
-  2998733608,
-  733239954,
-  1555261956,
-  3268935591,
-  3050360625,
-  752459403,
-  1541320221,
-  2607071920,
-  3965973030,
-  1969922972,
-  40735498,
-  2617837225,
-  3943577151,
-  1913087877,
-  83908371,
-  2512341634,
-  3803740692,
-  2075208622,
-  213261112,
-  2463272603,
-  3855990285,
-  2094854071,
-  198958881,
-  2262029012,
-  4057260610,
-  1759359992,
-  534414190,
-  2176718541,
-  4139329115,
-  1873836001,
-  414664567,
-  2282248934,
-  4279200368,
-  1711684554,
-  285281116,
-  2405801727,
-  4167216745,
-  1634467795,
-  376229701,
-  2685067896,
-  3608007406,
-  1308918612,
-  956543938,
-  2808555105,
-  3495958263,
-  1231636301,
-  1047427035,
-  2932959818,
-  3654703836,
-  1088359270,
-  936918e3,
-  2847714899,
-  3736837829,
-  1202900863,
-  817233897,
-  3183342108,
-  3401237130,
-  1404277552,
-  615818150,
-  3134207493,
-  3453421203,
-  1423857449,
-  601450431,
-  3009837614,
-  3294710456,
-  1567103746,
-  711928724,
-  3020668471,
-  3272380065,
-  1510334235,
-  755167117
-]);
-function getCrc32(buf) {
-  let crc = -1;
-  for (let i = 0; i < buf.length; i++) {
-    const byte = buf[i];
-    const t = (byte ^ crc) & 255;
-    crc = lookUpTable[t] ^ crc >>> 8;
-  }
-  return (crc ^ -1) >>> 0;
-}
-const crypto$1 = typeof globalThis === "object" && "crypto" in globalThis ? globalThis.crypto : void 0;
-/*! noble-hashes - MIT License (c) 2022 Paul Miller (paulmillr.com) */
-function isBytes(a) {
-  return a instanceof Uint8Array || ArrayBuffer.isView(a) && a.constructor.name === "Uint8Array";
-}
-function anumber(n) {
-  if (!Number.isSafeInteger(n) || n < 0)
-    throw new Error("positive integer expected, got " + n);
-}
-function abytes(b, ...lengths) {
-  if (!isBytes(b))
-    throw new Error("Uint8Array expected");
-  if (lengths.length > 0 && !lengths.includes(b.length))
-    throw new Error("Uint8Array expected of length " + lengths + ", got length=" + b.length);
-}
-function aexists(instance, checkFinished = true) {
-  if (instance.destroyed)
-    throw new Error("Hash instance has been destroyed");
-  if (checkFinished && instance.finished)
-    throw new Error("Hash#digest() has already been called");
-}
-function aoutput(out, instance) {
-  abytes(out);
-  const min = instance.outputLen;
-  if (out.length < min) {
-    throw new Error("digestInto() expects output buffer of length at least " + min);
-  }
-}
-function clean(...arrays) {
-  for (let i = 0; i < arrays.length; i++) {
-    arrays[i].fill(0);
-  }
-}
-function createView(arr) {
-  return new DataView(arr.buffer, arr.byteOffset, arr.byteLength);
-}
-function rotr(word, shift) {
-  return word << 32 - shift | word >>> shift;
-}
-const hasHexBuiltin = /* @__PURE__ */ (() => (
-  // @ts-ignore
-  typeof Uint8Array.from([]).toHex === "function" && typeof Uint8Array.fromHex === "function"
-))();
-const hexes = /* @__PURE__ */ Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, "0"));
-function bytesToHex(bytes) {
-  abytes(bytes);
-  if (hasHexBuiltin)
-    return bytes.toHex();
-  let hex2 = "";
-  for (let i = 0; i < bytes.length; i++) {
-    hex2 += hexes[bytes[i]];
-  }
-  return hex2;
-}
-const asciis = { _0: 48, _9: 57, A: 65, F: 70, a: 97, f: 102 };
-function asciiToBase16(ch) {
-  if (ch >= asciis._0 && ch <= asciis._9)
-    return ch - asciis._0;
-  if (ch >= asciis.A && ch <= asciis.F)
-    return ch - (asciis.A - 10);
-  if (ch >= asciis.a && ch <= asciis.f)
-    return ch - (asciis.a - 10);
-  return;
-}
-function hexToBytes(hex2) {
-  if (typeof hex2 !== "string")
-    throw new Error("hex string expected, got " + typeof hex2);
-  if (hasHexBuiltin)
-    return Uint8Array.fromHex(hex2);
-  const hl = hex2.length;
-  const al = hl / 2;
-  if (hl % 2)
-    throw new Error("hex string expected, got unpadded hex of length " + hl);
-  const array = new Uint8Array(al);
-  for (let ai = 0, hi = 0; ai < al; ai++, hi += 2) {
-    const n1 = asciiToBase16(hex2.charCodeAt(hi));
-    const n2 = asciiToBase16(hex2.charCodeAt(hi + 1));
-    if (n1 === void 0 || n2 === void 0) {
-      const char = hex2[hi] + hex2[hi + 1];
-      throw new Error('hex string expected, got non-hex character "' + char + '" at index ' + hi);
-    }
-    array[ai] = n1 * 16 + n2;
-  }
-  return array;
-}
-function utf8ToBytes(str) {
-  if (typeof str !== "string")
-    throw new Error("string expected");
-  return new Uint8Array(new TextEncoder().encode(str));
-}
-function toBytes(data) {
-  if (typeof data === "string")
-    data = utf8ToBytes(data);
-  abytes(data);
-  return data;
-}
-function concatBytes(...arrays) {
-  let sum = 0;
-  for (let i = 0; i < arrays.length; i++) {
-    const a = arrays[i];
-    abytes(a);
-    sum += a.length;
-  }
-  const res = new Uint8Array(sum);
-  for (let i = 0, pad = 0; i < arrays.length; i++) {
-    const a = arrays[i];
-    res.set(a, pad);
-    pad += a.length;
-  }
-  return res;
-}
-class Hash {
-}
-function createHasher(hashCons) {
-  const hashC = (msg) => hashCons().update(toBytes(msg)).digest();
-  const tmp = hashCons();
-  hashC.outputLen = tmp.outputLen;
-  hashC.blockLen = tmp.blockLen;
-  hashC.create = () => hashCons();
-  return hashC;
-}
-function randomBytes(bytesLength = 32) {
-  if (crypto$1 && typeof crypto$1.getRandomValues === "function") {
-    return crypto$1.getRandomValues(new Uint8Array(bytesLength));
-  }
-  if (crypto$1 && typeof crypto$1.randomBytes === "function") {
-    return Uint8Array.from(crypto$1.randomBytes(bytesLength));
-  }
-  throw new Error("crypto.getRandomValues must be defined");
-}
-function setBigUint64(view, byteOffset, value, isLE) {
-  if (typeof view.setBigUint64 === "function")
-    return view.setBigUint64(byteOffset, value, isLE);
-  const _32n2 = BigInt(32);
-  const _u32_max = BigInt(4294967295);
-  const wh = Number(value >> _32n2 & _u32_max);
-  const wl = Number(value & _u32_max);
-  const h = isLE ? 4 : 0;
-  const l = isLE ? 0 : 4;
-  view.setUint32(byteOffset + h, wh, isLE);
-  view.setUint32(byteOffset + l, wl, isLE);
-}
-function Chi(a, b, c) {
-  return a & b ^ ~a & c;
-}
-function Maj(a, b, c) {
-  return a & b ^ a & c ^ b & c;
-}
-class HashMD extends Hash {
-  constructor(blockLen, outputLen, padOffset, isLE) {
-    super();
-    this.finished = false;
-    this.length = 0;
-    this.pos = 0;
-    this.destroyed = false;
-    this.blockLen = blockLen;
-    this.outputLen = outputLen;
-    this.padOffset = padOffset;
-    this.isLE = isLE;
-    this.buffer = new Uint8Array(blockLen);
-    this.view = createView(this.buffer);
-  }
-  update(data) {
-    aexists(this);
-    data = toBytes(data);
-    abytes(data);
-    const { view, buffer, blockLen } = this;
-    const len = data.length;
-    for (let pos = 0; pos < len; ) {
-      const take = Math.min(blockLen - this.pos, len - pos);
-      if (take === blockLen) {
-        const dataView = createView(data);
-        for (; blockLen <= len - pos; pos += blockLen)
-          this.process(dataView, pos);
-        continue;
-      }
-      buffer.set(data.subarray(pos, pos + take), this.pos);
-      this.pos += take;
-      pos += take;
-      if (this.pos === blockLen) {
-        this.process(view, 0);
-        this.pos = 0;
-      }
-    }
-    this.length += data.length;
-    this.roundClean();
-    return this;
-  }
-  digestInto(out) {
-    aexists(this);
-    aoutput(out, this);
-    this.finished = true;
-    const { buffer, view, blockLen, isLE } = this;
-    let { pos } = this;
-    buffer[pos++] = 128;
-    clean(this.buffer.subarray(pos));
-    if (this.padOffset > blockLen - pos) {
-      this.process(view, 0);
-      pos = 0;
-    }
-    for (let i = pos; i < blockLen; i++)
-      buffer[i] = 0;
-    setBigUint64(view, blockLen - 8, BigInt(this.length * 8), isLE);
-    this.process(view, 0);
-    const oview = createView(out);
-    const len = this.outputLen;
-    if (len % 4)
-      throw new Error("_sha2: outputLen should be aligned to 32bit");
-    const outLen = len / 4;
-    const state = this.get();
-    if (outLen > state.length)
-      throw new Error("_sha2: outputLen bigger than state");
-    for (let i = 0; i < outLen; i++)
-      oview.setUint32(4 * i, state[i], isLE);
-  }
-  digest() {
-    const { buffer, outputLen } = this;
-    this.digestInto(buffer);
-    const res = buffer.slice(0, outputLen);
-    this.destroy();
-    return res;
-  }
-  _cloneInto(to) {
-    to || (to = new this.constructor());
-    to.set(...this.get());
-    const { blockLen, buffer, length, finished, destroyed, pos } = this;
-    to.destroyed = destroyed;
-    to.finished = finished;
-    to.length = length;
-    to.pos = pos;
-    if (length % blockLen)
-      to.buffer.set(buffer);
-    return to;
-  }
-  clone() {
-    return this._cloneInto();
-  }
-}
-const SHA256_IV = /* @__PURE__ */ Uint32Array.from([
-  1779033703,
-  3144134277,
-  1013904242,
-  2773480762,
-  1359893119,
-  2600822924,
-  528734635,
-  1541459225
-]);
-const SHA224_IV = /* @__PURE__ */ Uint32Array.from([
-  3238371032,
-  914150663,
-  812702999,
-  4144912697,
-  4290775857,
-  1750603025,
-  1694076839,
-  3204075428
-]);
-const SHA512_IV = /* @__PURE__ */ Uint32Array.from([
-  1779033703,
-  4089235720,
-  3144134277,
-  2227873595,
-  1013904242,
-  4271175723,
-  2773480762,
-  1595750129,
-  1359893119,
-  2917565137,
-  2600822924,
-  725511199,
-  528734635,
-  4215389547,
-  1541459225,
-  327033209
-]);
-const U32_MASK64 = /* @__PURE__ */ BigInt(2 ** 32 - 1);
-const _32n = /* @__PURE__ */ BigInt(32);
-function fromBig(n, le = false) {
-  if (le)
-    return { h: Number(n & U32_MASK64), l: Number(n >> _32n & U32_MASK64) };
-  return { h: Number(n >> _32n & U32_MASK64) | 0, l: Number(n & U32_MASK64) | 0 };
-}
-function split(lst, le = false) {
-  const len = lst.length;
-  let Ah = new Uint32Array(len);
-  let Al = new Uint32Array(len);
-  for (let i = 0; i < len; i++) {
-    const { h, l } = fromBig(lst[i], le);
-    [Ah[i], Al[i]] = [h, l];
-  }
-  return [Ah, Al];
-}
-const shrSH = (h, _l, s) => h >>> s;
-const shrSL = (h, l, s) => h << 32 - s | l >>> s;
-const rotrSH = (h, l, s) => h >>> s | l << 32 - s;
-const rotrSL = (h, l, s) => h << 32 - s | l >>> s;
-const rotrBH = (h, l, s) => h << 64 - s | l >>> s - 32;
-const rotrBL = (h, l, s) => h >>> s - 32 | l << 64 - s;
-function add(Ah, Al, Bh, Bl) {
-  const l = (Al >>> 0) + (Bl >>> 0);
-  return { h: Ah + Bh + (l / 2 ** 32 | 0) | 0, l: l | 0 };
-}
-const add3L = (Al, Bl, Cl) => (Al >>> 0) + (Bl >>> 0) + (Cl >>> 0);
-const add3H = (low, Ah, Bh, Ch) => Ah + Bh + Ch + (low / 2 ** 32 | 0) | 0;
-const add4L = (Al, Bl, Cl, Dl) => (Al >>> 0) + (Bl >>> 0) + (Cl >>> 0) + (Dl >>> 0);
-const add4H = (low, Ah, Bh, Ch, Dh) => Ah + Bh + Ch + Dh + (low / 2 ** 32 | 0) | 0;
-const add5L = (Al, Bl, Cl, Dl, El) => (Al >>> 0) + (Bl >>> 0) + (Cl >>> 0) + (Dl >>> 0) + (El >>> 0);
-const add5H = (low, Ah, Bh, Ch, Dh, Eh) => Ah + Bh + Ch + Dh + Eh + (low / 2 ** 32 | 0) | 0;
-const SHA256_K = /* @__PURE__ */ Uint32Array.from([
-  1116352408,
-  1899447441,
-  3049323471,
-  3921009573,
-  961987163,
-  1508970993,
-  2453635748,
-  2870763221,
-  3624381080,
-  310598401,
-  607225278,
-  1426881987,
-  1925078388,
-  2162078206,
-  2614888103,
-  3248222580,
-  3835390401,
-  4022224774,
-  264347078,
-  604807628,
-  770255983,
-  1249150122,
-  1555081692,
-  1996064986,
-  2554220882,
-  2821834349,
-  2952996808,
-  3210313671,
-  3336571891,
-  3584528711,
-  113926993,
-  338241895,
-  666307205,
-  773529912,
-  1294757372,
-  1396182291,
-  1695183700,
-  1986661051,
-  2177026350,
-  2456956037,
-  2730485921,
-  2820302411,
-  3259730800,
-  3345764771,
-  3516065817,
-  3600352804,
-  4094571909,
-  275423344,
-  430227734,
-  506948616,
-  659060556,
-  883997877,
-  958139571,
-  1322822218,
-  1537002063,
-  1747873779,
-  1955562222,
-  2024104815,
-  2227730452,
-  2361852424,
-  2428436474,
-  2756734187,
-  3204031479,
-  3329325298
-]);
-const SHA256_W = /* @__PURE__ */ new Uint32Array(64);
-class SHA256 extends HashMD {
-  constructor(outputLen = 32) {
-    super(64, outputLen, 8, false);
-    this.A = SHA256_IV[0] | 0;
-    this.B = SHA256_IV[1] | 0;
-    this.C = SHA256_IV[2] | 0;
-    this.D = SHA256_IV[3] | 0;
-    this.E = SHA256_IV[4] | 0;
-    this.F = SHA256_IV[5] | 0;
-    this.G = SHA256_IV[6] | 0;
-    this.H = SHA256_IV[7] | 0;
-  }
-  get() {
-    const { A, B, C, D, E, F, G, H } = this;
-    return [A, B, C, D, E, F, G, H];
-  }
-  // prettier-ignore
-  set(A, B, C, D, E, F, G, H) {
-    this.A = A | 0;
-    this.B = B | 0;
-    this.C = C | 0;
-    this.D = D | 0;
-    this.E = E | 0;
-    this.F = F | 0;
-    this.G = G | 0;
-    this.H = H | 0;
-  }
-  process(view, offset) {
-    for (let i = 0; i < 16; i++, offset += 4)
-      SHA256_W[i] = view.getUint32(offset, false);
-    for (let i = 16; i < 64; i++) {
-      const W15 = SHA256_W[i - 15];
-      const W2 = SHA256_W[i - 2];
-      const s0 = rotr(W15, 7) ^ rotr(W15, 18) ^ W15 >>> 3;
-      const s1 = rotr(W2, 17) ^ rotr(W2, 19) ^ W2 >>> 10;
-      SHA256_W[i] = s1 + SHA256_W[i - 7] + s0 + SHA256_W[i - 16] | 0;
-    }
-    let { A, B, C, D, E, F, G, H } = this;
-    for (let i = 0; i < 64; i++) {
-      const sigma1 = rotr(E, 6) ^ rotr(E, 11) ^ rotr(E, 25);
-      const T1 = H + sigma1 + Chi(E, F, G) + SHA256_K[i] + SHA256_W[i] | 0;
-      const sigma0 = rotr(A, 2) ^ rotr(A, 13) ^ rotr(A, 22);
-      const T2 = sigma0 + Maj(A, B, C) | 0;
-      H = G;
-      G = F;
-      F = E;
-      E = D + T1 | 0;
-      D = C;
-      C = B;
-      B = A;
-      A = T1 + T2 | 0;
-    }
-    A = A + this.A | 0;
-    B = B + this.B | 0;
-    C = C + this.C | 0;
-    D = D + this.D | 0;
-    E = E + this.E | 0;
-    F = F + this.F | 0;
-    G = G + this.G | 0;
-    H = H + this.H | 0;
-    this.set(A, B, C, D, E, F, G, H);
-  }
-  roundClean() {
-    clean(SHA256_W);
-  }
-  destroy() {
-    this.set(0, 0, 0, 0, 0, 0, 0, 0);
-    clean(this.buffer);
-  }
-}
-class SHA224 extends SHA256 {
-  constructor() {
-    super(28);
-    this.A = SHA224_IV[0] | 0;
-    this.B = SHA224_IV[1] | 0;
-    this.C = SHA224_IV[2] | 0;
-    this.D = SHA224_IV[3] | 0;
-    this.E = SHA224_IV[4] | 0;
-    this.F = SHA224_IV[5] | 0;
-    this.G = SHA224_IV[6] | 0;
-    this.H = SHA224_IV[7] | 0;
-  }
-}
-const K512 = /* @__PURE__ */ (() => split([
-  "0x428a2f98d728ae22",
-  "0x7137449123ef65cd",
-  "0xb5c0fbcfec4d3b2f",
-  "0xe9b5dba58189dbbc",
-  "0x3956c25bf348b538",
-  "0x59f111f1b605d019",
-  "0x923f82a4af194f9b",
-  "0xab1c5ed5da6d8118",
-  "0xd807aa98a3030242",
-  "0x12835b0145706fbe",
-  "0x243185be4ee4b28c",
-  "0x550c7dc3d5ffb4e2",
-  "0x72be5d74f27b896f",
-  "0x80deb1fe3b1696b1",
-  "0x9bdc06a725c71235",
-  "0xc19bf174cf692694",
-  "0xe49b69c19ef14ad2",
-  "0xefbe4786384f25e3",
-  "0x0fc19dc68b8cd5b5",
-  "0x240ca1cc77ac9c65",
-  "0x2de92c6f592b0275",
-  "0x4a7484aa6ea6e483",
-  "0x5cb0a9dcbd41fbd4",
-  "0x76f988da831153b5",
-  "0x983e5152ee66dfab",
-  "0xa831c66d2db43210",
-  "0xb00327c898fb213f",
-  "0xbf597fc7beef0ee4",
-  "0xc6e00bf33da88fc2",
-  "0xd5a79147930aa725",
-  "0x06ca6351e003826f",
-  "0x142929670a0e6e70",
-  "0x27b70a8546d22ffc",
-  "0x2e1b21385c26c926",
-  "0x4d2c6dfc5ac42aed",
-  "0x53380d139d95b3df",
-  "0x650a73548baf63de",
-  "0x766a0abb3c77b2a8",
-  "0x81c2c92e47edaee6",
-  "0x92722c851482353b",
-  "0xa2bfe8a14cf10364",
-  "0xa81a664bbc423001",
-  "0xc24b8b70d0f89791",
-  "0xc76c51a30654be30",
-  "0xd192e819d6ef5218",
-  "0xd69906245565a910",
-  "0xf40e35855771202a",
-  "0x106aa07032bbd1b8",
-  "0x19a4c116b8d2d0c8",
-  "0x1e376c085141ab53",
-  "0x2748774cdf8eeb99",
-  "0x34b0bcb5e19b48a8",
-  "0x391c0cb3c5c95a63",
-  "0x4ed8aa4ae3418acb",
-  "0x5b9cca4f7763e373",
-  "0x682e6ff3d6b2b8a3",
-  "0x748f82ee5defb2fc",
-  "0x78a5636f43172f60",
-  "0x84c87814a1f0ab72",
-  "0x8cc702081a6439ec",
-  "0x90befffa23631e28",
-  "0xa4506cebde82bde9",
-  "0xbef9a3f7b2c67915",
-  "0xc67178f2e372532b",
-  "0xca273eceea26619c",
-  "0xd186b8c721c0c207",
-  "0xeada7dd6cde0eb1e",
-  "0xf57d4f7fee6ed178",
-  "0x06f067aa72176fba",
-  "0x0a637dc5a2c898a6",
-  "0x113f9804bef90dae",
-  "0x1b710b35131c471b",
-  "0x28db77f523047d84",
-  "0x32caab7b40c72493",
-  "0x3c9ebe0a15c9bebc",
-  "0x431d67c49c100d4c",
-  "0x4cc5d4becb3e42b6",
-  "0x597f299cfc657e2a",
-  "0x5fcb6fab3ad6faec",
-  "0x6c44198c4a475817"
-].map((n) => BigInt(n))))();
-const SHA512_Kh = /* @__PURE__ */ (() => K512[0])();
-const SHA512_Kl = /* @__PURE__ */ (() => K512[1])();
-const SHA512_W_H = /* @__PURE__ */ new Uint32Array(80);
-const SHA512_W_L = /* @__PURE__ */ new Uint32Array(80);
-class SHA512 extends HashMD {
-  constructor(outputLen = 64) {
-    super(128, outputLen, 16, false);
-    this.Ah = SHA512_IV[0] | 0;
-    this.Al = SHA512_IV[1] | 0;
-    this.Bh = SHA512_IV[2] | 0;
-    this.Bl = SHA512_IV[3] | 0;
-    this.Ch = SHA512_IV[4] | 0;
-    this.Cl = SHA512_IV[5] | 0;
-    this.Dh = SHA512_IV[6] | 0;
-    this.Dl = SHA512_IV[7] | 0;
-    this.Eh = SHA512_IV[8] | 0;
-    this.El = SHA512_IV[9] | 0;
-    this.Fh = SHA512_IV[10] | 0;
-    this.Fl = SHA512_IV[11] | 0;
-    this.Gh = SHA512_IV[12] | 0;
-    this.Gl = SHA512_IV[13] | 0;
-    this.Hh = SHA512_IV[14] | 0;
-    this.Hl = SHA512_IV[15] | 0;
-  }
-  // prettier-ignore
-  get() {
-    const { Ah, Al, Bh, Bl, Ch, Cl, Dh, Dl, Eh, El, Fh, Fl, Gh, Gl, Hh, Hl } = this;
-    return [Ah, Al, Bh, Bl, Ch, Cl, Dh, Dl, Eh, El, Fh, Fl, Gh, Gl, Hh, Hl];
-  }
-  // prettier-ignore
-  set(Ah, Al, Bh, Bl, Ch, Cl, Dh, Dl, Eh, El, Fh, Fl, Gh, Gl, Hh, Hl) {
-    this.Ah = Ah | 0;
-    this.Al = Al | 0;
-    this.Bh = Bh | 0;
-    this.Bl = Bl | 0;
-    this.Ch = Ch | 0;
-    this.Cl = Cl | 0;
-    this.Dh = Dh | 0;
-    this.Dl = Dl | 0;
-    this.Eh = Eh | 0;
-    this.El = El | 0;
-    this.Fh = Fh | 0;
-    this.Fl = Fl | 0;
-    this.Gh = Gh | 0;
-    this.Gl = Gl | 0;
-    this.Hh = Hh | 0;
-    this.Hl = Hl | 0;
-  }
-  process(view, offset) {
-    for (let i = 0; i < 16; i++, offset += 4) {
-      SHA512_W_H[i] = view.getUint32(offset);
-      SHA512_W_L[i] = view.getUint32(offset += 4);
-    }
-    for (let i = 16; i < 80; i++) {
-      const W15h = SHA512_W_H[i - 15] | 0;
-      const W15l = SHA512_W_L[i - 15] | 0;
-      const s0h = rotrSH(W15h, W15l, 1) ^ rotrSH(W15h, W15l, 8) ^ shrSH(W15h, W15l, 7);
-      const s0l = rotrSL(W15h, W15l, 1) ^ rotrSL(W15h, W15l, 8) ^ shrSL(W15h, W15l, 7);
-      const W2h = SHA512_W_H[i - 2] | 0;
-      const W2l = SHA512_W_L[i - 2] | 0;
-      const s1h = rotrSH(W2h, W2l, 19) ^ rotrBH(W2h, W2l, 61) ^ shrSH(W2h, W2l, 6);
-      const s1l = rotrSL(W2h, W2l, 19) ^ rotrBL(W2h, W2l, 61) ^ shrSL(W2h, W2l, 6);
-      const SUMl = add4L(s0l, s1l, SHA512_W_L[i - 7], SHA512_W_L[i - 16]);
-      const SUMh = add4H(SUMl, s0h, s1h, SHA512_W_H[i - 7], SHA512_W_H[i - 16]);
-      SHA512_W_H[i] = SUMh | 0;
-      SHA512_W_L[i] = SUMl | 0;
-    }
-    let { Ah, Al, Bh, Bl, Ch, Cl, Dh, Dl, Eh, El, Fh, Fl, Gh, Gl, Hh, Hl } = this;
-    for (let i = 0; i < 80; i++) {
-      const sigma1h = rotrSH(Eh, El, 14) ^ rotrSH(Eh, El, 18) ^ rotrBH(Eh, El, 41);
-      const sigma1l = rotrSL(Eh, El, 14) ^ rotrSL(Eh, El, 18) ^ rotrBL(Eh, El, 41);
-      const CHIh = Eh & Fh ^ ~Eh & Gh;
-      const CHIl = El & Fl ^ ~El & Gl;
-      const T1ll = add5L(Hl, sigma1l, CHIl, SHA512_Kl[i], SHA512_W_L[i]);
-      const T1h = add5H(T1ll, Hh, sigma1h, CHIh, SHA512_Kh[i], SHA512_W_H[i]);
-      const T1l = T1ll | 0;
-      const sigma0h = rotrSH(Ah, Al, 28) ^ rotrBH(Ah, Al, 34) ^ rotrBH(Ah, Al, 39);
-      const sigma0l = rotrSL(Ah, Al, 28) ^ rotrBL(Ah, Al, 34) ^ rotrBL(Ah, Al, 39);
-      const MAJh = Ah & Bh ^ Ah & Ch ^ Bh & Ch;
-      const MAJl = Al & Bl ^ Al & Cl ^ Bl & Cl;
-      Hh = Gh | 0;
-      Hl = Gl | 0;
-      Gh = Fh | 0;
-      Gl = Fl | 0;
-      Fh = Eh | 0;
-      Fl = El | 0;
-      ({ h: Eh, l: El } = add(Dh | 0, Dl | 0, T1h | 0, T1l | 0));
-      Dh = Ch | 0;
-      Dl = Cl | 0;
-      Ch = Bh | 0;
-      Cl = Bl | 0;
-      Bh = Ah | 0;
-      Bl = Al | 0;
-      const All = add3L(T1l, sigma0l, MAJl);
-      Ah = add3H(All, T1h, sigma0h, MAJh);
-      Al = All | 0;
-    }
-    ({ h: Ah, l: Al } = add(this.Ah | 0, this.Al | 0, Ah | 0, Al | 0));
-    ({ h: Bh, l: Bl } = add(this.Bh | 0, this.Bl | 0, Bh | 0, Bl | 0));
-    ({ h: Ch, l: Cl } = add(this.Ch | 0, this.Cl | 0, Ch | 0, Cl | 0));
-    ({ h: Dh, l: Dl } = add(this.Dh | 0, this.Dl | 0, Dh | 0, Dl | 0));
-    ({ h: Eh, l: El } = add(this.Eh | 0, this.El | 0, Eh | 0, El | 0));
-    ({ h: Fh, l: Fl } = add(this.Fh | 0, this.Fl | 0, Fh | 0, Fl | 0));
-    ({ h: Gh, l: Gl } = add(this.Gh | 0, this.Gl | 0, Gh | 0, Gl | 0));
-    ({ h: Hh, l: Hl } = add(this.Hh | 0, this.Hl | 0, Hh | 0, Hl | 0));
-    this.set(Ah, Al, Bh, Bl, Ch, Cl, Dh, Dl, Eh, El, Fh, Fl, Gh, Gl, Hh, Hl);
-  }
-  roundClean() {
-    clean(SHA512_W_H, SHA512_W_L);
-  }
-  destroy() {
-    clean(this.buffer);
-    this.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-  }
-}
-const sha256 = /* @__PURE__ */ createHasher(() => new SHA256());
-const sha224 = /* @__PURE__ */ createHasher(() => new SHA224());
-const sha512 = /* @__PURE__ */ createHasher(() => new SHA512());
-const JSON_KEY_PRINCIPAL = "__principal__";
-const SELF_AUTHENTICATING_SUFFIX = 2;
-const ANONYMOUS_SUFFIX = 4;
-const MANAGEMENT_CANISTER_PRINCIPAL_TEXT_STR = "aaaaa-aa";
-class Principal {
-  static anonymous() {
-    return new this(new Uint8Array([ANONYMOUS_SUFFIX]));
-  }
-  /**
-   * Utility method, returning the principal representing the management canister, decoded from the hex string `'aaaaa-aa'`
-   * @returns {Principal} principal of the management canister
-   */
-  static managementCanister() {
-    return this.fromText(MANAGEMENT_CANISTER_PRINCIPAL_TEXT_STR);
-  }
-  static selfAuthenticating(publicKey) {
-    const sha = sha224(publicKey);
-    return new this(new Uint8Array([...sha, SELF_AUTHENTICATING_SUFFIX]));
-  }
-  static from(other) {
-    if (typeof other === "string") {
-      return Principal.fromText(other);
-    } else if (Object.getPrototypeOf(other) === Uint8Array.prototype) {
-      return new Principal(other);
-    } else if (Principal.isPrincipal(other)) {
-      return new Principal(other._arr);
-    }
-    throw new Error(`Impossible to convert ${JSON.stringify(other)} to Principal.`);
-  }
-  static fromHex(hex2) {
-    return new this(hexToBytes(hex2));
-  }
-  static fromText(text) {
-    let maybePrincipal = text;
-    if (text.includes(JSON_KEY_PRINCIPAL)) {
-      const obj = JSON.parse(text);
-      if (JSON_KEY_PRINCIPAL in obj) {
-        maybePrincipal = obj[JSON_KEY_PRINCIPAL];
-      }
-    }
-    const canisterIdNoDash = maybePrincipal.toLowerCase().replace(/-/g, "");
-    let arr = base32Decode(canisterIdNoDash);
-    arr = arr.slice(4, arr.length);
-    const principal = new this(arr);
-    if (principal.toText() !== maybePrincipal) {
-      throw new Error(`Principal "${principal.toText()}" does not have a valid checksum (original value "${maybePrincipal}" may not be a valid Principal ID).`);
-    }
-    return principal;
-  }
-  static fromUint8Array(arr) {
-    return new this(arr);
-  }
-  static isPrincipal(other) {
-    return other instanceof Principal || typeof other === "object" && other !== null && "_isPrincipal" in other && other["_isPrincipal"] === true && "_arr" in other && other["_arr"] instanceof Uint8Array;
-  }
-  constructor(_arr) {
-    this._arr = _arr;
-    this._isPrincipal = true;
-  }
-  isAnonymous() {
-    return this._arr.byteLength === 1 && this._arr[0] === ANONYMOUS_SUFFIX;
-  }
-  toUint8Array() {
-    return this._arr;
-  }
-  toHex() {
-    return bytesToHex(this._arr).toUpperCase();
-  }
-  toText() {
-    const checksumArrayBuf = new ArrayBuffer(4);
-    const view = new DataView(checksumArrayBuf);
-    view.setUint32(0, getCrc32(this._arr));
-    const checksum = new Uint8Array(checksumArrayBuf);
-    const array = new Uint8Array([...checksum, ...this._arr]);
-    const result = base32Encode(array);
-    const matches = result.match(/.{1,5}/g);
-    if (!matches) {
-      throw new Error();
-    }
-    return matches.join("-");
-  }
-  toString() {
-    return this.toText();
-  }
-  /**
-   * Serializes to JSON
-   * @returns {JsonnablePrincipal} a JSON object with a single key, {@link JSON_KEY_PRINCIPAL}, whose value is the principal as a string
-   */
-  toJSON() {
-    return { [JSON_KEY_PRINCIPAL]: this.toText() };
-  }
-  /**
-   * Utility method taking a Principal to compare against. Used for determining canister ranges in certificate verification
-   * @param {Principal} other - a {@link Principal} to compare
-   * @returns {'lt' | 'eq' | 'gt'} `'lt' | 'eq' | 'gt'` a string, representing less than, equal to, or greater than
-   */
-  compareTo(other) {
-    for (let i = 0; i < Math.min(this._arr.length, other._arr.length); i++) {
-      if (this._arr[i] < other._arr[i])
-        return "lt";
-      else if (this._arr[i] > other._arr[i])
-        return "gt";
-    }
-    if (this._arr.length < other._arr.length)
-      return "lt";
-    if (this._arr.length > other._arr.length)
-      return "gt";
-    return "eq";
-  }
-  /**
-   * Utility method checking whether a provided Principal is less than or equal to the current one using the {@link Principal.compareTo} method
-   * @param other a {@link Principal} to compare
-   * @returns {boolean} boolean
-   */
-  ltEq(other) {
-    const cmp = this.compareTo(other);
-    return cmp == "lt" || cmp == "eq";
-  }
-  /**
-   * Utility method checking whether a provided Principal is greater than or equal to the current one using the {@link Principal.compareTo} method
-   * @param other a {@link Principal} to compare
-   * @returns {boolean} boolean
-   */
-  gtEq(other) {
-    const cmp = this.compareTo(other);
-    return cmp == "gt" || cmp == "eq";
-  }
-}
-var ErrorKindEnum;
-(function(ErrorKindEnum2) {
-  ErrorKindEnum2["Trust"] = "Trust";
-  ErrorKindEnum2["Protocol"] = "Protocol";
-  ErrorKindEnum2["Reject"] = "Reject";
-  ErrorKindEnum2["Transport"] = "Transport";
-  ErrorKindEnum2["External"] = "External";
-  ErrorKindEnum2["Limit"] = "Limit";
-  ErrorKindEnum2["Input"] = "Input";
-  ErrorKindEnum2["Unknown"] = "Unknown";
-})(ErrorKindEnum || (ErrorKindEnum = {}));
-class ErrorCode {
-  constructor(isCertified = false) {
-    this.isCertified = isCertified;
-  }
-  toString() {
-    let errorMessage = this.toErrorMessage();
-    if (this.requestContext) {
-      errorMessage += `
-Request context:
-  Request ID (hex): ${this.requestContext.requestId ? bytesToHex(this.requestContext.requestId) : "undefined"}
-  Sender pubkey (hex): ${bytesToHex(this.requestContext.senderPubKey)}
-  Sender signature (hex): ${bytesToHex(this.requestContext.senderSignature)}
-  Ingress expiry: ${this.requestContext.ingressExpiry.toString()}`;
-    }
-    if (this.callContext) {
-      errorMessage += `
-Call context:
-  Canister ID: ${this.callContext.canisterId.toText()}
-  Method name: ${this.callContext.methodName}
-  HTTP details: ${JSON.stringify(this.callContext.httpDetails, null, 2)}`;
-    }
-    return errorMessage;
-  }
-}
-class AgentError extends Error {
-  get code() {
-    return this.cause.code;
-  }
-  set code(code) {
-    this.cause.code = code;
-  }
-  get kind() {
-    return this.cause.kind;
-  }
-  set kind(kind) {
-    this.cause.kind = kind;
-  }
-  /**
-   * Reads the `isCertified` property of the underlying error code.
-   * @returns `true` if the error is certified, `false` otherwise.
-   */
-  get isCertified() {
-    return this.code.isCertified;
-  }
-  constructor(code, kind) {
-    super(code.toString());
-    this.name = "AgentError";
-    this.cause = { code, kind };
-    Object.setPrototypeOf(this, AgentError.prototype);
-  }
-  hasCode(code) {
-    return this.code instanceof code;
-  }
-  toString() {
-    return `${this.name} (${this.kind}): ${this.message}`;
-  }
-}
-class ErrorKind extends AgentError {
-  static fromCode(code) {
-    return new this(code);
-  }
-}
-class InputError extends ErrorKind {
-  constructor(code) {
-    super(code, ErrorKindEnum.Input);
-    this.name = "InputError";
-    Object.setPrototypeOf(this, InputError.prototype);
-  }
-}
-class DerDecodeLengthMismatchErrorCode extends ErrorCode {
-  constructor(expectedLength, actualLength) {
-    super();
-    this.expectedLength = expectedLength;
-    this.actualLength = actualLength;
-    this.name = "DerDecodeLengthMismatchErrorCode";
-    Object.setPrototypeOf(this, DerDecodeLengthMismatchErrorCode.prototype);
-  }
-  toErrorMessage() {
-    return `DER payload mismatch: Expected length ${this.expectedLength}, actual length: ${this.actualLength}`;
-  }
-}
-class DerDecodeErrorCode extends ErrorCode {
-  constructor(error) {
-    super();
-    this.error = error;
-    this.name = "DerDecodeErrorCode";
-    Object.setPrototypeOf(this, DerDecodeErrorCode.prototype);
-  }
-  toErrorMessage() {
-    return `Failed to decode DER: ${this.error}`;
-  }
-}
-class DerEncodeErrorCode extends ErrorCode {
-  constructor(error) {
-    super();
-    this.error = error;
-    this.name = "DerEncodeErrorCode";
-    Object.setPrototypeOf(this, DerEncodeErrorCode.prototype);
-  }
-  toErrorMessage() {
-    return `Failed to encode DER: ${this.error}`;
-  }
-}
-class HashValueErrorCode extends ErrorCode {
-  constructor(value) {
-    super();
-    this.value = value;
-    this.name = "HashValueErrorCode";
-    Object.setPrototypeOf(this, HashValueErrorCode.prototype);
-  }
-  toErrorMessage() {
-    return `Attempt to hash a value of unsupported type: ${this.value}`;
-  }
-}
-function concat(...uint8Arrays) {
-  const result = new Uint8Array(uint8Arrays.reduce((acc, curr) => acc + curr.byteLength, 0));
-  let index2 = 0;
-  for (const b of uint8Arrays) {
-    result.set(b, index2);
-    index2 += b.byteLength;
-  }
-  return result;
-}
-class PipeArrayBuffer {
-  /**
-   * Save a checkpoint of the reading view (for backtracking)
-   */
-  save() {
-    return this._view;
-  }
-  /**
-   * Restore a checkpoint of the reading view (for backtracking)
-   * @param checkPoint a previously saved checkpoint
-   */
-  restore(checkPoint) {
-    if (!(checkPoint instanceof Uint8Array)) {
-      throw new Error("Checkpoint must be a Uint8Array");
-    }
-    this._view = checkPoint;
-  }
-  /**
-   * Creates a new instance of a pipe
-   * @param buffer an optional buffer to start with
-   * @param length an optional amount of bytes to use for the length.
-   */
-  constructor(buffer, length = (buffer == null ? void 0 : buffer.byteLength) || 0) {
-    if (buffer && !(buffer instanceof Uint8Array)) {
-      try {
-        buffer = uint8FromBufLike$1(buffer);
-      } catch {
-        throw new Error("Buffer must be a Uint8Array");
-      }
-    }
-    if (length < 0 || !Number.isInteger(length)) {
-      throw new Error("Length must be a non-negative integer");
-    }
-    if (buffer && length > buffer.byteLength) {
-      throw new Error("Length cannot exceed buffer length");
-    }
-    this._buffer = buffer || new Uint8Array(0);
-    this._view = new Uint8Array(this._buffer.buffer, 0, length);
-  }
-  get buffer() {
-    return this._view.slice();
-  }
-  get byteLength() {
-    return this._view.byteLength;
-  }
-  /**
-   * Read `num` number of bytes from the front of the pipe.
-   * @param num The number of bytes to read.
-   */
-  read(num) {
-    const result = this._view.subarray(0, num);
-    this._view = this._view.subarray(num);
-    return result.slice();
-  }
-  readUint8() {
-    if (this._view.byteLength === 0) {
-      return void 0;
-    }
-    const result = this._view[0];
-    this._view = this._view.subarray(1);
-    return result;
-  }
-  /**
-   * Write a buffer to the end of the pipe.
-   * @param buf The bytes to write.
-   */
-  write(buf) {
-    if (!(buf instanceof Uint8Array)) {
-      throw new Error("Buffer must be a Uint8Array");
-    }
-    const offset = this._view.byteLength;
-    if (this._view.byteOffset + this._view.byteLength + buf.byteLength >= this._buffer.byteLength) {
-      this.alloc(buf.byteLength);
-    } else {
-      this._view = new Uint8Array(this._buffer.buffer, this._view.byteOffset, this._view.byteLength + buf.byteLength);
-    }
-    this._view.set(buf, offset);
-  }
-  /**
-   * Whether or not there is more data to read from the buffer
-   */
-  get end() {
-    return this._view.byteLength === 0;
-  }
-  /**
-   * Allocate a fixed amount of memory in the buffer. This does not affect the view.
-   * @param amount A number of bytes to add to the buffer.
-   */
-  alloc(amount) {
-    if (amount <= 0 || !Number.isInteger(amount)) {
-      throw new Error("Amount must be a positive integer");
-    }
-    const b = new Uint8Array((this._buffer.byteLength + amount) * 1.2 | 0);
-    const v = new Uint8Array(b.buffer, 0, this._view.byteLength + amount);
-    v.set(this._view);
-    this._buffer = b;
-    this._view = v;
-  }
-}
-function uint8FromBufLike$1(bufLike) {
-  if (!bufLike) {
-    throw new Error("Input cannot be null or undefined");
-  }
-  if (bufLike instanceof Uint8Array) {
-    return bufLike;
-  }
-  if (bufLike instanceof ArrayBuffer) {
-    return new Uint8Array(bufLike);
-  }
-  if (Array.isArray(bufLike)) {
-    return new Uint8Array(bufLike);
-  }
-  if ("buffer" in bufLike) {
-    return uint8FromBufLike$1(bufLike.buffer);
-  }
-  return new Uint8Array(bufLike);
-}
-function compare(u1, u2) {
-  if (u1.byteLength !== u2.byteLength) {
-    return u1.byteLength - u2.byteLength;
-  }
-  for (let i = 0; i < u1.length; i++) {
-    if (u1[i] !== u2[i]) {
-      return u1[i] - u2[i];
-    }
-  }
-  return 0;
-}
-function uint8Equals$1(u1, u2) {
-  return compare(u1, u2) === 0;
-}
-function uint8ToDataView(uint8) {
-  if (!(uint8 instanceof Uint8Array)) {
-    throw new Error("Input must be a Uint8Array");
-  }
-  return new DataView(uint8.buffer, uint8.byteOffset, uint8.byteLength);
-}
-function idlHash(s) {
-  const utf8encoder = new TextEncoder();
-  const array = utf8encoder.encode(s);
-  let h = 0;
-  for (const c of array) {
-    h = (h * 223 + c) % 2 ** 32;
-  }
-  return h;
-}
-function idlLabelToId(label) {
-  if (/^_\d+_$/.test(label) || /^_0x[0-9a-fA-F]+_$/.test(label)) {
-    const num = +label.slice(1, -1);
-    if (Number.isSafeInteger(num) && num >= 0 && num < 2 ** 32) {
-      return num;
-    }
-  }
-  return idlHash(label);
-}
-function ilog2(n) {
-  const nBig = BigInt(n);
-  if (n <= 0) {
-    throw new RangeError("Input must be positive");
-  }
-  return nBig.toString(2).length - 1;
-}
-function iexp2(n) {
-  const nBig = BigInt(n);
-  if (n < 0) {
-    throw new RangeError("Input must be non-negative");
-  }
-  return BigInt(1) << nBig;
-}
-function eob() {
-  throw new Error("unexpected end of buffer");
-}
-function safeRead(pipe2, num) {
-  if (pipe2.byteLength < num) {
-    eob();
-  }
-  return pipe2.read(num);
-}
-function safeReadUint8(pipe2) {
-  const byte = pipe2.readUint8();
-  if (byte === void 0) {
-    eob();
-  }
-  return byte;
-}
-function lebEncode(value) {
-  if (typeof value === "number") {
-    value = BigInt(value);
-  }
-  if (value < BigInt(0)) {
-    throw new Error("Cannot leb encode negative values.");
-  }
-  const byteLength = (value === BigInt(0) ? 0 : ilog2(value)) + 1;
-  const pipe2 = new PipeArrayBuffer(new Uint8Array(byteLength), 0);
-  while (true) {
-    const i = Number(value & BigInt(127));
-    value /= BigInt(128);
-    if (value === BigInt(0)) {
-      pipe2.write(new Uint8Array([i]));
-      break;
-    } else {
-      pipe2.write(new Uint8Array([i | 128]));
-    }
-  }
-  return pipe2.buffer;
-}
-function lebDecode(pipe2) {
-  let weight = BigInt(1);
-  let value = BigInt(0);
-  let byte;
-  do {
-    byte = safeReadUint8(pipe2);
-    value += BigInt(byte & 127).valueOf() * weight;
-    weight *= BigInt(128);
-  } while (byte >= 128);
-  return value;
-}
-function slebEncode(value) {
-  if (typeof value === "number") {
-    value = BigInt(value);
-  }
-  const isNeg = value < BigInt(0);
-  if (isNeg) {
-    value = -value - BigInt(1);
-  }
-  const byteLength = (value === BigInt(0) ? 0 : ilog2(value)) + 1;
-  const pipe2 = new PipeArrayBuffer(new Uint8Array(byteLength), 0);
-  while (true) {
-    const i = getLowerBytes(value);
-    value /= BigInt(128);
-    if (isNeg && value === BigInt(0) && (i & 64) !== 0 || !isNeg && value === BigInt(0) && (i & 64) === 0) {
-      pipe2.write(new Uint8Array([i]));
-      break;
-    } else {
-      pipe2.write(new Uint8Array([i | 128]));
-    }
-  }
-  function getLowerBytes(num) {
-    const bytes = num % BigInt(128);
-    if (isNeg) {
-      return Number(BigInt(128) - bytes - BigInt(1));
-    } else {
-      return Number(bytes);
-    }
-  }
-  return pipe2.buffer;
-}
-function slebDecode(pipe2) {
-  const pipeView = new Uint8Array(pipe2.buffer);
-  let len = 0;
-  for (; len < pipeView.byteLength; len++) {
-    if (pipeView[len] < 128) {
-      if ((pipeView[len] & 64) === 0) {
-        return lebDecode(pipe2);
-      }
-      break;
-    }
-  }
-  const bytes = new Uint8Array(safeRead(pipe2, len + 1));
-  let value = BigInt(0);
-  for (let i = bytes.byteLength - 1; i >= 0; i--) {
-    value = value * BigInt(128) + BigInt(128 - (bytes[i] & 127) - 1);
-  }
-  return -value - BigInt(1);
-}
-function writeUIntLE(value, byteLength) {
-  if (BigInt(value) < BigInt(0)) {
-    throw new Error("Cannot write negative values.");
-  }
-  return writeIntLE(value, byteLength);
-}
-function writeIntLE(value, byteLength) {
-  value = BigInt(value);
-  const pipe2 = new PipeArrayBuffer(new Uint8Array(Math.min(1, byteLength)), 0);
-  let i = 0;
-  let mul = BigInt(256);
-  let sub = BigInt(0);
-  let byte = Number(value % mul);
-  pipe2.write(new Uint8Array([byte]));
-  while (++i < byteLength) {
-    if (value < 0 && sub === BigInt(0) && byte !== 0) {
-      sub = BigInt(1);
-    }
-    byte = Number((value / mul - sub) % BigInt(256));
-    pipe2.write(new Uint8Array([byte]));
-    mul *= BigInt(256);
-  }
-  return pipe2.buffer;
-}
-function readUIntLE(pipe2, byteLength) {
-  if (byteLength <= 0 || !Number.isInteger(byteLength)) {
-    throw new Error("Byte length must be a positive integer");
-  }
-  let val = BigInt(safeReadUint8(pipe2));
-  let mul = BigInt(1);
-  let i = 0;
-  while (++i < byteLength) {
-    mul *= BigInt(256);
-    const byte = BigInt(safeReadUint8(pipe2));
-    val = val + mul * byte;
-  }
-  return val;
-}
-function readIntLE(pipe2, byteLength) {
-  if (byteLength <= 0 || !Number.isInteger(byteLength)) {
-    throw new Error("Byte length must be a positive integer");
-  }
-  let val = readUIntLE(pipe2, byteLength);
-  const mul = BigInt(2) ** (BigInt(8) * BigInt(byteLength - 1) + BigInt(7));
-  if (val >= mul) {
-    val -= mul * BigInt(2);
-  }
-  return val;
-}
-var IDLTypeIds;
-(function(IDLTypeIds2) {
-  IDLTypeIds2[IDLTypeIds2["Null"] = -1] = "Null";
-  IDLTypeIds2[IDLTypeIds2["Bool"] = -2] = "Bool";
-  IDLTypeIds2[IDLTypeIds2["Nat"] = -3] = "Nat";
-  IDLTypeIds2[IDLTypeIds2["Int"] = -4] = "Int";
-  IDLTypeIds2[IDLTypeIds2["Float32"] = -13] = "Float32";
-  IDLTypeIds2[IDLTypeIds2["Float64"] = -14] = "Float64";
-  IDLTypeIds2[IDLTypeIds2["Text"] = -15] = "Text";
-  IDLTypeIds2[IDLTypeIds2["Reserved"] = -16] = "Reserved";
-  IDLTypeIds2[IDLTypeIds2["Empty"] = -17] = "Empty";
-  IDLTypeIds2[IDLTypeIds2["Opt"] = -18] = "Opt";
-  IDLTypeIds2[IDLTypeIds2["Vector"] = -19] = "Vector";
-  IDLTypeIds2[IDLTypeIds2["Record"] = -20] = "Record";
-  IDLTypeIds2[IDLTypeIds2["Variant"] = -21] = "Variant";
-  IDLTypeIds2[IDLTypeIds2["Func"] = -22] = "Func";
-  IDLTypeIds2[IDLTypeIds2["Service"] = -23] = "Service";
-  IDLTypeIds2[IDLTypeIds2["Principal"] = -24] = "Principal";
-})(IDLTypeIds || (IDLTypeIds = {}));
-const toReadableString_max = 400;
-function zipWith(xs, ys, f) {
-  return xs.map((x, i) => f(x, ys[i]));
-}
-var IdlTypeName;
-(function(IdlTypeName2) {
-  IdlTypeName2["EmptyClass"] = "__IDL_EmptyClass__";
-  IdlTypeName2["UnknownClass"] = "__IDL_UnknownClass__";
-  IdlTypeName2["BoolClass"] = "__IDL_BoolClass__";
-  IdlTypeName2["NullClass"] = "__IDL_NullClass__";
-  IdlTypeName2["ReservedClass"] = "__IDL_ReservedClass__";
-  IdlTypeName2["TextClass"] = "__IDL_TextClass__";
-  IdlTypeName2["IntClass"] = "__IDL_IntClass__";
-  IdlTypeName2["NatClass"] = "__IDL_NatClass__";
-  IdlTypeName2["FloatClass"] = "__IDL_FloatClass__";
-  IdlTypeName2["FixedIntClass"] = "__IDL_FixedIntClass__";
-  IdlTypeName2["FixedNatClass"] = "__IDL_FixedNatClass__";
-  IdlTypeName2["VecClass"] = "__IDL_VecClass__";
-  IdlTypeName2["OptClass"] = "__IDL_OptClass__";
-  IdlTypeName2["RecordClass"] = "__IDL_RecordClass__";
-  IdlTypeName2["TupleClass"] = "__IDL_TupleClass__";
-  IdlTypeName2["VariantClass"] = "__IDL_VariantClass__";
-  IdlTypeName2["RecClass"] = "__IDL_RecClass__";
-  IdlTypeName2["PrincipalClass"] = "__IDL_PrincipalClass__";
-  IdlTypeName2["FuncClass"] = "__IDL_FuncClass__";
-  IdlTypeName2["ServiceClass"] = "__IDL_ServiceClass__";
-})(IdlTypeName || (IdlTypeName = {}));
-class Type {
-  /* Display type name */
-  display() {
-    return this.name;
-  }
-  valueToString(x) {
-    return toReadableString(x);
-  }
-  /* Implement `T` in the IDL spec, only needed for non-primitive types */
-  buildTypeTable(typeTable) {
-    if (!typeTable.has(this)) {
-      this._buildTypeTableImpl(typeTable);
-    }
-  }
-}
-class PrimitiveType extends Type {
-  checkType(t) {
-    if (this.name !== t.name) {
-      throw new Error(`type mismatch: type on the wire ${t.name}, expect type ${this.name}`);
-    }
-    return t;
-  }
-  _buildTypeTableImpl(_typeTable) {
-    return;
-  }
-}
-class ConstructType extends Type {
-  checkType(t) {
-    if (t instanceof RecClass) {
-      const ty = t.getType();
-      if (typeof ty === "undefined") {
-        throw new Error("type mismatch with uninitialized type");
-      }
-      return ty;
-    }
-    throw new Error(`type mismatch: type on the wire ${t.name}, expect type ${this.name}`);
-  }
-  encodeType(typeTable) {
-    return typeTable.indexOf(this.name);
-  }
-}
-class EmptyClass extends PrimitiveType {
-  get typeName() {
-    return IdlTypeName.EmptyClass;
-  }
-  static [Symbol.hasInstance](instance) {
-    return instance.typeName === IdlTypeName.EmptyClass;
-  }
-  accept(v, d) {
-    return v.visitEmpty(this, d);
-  }
-  covariant(x) {
-    throw new Error(`Invalid ${this.display()} argument: ${toReadableString(x)}`);
-  }
-  encodeValue() {
-    throw new Error("Empty cannot appear as a function argument");
-  }
-  valueToString() {
-    throw new Error("Empty cannot appear as a value");
-  }
-  encodeType() {
-    return slebEncode(IDLTypeIds.Empty);
-  }
-  decodeValue() {
-    throw new Error("Empty cannot appear as an output");
-  }
-  get name() {
-    return "empty";
-  }
-}
-class NullClass extends PrimitiveType {
-  get typeName() {
-    return IdlTypeName.NullClass;
-  }
-  static [Symbol.hasInstance](instance) {
-    return instance.typeName === IdlTypeName.NullClass;
-  }
-  accept(v, d) {
-    return v.visitNull(this, d);
-  }
-  covariant(x) {
-    if (x === null)
-      return true;
-    throw new Error(`Invalid ${this.display()} argument: ${toReadableString(x)}`);
-  }
-  encodeValue() {
-    return new Uint8Array(0);
-  }
-  encodeType() {
-    return slebEncode(IDLTypeIds.Null);
-  }
-  decodeValue(_b2, t) {
-    this.checkType(t);
-    return null;
-  }
-  get name() {
-    return "null";
-  }
-}
-class ReservedClass extends PrimitiveType {
-  get typeName() {
-    return IdlTypeName.ReservedClass;
-  }
-  static [Symbol.hasInstance](instance) {
-    return instance.typeName === IdlTypeName.ReservedClass;
-  }
-  accept(v, d) {
-    return v.visitReserved(this, d);
-  }
-  covariant(_x) {
-    return true;
-  }
-  encodeValue() {
-    return new Uint8Array(0);
-  }
-  encodeType() {
-    return slebEncode(IDLTypeIds.Reserved);
-  }
-  decodeValue(b, t) {
-    if (t.name !== this.name) {
-      t.decodeValue(b, t);
-    }
-    return null;
-  }
-  get name() {
-    return "reserved";
-  }
-}
-class TextClass extends PrimitiveType {
-  get typeName() {
-    return IdlTypeName.TextClass;
-  }
-  static [Symbol.hasInstance](instance) {
-    return instance.typeName === IdlTypeName.TextClass;
-  }
-  accept(v, d) {
-    return v.visitText(this, d);
-  }
-  covariant(x) {
-    if (typeof x === "string")
-      return true;
-    throw new Error(`Invalid ${this.display()} argument: ${toReadableString(x)}`);
-  }
-  encodeValue(x) {
-    const buf = new TextEncoder().encode(x);
-    const len = lebEncode(buf.byteLength);
-    return concat(len, buf);
-  }
-  encodeType() {
-    return slebEncode(IDLTypeIds.Text);
-  }
-  decodeValue(b, t) {
-    this.checkType(t);
-    const len = lebDecode(b);
-    const buf = safeRead(b, Number(len));
-    const decoder = new TextDecoder("utf8", { fatal: true });
-    return decoder.decode(buf);
-  }
-  get name() {
-    return "text";
-  }
-  valueToString(x) {
-    return '"' + x + '"';
-  }
-}
-class IntClass extends PrimitiveType {
-  get typeName() {
-    return IdlTypeName.IntClass;
-  }
-  static [Symbol.hasInstance](instance) {
-    return instance.typeName === IdlTypeName.IntClass;
-  }
-  accept(v, d) {
-    return v.visitInt(this, d);
-  }
-  covariant(x) {
-    if (typeof x === "bigint" || Number.isInteger(x))
-      return true;
-    throw new Error(`Invalid ${this.display()} argument: ${toReadableString(x)}`);
-  }
-  encodeValue(x) {
-    return slebEncode(x);
-  }
-  encodeType() {
-    return slebEncode(IDLTypeIds.Int);
-  }
-  decodeValue(b, t) {
-    this.checkType(t);
-    return slebDecode(b);
-  }
-  get name() {
-    return "int";
-  }
-  valueToString(x) {
-    return x.toString();
-  }
-}
-class NatClass extends PrimitiveType {
-  get typeName() {
-    return IdlTypeName.NatClass;
-  }
-  static [Symbol.hasInstance](instance) {
-    return instance.typeName === IdlTypeName.NatClass;
-  }
-  accept(v, d) {
-    return v.visitNat(this, d);
-  }
-  covariant(x) {
-    if (typeof x === "bigint" && x >= BigInt(0) || Number.isInteger(x) && x >= 0)
-      return true;
-    throw new Error(`Invalid ${this.display()} argument: ${toReadableString(x)}`);
-  }
-  encodeValue(x) {
-    return lebEncode(x);
-  }
-  encodeType() {
-    return slebEncode(IDLTypeIds.Nat);
-  }
-  decodeValue(b, t) {
-    this.checkType(t);
-    return lebDecode(b);
-  }
-  get name() {
-    return "nat";
-  }
-  valueToString(x) {
-    return x.toString();
-  }
-}
-class FloatClass extends PrimitiveType {
-  get typeName() {
-    return IdlTypeName.FloatClass;
-  }
-  static [Symbol.hasInstance](instance) {
-    return instance.typeName === IdlTypeName.FloatClass;
-  }
-  constructor(_bits) {
-    super();
-    this._bits = _bits;
-    if (_bits !== 32 && _bits !== 64) {
-      throw new Error("not a valid float type");
-    }
-  }
-  accept(v, d) {
-    return v.visitFloat(this, d);
-  }
-  covariant(x) {
-    if (typeof x === "number" || x instanceof Number)
-      return true;
-    throw new Error(`Invalid ${this.display()} argument: ${toReadableString(x)}`);
-  }
-  encodeValue(x) {
-    const buf = new ArrayBuffer(this._bits / 8);
-    const view = new DataView(buf);
-    if (this._bits === 32) {
-      view.setFloat32(0, x, true);
-    } else {
-      view.setFloat64(0, x, true);
-    }
-    return new Uint8Array(buf);
-  }
-  encodeType() {
-    const opcode = this._bits === 32 ? IDLTypeIds.Float32 : IDLTypeIds.Float64;
-    return slebEncode(opcode);
-  }
-  decodeValue(b, t) {
-    this.checkType(t);
-    const bytes = safeRead(b, this._bits / 8);
-    const view = uint8ToDataView(bytes);
-    if (this._bits === 32) {
-      return view.getFloat32(0, true);
-    } else {
-      return view.getFloat64(0, true);
-    }
-  }
-  get name() {
-    return "float" + this._bits;
-  }
-  valueToString(x) {
-    return x.toString();
-  }
-}
-class FixedIntClass extends PrimitiveType {
-  get typeName() {
-    return IdlTypeName.FixedIntClass;
-  }
-  static [Symbol.hasInstance](instance) {
-    return instance.typeName === IdlTypeName.FixedIntClass;
-  }
-  constructor(_bits) {
-    super();
-    this._bits = _bits;
-  }
-  accept(v, d) {
-    return v.visitFixedInt(this, d);
-  }
-  covariant(x) {
-    const min = iexp2(this._bits - 1) * BigInt(-1);
-    const max = iexp2(this._bits - 1) - BigInt(1);
-    let ok = false;
-    if (typeof x === "bigint") {
-      ok = x >= min && x <= max;
-    } else if (Number.isInteger(x)) {
-      const v = BigInt(x);
-      ok = v >= min && v <= max;
-    } else {
-      ok = false;
-    }
-    if (ok)
-      return true;
-    throw new Error(`Invalid ${this.display()} argument: ${toReadableString(x)}`);
-  }
-  encodeValue(x) {
-    return writeIntLE(x, this._bits / 8);
-  }
-  encodeType() {
-    const offset = Math.log2(this._bits) - 3;
-    return slebEncode(-9 - offset);
-  }
-  decodeValue(b, t) {
-    this.checkType(t);
-    const num = readIntLE(b, this._bits / 8);
-    if (this._bits <= 32) {
-      return Number(num);
-    } else {
-      return num;
-    }
-  }
-  get name() {
-    return `int${this._bits}`;
-  }
-  valueToString(x) {
-    return x.toString();
-  }
-}
-class FixedNatClass extends PrimitiveType {
-  get typeName() {
-    return IdlTypeName.FixedNatClass;
-  }
-  static [Symbol.hasInstance](instance) {
-    return instance.typeName === IdlTypeName.FixedNatClass;
-  }
-  constructor(_bits) {
-    super();
-    this._bits = _bits;
-  }
-  accept(v, d) {
-    return v.visitFixedNat(this, d);
-  }
-  covariant(x) {
-    const max = iexp2(this._bits);
-    let ok = false;
-    if (typeof x === "bigint" && x >= BigInt(0)) {
-      ok = x < max;
-    } else if (Number.isInteger(x) && x >= 0) {
-      const v = BigInt(x);
-      ok = v < max;
-    } else {
-      ok = false;
-    }
-    if (ok)
-      return true;
-    throw new Error(`Invalid ${this.display()} argument: ${toReadableString(x)}`);
-  }
-  encodeValue(x) {
-    return writeUIntLE(x, this._bits / 8);
-  }
-  encodeType() {
-    const offset = Math.log2(this._bits) - 3;
-    return slebEncode(-5 - offset);
-  }
-  decodeValue(b, t) {
-    this.checkType(t);
-    const num = readUIntLE(b, this._bits / 8);
-    if (this._bits <= 32) {
-      return Number(num);
-    } else {
-      return num;
-    }
-  }
-  get name() {
-    return `nat${this._bits}`;
-  }
-  valueToString(x) {
-    return x.toString();
-  }
-}
-class VecClass extends ConstructType {
-  get typeName() {
-    return IdlTypeName.VecClass;
-  }
-  static [Symbol.hasInstance](instance) {
-    return instance.typeName === IdlTypeName.VecClass;
-  }
-  constructor(_type) {
-    super();
-    this._type = _type;
-    this._blobOptimization = false;
-    if (_type instanceof FixedNatClass && _type._bits === 8) {
-      this._blobOptimization = true;
-    }
-  }
-  accept(v, d) {
-    return v.visitVec(this, this._type, d);
-  }
-  covariant(x) {
-    const bits = this._type instanceof FixedNatClass ? this._type._bits : this._type instanceof FixedIntClass ? this._type._bits : 0;
-    if (ArrayBuffer.isView(x) && bits == x.BYTES_PER_ELEMENT * 8 || Array.isArray(x) && x.every((v, idx) => {
-      try {
-        return this._type.covariant(v);
-      } catch (e) {
-        throw new Error(`Invalid ${this.display()} argument: 
-
-index ${idx} -> ${e.message}`);
-      }
-    }))
-      return true;
-    throw new Error(`Invalid ${this.display()} argument: ${toReadableString(x)}`);
-  }
-  encodeValue(x) {
-    const len = lebEncode(x.length);
-    if (this._blobOptimization) {
-      return concat(len, new Uint8Array(x));
-    }
-    if (ArrayBuffer.isView(x)) {
-      if (x instanceof Int16Array || x instanceof Uint16Array) {
-        const buffer = new DataView(new ArrayBuffer(x.length * 2));
-        for (let i = 0; i < x.length; i++) {
-          if (x instanceof Int16Array) {
-            buffer.setInt16(i * 2, x[i], true);
-          } else {
-            buffer.setUint16(i * 2, x[i], true);
-          }
-        }
-        return concat(len, new Uint8Array(buffer.buffer));
-      } else if (x instanceof Int32Array || x instanceof Uint32Array) {
-        const buffer = new DataView(new ArrayBuffer(x.length * 4));
-        for (let i = 0; i < x.length; i++) {
-          if (x instanceof Int32Array) {
-            buffer.setInt32(i * 4, x[i], true);
-          } else {
-            buffer.setUint32(i * 4, x[i], true);
-          }
-        }
-        return concat(len, new Uint8Array(buffer.buffer));
-      } else if (x instanceof BigInt64Array || x instanceof BigUint64Array) {
-        const buffer = new DataView(new ArrayBuffer(x.length * 8));
-        for (let i = 0; i < x.length; i++) {
-          if (x instanceof BigInt64Array) {
-            buffer.setBigInt64(i * 8, x[i], true);
-          } else {
-            buffer.setBigUint64(i * 8, x[i], true);
-          }
-        }
-        return concat(len, new Uint8Array(buffer.buffer));
-      } else {
-        return concat(len, new Uint8Array(x.buffer, x.byteOffset, x.byteLength));
-      }
-    }
-    const buf = new PipeArrayBuffer(new Uint8Array(len.byteLength + x.length), 0);
-    buf.write(len);
-    for (const d of x) {
-      const encoded = this._type.encodeValue(d);
-      buf.write(new Uint8Array(encoded));
-    }
-    return buf.buffer;
-  }
-  _buildTypeTableImpl(typeTable) {
-    this._type.buildTypeTable(typeTable);
-    const opCode = slebEncode(IDLTypeIds.Vector);
-    const buffer = this._type.encodeType(typeTable);
-    typeTable.add(this, concat(opCode, buffer));
-  }
-  decodeValue(b, t) {
-    const vec = this.checkType(t);
-    if (!(vec instanceof VecClass)) {
-      throw new Error("Not a vector type");
-    }
-    const len = Number(lebDecode(b));
-    if (this._type instanceof FixedNatClass) {
-      if (this._type._bits == 8) {
-        return new Uint8Array(b.read(len));
-      }
-      if (this._type._bits == 16) {
-        const bytes = b.read(len * 2);
-        const u16 = new Uint16Array(bytes.buffer, bytes.byteOffset, len);
-        return u16;
-      }
-      if (this._type._bits == 32) {
-        const bytes = b.read(len * 4);
-        const u32 = new Uint32Array(bytes.buffer, bytes.byteOffset, len);
-        return u32;
-      }
-      if (this._type._bits == 64) {
-        return new BigUint64Array(b.read(len * 8).buffer);
-      }
-    }
-    if (this._type instanceof FixedIntClass) {
-      if (this._type._bits == 8) {
-        return new Int8Array(b.read(len));
-      }
-      if (this._type._bits == 16) {
-        const bytes = b.read(len * 2);
-        const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-        const result = new Int16Array(len);
-        for (let i = 0; i < len; i++) {
-          result[i] = view.getInt16(i * 2, true);
-        }
-        return result;
-      }
-      if (this._type._bits == 32) {
-        const bytes = b.read(len * 4);
-        const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-        const result = new Int32Array(len);
-        for (let i = 0; i < len; i++) {
-          result[i] = view.getInt32(i * 4, true);
-        }
-        return result;
-      }
-      if (this._type._bits == 64) {
-        const bytes = b.read(len * 8);
-        const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-        const result = new BigInt64Array(len);
-        for (let i = 0; i < len; i++) {
-          result[i] = view.getBigInt64(i * 8, true);
-        }
-        return result;
-      }
-    }
-    const rets = [];
-    for (let i = 0; i < len; i++) {
-      rets.push(this._type.decodeValue(b, vec._type));
-    }
-    return rets;
-  }
-  get name() {
-    return `vec ${this._type.name}`;
-  }
-  display() {
-    return `vec ${this._type.display()}`;
-  }
-  valueToString(x) {
-    const elements = x.map((e) => this._type.valueToString(e));
-    return "vec {" + elements.join("; ") + "}";
-  }
-}
-class OptClass extends ConstructType {
-  get typeName() {
-    return IdlTypeName.OptClass;
-  }
-  static [Symbol.hasInstance](instance) {
-    return instance.typeName === IdlTypeName.OptClass;
-  }
-  constructor(_type) {
-    super();
-    this._type = _type;
-  }
-  accept(v, d) {
-    return v.visitOpt(this, this._type, d);
-  }
-  covariant(x) {
-    try {
-      if (Array.isArray(x) && (x.length === 0 || x.length === 1 && this._type.covariant(x[0])))
-        return true;
-    } catch (e) {
-      throw new Error(`Invalid ${this.display()} argument: ${toReadableString(x)} 
-
--> ${e.message}`);
-    }
-    throw new Error(`Invalid ${this.display()} argument: ${toReadableString(x)}`);
-  }
-  encodeValue(x) {
-    if (x.length === 0) {
-      return new Uint8Array([0]);
-    } else {
-      return concat(new Uint8Array([1]), this._type.encodeValue(x[0]));
-    }
-  }
-  _buildTypeTableImpl(typeTable) {
-    this._type.buildTypeTable(typeTable);
-    const opCode = slebEncode(IDLTypeIds.Opt);
-    const buffer = this._type.encodeType(typeTable);
-    typeTable.add(this, concat(opCode, buffer));
-  }
-  decodeValue(b, t) {
-    if (t instanceof NullClass) {
-      return [];
-    }
-    if (t instanceof ReservedClass) {
-      return [];
-    }
-    let wireType = t;
-    if (t instanceof RecClass) {
-      const ty = t.getType();
-      if (typeof ty === "undefined") {
-        throw new Error("type mismatch with uninitialized type");
-      } else
-        wireType = ty;
-    }
-    if (wireType instanceof OptClass) {
-      switch (safeReadUint8(b)) {
-        case 0:
-          return [];
-        case 1: {
-          const checkpoint = b.save();
-          try {
-            const v = this._type.decodeValue(b, wireType._type);
-            return [v];
-          } catch (e) {
-            b.restore(checkpoint);
-            wireType._type.decodeValue(b, wireType._type);
-            return [];
-          }
-        }
-        default:
-          throw new Error("Not an option value");
-      }
-    } else if (
-      // this check corresponds to `not (null <: <t>)` in the spec
-      this._type instanceof NullClass || this._type instanceof OptClass || this._type instanceof ReservedClass
-    ) {
-      wireType.decodeValue(b, wireType);
-      return [];
-    } else {
-      const checkpoint = b.save();
-      try {
-        const v = this._type.decodeValue(b, t);
-        return [v];
-      } catch (e) {
-        b.restore(checkpoint);
-        wireType.decodeValue(b, t);
-        return [];
-      }
-    }
-  }
-  get name() {
-    return `opt ${this._type.name}`;
-  }
-  display() {
-    return `opt ${this._type.display()}`;
-  }
-  valueToString(x) {
-    if (x.length === 0) {
-      return "null";
-    } else {
-      return `opt ${this._type.valueToString(x[0])}`;
-    }
-  }
-}
-class RecordClass extends ConstructType {
-  get typeName() {
-    return IdlTypeName.RecordClass;
-  }
-  static [Symbol.hasInstance](instance) {
-    return instance.typeName === IdlTypeName.RecordClass || instance.typeName === IdlTypeName.TupleClass;
-  }
-  constructor(fields = {}) {
-    super();
-    this._fields = Object.entries(fields).sort((a, b) => idlLabelToId(a[0]) - idlLabelToId(b[0]));
-  }
-  accept(v, d) {
-    return v.visitRecord(this, this._fields, d);
-  }
-  tryAsTuple() {
-    const res = [];
-    for (let i = 0; i < this._fields.length; i++) {
-      const [key, type] = this._fields[i];
-      if (key !== `_${i}_`) {
-        return null;
-      }
-      res.push(type);
-    }
-    return res;
-  }
-  covariant(x) {
-    if (typeof x === "object" && this._fields.every(([k, t]) => {
-      if (!x.hasOwnProperty(k)) {
-        throw new Error(`Record is missing key "${k}".`);
-      }
-      try {
-        return t.covariant(x[k]);
-      } catch (e) {
-        throw new Error(`Invalid ${this.display()} argument: 
-
-field ${k} -> ${e.message}`);
-      }
-    }))
-      return true;
-    throw new Error(`Invalid ${this.display()} argument: ${toReadableString(x)}`);
-  }
-  encodeValue(x) {
-    const values = this._fields.map(([key]) => x[key]);
-    const bufs = zipWith(this._fields, values, ([, c], d) => c.encodeValue(d));
-    return concat(...bufs);
-  }
-  _buildTypeTableImpl(T) {
-    this._fields.forEach(([_, value]) => value.buildTypeTable(T));
-    const opCode = slebEncode(IDLTypeIds.Record);
-    const len = lebEncode(this._fields.length);
-    const fields = this._fields.map(([key, value]) => concat(lebEncode(idlLabelToId(key)), value.encodeType(T)));
-    T.add(this, concat(opCode, len, concat(...fields)));
-  }
-  decodeValue(b, t) {
-    const record = this.checkType(t);
-    if (!(record instanceof RecordClass)) {
-      throw new Error("Not a record type");
-    }
-    const x = {};
-    let expectedRecordIdx = 0;
-    let actualRecordIdx = 0;
-    while (actualRecordIdx < record._fields.length) {
-      const [hash, type] = record._fields[actualRecordIdx];
-      if (expectedRecordIdx >= this._fields.length) {
-        type.decodeValue(b, type);
-        actualRecordIdx++;
-        continue;
-      }
-      const [expectKey, expectType] = this._fields[expectedRecordIdx];
-      const expectedId = idlLabelToId(this._fields[expectedRecordIdx][0]);
-      const actualId = idlLabelToId(hash);
-      if (expectedId === actualId) {
-        x[expectKey] = expectType.decodeValue(b, type);
-        expectedRecordIdx++;
-        actualRecordIdx++;
-      } else if (actualId > expectedId) {
-        if (expectType instanceof OptClass || expectType instanceof ReservedClass) {
-          x[expectKey] = [];
-          expectedRecordIdx++;
-        } else {
-          throw new Error("Cannot find required field " + expectKey);
-        }
-      } else {
-        type.decodeValue(b, type);
-        actualRecordIdx++;
-      }
-    }
-    for (const [expectKey, expectType] of this._fields.slice(expectedRecordIdx)) {
-      if (expectType instanceof OptClass || expectType instanceof ReservedClass) {
-        x[expectKey] = [];
-      } else {
-        throw new Error("Cannot find required field " + expectKey);
-      }
-    }
-    return x;
-  }
-  get fieldsAsObject() {
-    const fields = {};
-    for (const [name, ty] of this._fields) {
-      fields[idlLabelToId(name)] = ty;
-    }
-    return fields;
-  }
-  get name() {
-    const fields = this._fields.map(([key, value]) => key + ":" + value.name);
-    return `record {${fields.join("; ")}}`;
-  }
-  display() {
-    const fields = this._fields.map(([key, value]) => key + ":" + value.display());
-    return `record {${fields.join("; ")}}`;
-  }
-  valueToString(x) {
-    const values = this._fields.map(([key]) => x[key]);
-    const fields = zipWith(this._fields, values, ([k, c], d) => k + "=" + c.valueToString(d));
-    return `record {${fields.join("; ")}}`;
-  }
-}
-class VariantClass extends ConstructType {
-  get typeName() {
-    return IdlTypeName.VariantClass;
-  }
-  static [Symbol.hasInstance](instance) {
-    return instance.typeName === IdlTypeName.VariantClass;
-  }
-  constructor(fields = {}) {
-    super();
-    this._fields = Object.entries(fields).sort((a, b) => idlLabelToId(a[0]) - idlLabelToId(b[0]));
-  }
-  accept(v, d) {
-    return v.visitVariant(this, this._fields, d);
-  }
-  covariant(x) {
-    if (typeof x === "object" && Object.entries(x).length === 1 && this._fields.every(([k, v]) => {
-      try {
-        return !x.hasOwnProperty(k) || v.covariant(x[k]);
-      } catch (e) {
-        throw new Error(`Invalid ${this.display()} argument: 
-
-variant ${k} -> ${e.message}`);
-      }
-    }))
-      return true;
-    throw new Error(`Invalid ${this.display()} argument: ${toReadableString(x)}`);
-  }
-  encodeValue(x) {
-    for (let i = 0; i < this._fields.length; i++) {
-      const [name, type] = this._fields[i];
-      if (x.hasOwnProperty(name)) {
-        const idx = lebEncode(i);
-        const buf = type.encodeValue(x[name]);
-        return concat(idx, buf);
-      }
-    }
-    throw Error("Variant has no data: " + x);
-  }
-  _buildTypeTableImpl(typeTable) {
-    this._fields.forEach(([, type]) => {
-      type.buildTypeTable(typeTable);
-    });
-    const opCode = slebEncode(IDLTypeIds.Variant);
-    const len = lebEncode(this._fields.length);
-    const fields = this._fields.map(([key, value]) => concat(lebEncode(idlLabelToId(key)), value.encodeType(typeTable)));
-    typeTable.add(this, concat(opCode, len, ...fields));
-  }
-  decodeValue(b, t) {
-    const variant = this.checkType(t);
-    if (!(variant instanceof VariantClass)) {
-      throw new Error("Not a variant type");
-    }
-    const idx = Number(lebDecode(b));
-    if (idx >= variant._fields.length) {
-      throw Error("Invalid variant index: " + idx);
-    }
-    const [wireHash, wireType] = variant._fields[idx];
-    for (const [key, expectType] of this._fields) {
-      if (idlLabelToId(wireHash) === idlLabelToId(key)) {
-        const value = expectType.decodeValue(b, wireType);
-        return { [key]: value };
-      }
-    }
-    throw new Error("Cannot find field hash " + wireHash);
-  }
-  get name() {
-    const fields = this._fields.map(([key, type]) => key + ":" + type.name);
-    return `variant {${fields.join("; ")}}`;
-  }
-  display() {
-    const fields = this._fields.map(([key, type]) => key + (type.name === "null" ? "" : `:${type.display()}`));
-    return `variant {${fields.join("; ")}}`;
-  }
-  valueToString(x) {
-    for (const [name, type] of this._fields) {
-      if (x.hasOwnProperty(name)) {
-        const value = type.valueToString(x[name]);
-        if (value === "null") {
-          return `variant {${name}}`;
-        } else {
-          return `variant {${name}=${value}}`;
-        }
-      }
-    }
-    throw new Error("Variant has no data: " + x);
-  }
-  get alternativesAsObject() {
-    const alternatives = {};
-    for (const [name, ty] of this._fields) {
-      alternatives[idlLabelToId(name)] = ty;
-    }
-    return alternatives;
-  }
-}
-const _RecClass = class _RecClass extends ConstructType {
-  constructor() {
-    super(...arguments);
-    this._id = _RecClass._counter++;
-  }
-  get typeName() {
-    return IdlTypeName.RecClass;
-  }
-  static [Symbol.hasInstance](instance) {
-    return instance.typeName === IdlTypeName.RecClass;
-  }
-  accept(v, d) {
-    if (!this._type) {
-      throw Error("Recursive type uninitialized.");
-    }
-    return v.visitRec(this, this._type, d);
-  }
-  fill(t) {
-    this._type = t;
-  }
-  getType() {
-    return this._type;
-  }
-  covariant(x) {
-    if (this._type ? this._type.covariant(x) : false)
-      return true;
-    throw new Error(`Invalid ${this.display()} argument: ${toReadableString(x)}`);
-  }
-  encodeValue(x) {
-    if (!this._type) {
-      throw Error("Recursive type uninitialized.");
-    }
-    return this._type.encodeValue(x);
-  }
-  _buildTypeTableImpl(typeTable) {
-    if (!this._type) {
-      throw Error("Recursive type uninitialized.");
-    }
-    typeTable.add(this, new Uint8Array([]));
-    this._type.buildTypeTable(typeTable);
-    typeTable.merge(this, this._type.name);
-  }
-  decodeValue(b, t) {
-    if (!this._type) {
-      throw Error("Recursive type uninitialized.");
-    }
-    return this._type.decodeValue(b, t);
-  }
-  get name() {
-    return `rec_${this._id}`;
-  }
-  display() {
-    if (!this._type) {
-      throw Error("Recursive type uninitialized.");
-    }
-    return `μ${this.name}.${this._type.name}`;
-  }
-  valueToString(x) {
-    if (!this._type) {
-      throw Error("Recursive type uninitialized.");
-    }
-    return this._type.valueToString(x);
-  }
-};
-_RecClass._counter = 0;
-let RecClass = _RecClass;
-function decodePrincipalId(b) {
-  const x = safeReadUint8(b);
-  if (x !== 1) {
-    throw new Error("Cannot decode principal");
-  }
-  const len = Number(lebDecode(b));
-  return Principal.fromUint8Array(new Uint8Array(safeRead(b, len)));
-}
-class FuncClass extends ConstructType {
-  get typeName() {
-    return IdlTypeName.FuncClass;
-  }
-  static [Symbol.hasInstance](instance) {
-    return instance.typeName === IdlTypeName.FuncClass;
-  }
-  static argsToString(types, v) {
-    if (types.length !== v.length) {
-      throw new Error("arity mismatch");
-    }
-    return "(" + types.map((t, i) => t.valueToString(v[i])).join(", ") + ")";
-  }
-  constructor(argTypes, retTypes, annotations = []) {
-    super();
-    this.argTypes = argTypes;
-    this.retTypes = retTypes;
-    this.annotations = annotations;
-  }
-  accept(v, d) {
-    return v.visitFunc(this, d);
-  }
-  covariant(x) {
-    if (Array.isArray(x) && x.length === 2 && x[0] && x[0]._isPrincipal && typeof x[1] === "string")
-      return true;
-    throw new Error(`Invalid ${this.display()} argument: ${toReadableString(x)}`);
-  }
-  encodeValue([principal, methodName]) {
-    const buf = principal.toUint8Array();
-    const len = lebEncode(buf.byteLength);
-    const canister = concat(new Uint8Array([1]), len, buf);
-    const method = new TextEncoder().encode(methodName);
-    const methodLen = lebEncode(method.byteLength);
-    return concat(new Uint8Array([1]), canister, methodLen, method);
-  }
-  _buildTypeTableImpl(T) {
-    this.argTypes.forEach((arg) => arg.buildTypeTable(T));
-    this.retTypes.forEach((arg) => arg.buildTypeTable(T));
-    const opCode = slebEncode(IDLTypeIds.Func);
-    const argLen = lebEncode(this.argTypes.length);
-    const args = concat(...this.argTypes.map((arg) => arg.encodeType(T)));
-    const retLen = lebEncode(this.retTypes.length);
-    const rets = concat(...this.retTypes.map((arg) => arg.encodeType(T)));
-    const annLen = lebEncode(this.annotations.length);
-    const anns = concat(...this.annotations.map((a) => this.encodeAnnotation(a)));
-    T.add(this, concat(opCode, argLen, args, retLen, rets, annLen, anns));
-  }
-  decodeValue(b, t) {
-    const tt = t instanceof RecClass ? t.getType() ?? t : t;
-    if (!subtype(tt, this)) {
-      throw new Error(`Cannot decode function reference at type ${this.display()} from wire type ${tt.display()}`);
-    }
-    const x = safeReadUint8(b);
-    if (x !== 1) {
-      throw new Error("Cannot decode function reference");
-    }
-    const canister = decodePrincipalId(b);
-    const mLen = Number(lebDecode(b));
-    const buf = safeRead(b, mLen);
-    const decoder = new TextDecoder("utf8", { fatal: true });
-    const method = decoder.decode(buf);
-    return [canister, method];
-  }
-  get name() {
-    const args = this.argTypes.map((arg) => arg.name).join(", ");
-    const rets = this.retTypes.map((arg) => arg.name).join(", ");
-    const annon = " " + this.annotations.join(" ");
-    return `(${args}) -> (${rets})${annon}`;
-  }
-  valueToString([principal, str]) {
-    return `func "${principal.toText()}".${str}`;
-  }
-  display() {
-    const args = this.argTypes.map((arg) => arg.display()).join(", ");
-    const rets = this.retTypes.map((arg) => arg.display()).join(", ");
-    const annon = " " + this.annotations.join(" ");
-    return `(${args}) → (${rets})${annon}`;
-  }
-  encodeAnnotation(ann) {
-    if (ann === "query") {
-      return new Uint8Array([1]);
-    } else if (ann === "oneway") {
-      return new Uint8Array([2]);
-    } else if (ann === "composite_query") {
-      return new Uint8Array([3]);
-    } else {
-      throw new Error("Illegal function annotation");
-    }
-  }
-}
-class ServiceClass extends ConstructType {
-  get typeName() {
-    return IdlTypeName.ServiceClass;
-  }
-  static [Symbol.hasInstance](instance) {
-    return instance.typeName === IdlTypeName.ServiceClass;
-  }
-  constructor(fields) {
-    super();
-    this._fields = Object.entries(fields).sort((a, b) => {
-      if (a[0] < b[0]) {
-        return -1;
-      }
-      if (a[0] > b[0]) {
-        return 1;
-      }
-      return 0;
-    });
-  }
-  accept(v, d) {
-    return v.visitService(this, d);
-  }
-  covariant(x) {
-    if (x && x._isPrincipal)
-      return true;
-    throw new Error(`Invalid ${this.display()} argument: ${toReadableString(x)}`);
-  }
-  encodeValue(x) {
-    const buf = x.toUint8Array();
-    const len = lebEncode(buf.length);
-    return concat(new Uint8Array([1]), len, buf);
-  }
-  _buildTypeTableImpl(T) {
-    this._fields.forEach(([_, func]) => func.buildTypeTable(T));
-    const opCode = slebEncode(IDLTypeIds.Service);
-    const len = lebEncode(this._fields.length);
-    const meths = this._fields.map(([label, func]) => {
-      const labelBuf = new TextEncoder().encode(label);
-      const labelLen = lebEncode(labelBuf.length);
-      return concat(labelLen, labelBuf, func.encodeType(T));
-    });
-    T.add(this, concat(opCode, len, ...meths));
-  }
-  decodeValue(b, t) {
-    const tt = t instanceof RecClass ? t.getType() ?? t : t;
-    if (!subtype(tt, this)) {
-      throw new Error(`Cannot decode service reference at type ${this.display()} from wire type ${tt.display()}`);
-    }
-    return decodePrincipalId(b);
-  }
-  get name() {
-    const fields = this._fields.map(([key, value]) => key + ":" + value.name);
-    return `service {${fields.join("; ")}}`;
-  }
-  valueToString(x) {
-    return `service "${x.toText()}"`;
-  }
-  fieldsAsObject() {
-    const fields = {};
-    for (const [name, ty] of this._fields) {
-      fields[name] = ty;
-    }
-    return fields;
-  }
-}
-function toReadableString(x) {
-  const str = JSON.stringify(x, (_key, value) => typeof value === "bigint" ? `BigInt(${value})` : value);
-  return str && str.length > toReadableString_max ? str.substring(0, toReadableString_max - 3) + "..." : str;
-}
-const Text = new TextClass();
-const Nat = new NatClass();
-new FloatClass(32);
-new FloatClass(64);
-new FixedIntClass(8);
-new FixedIntClass(16);
-new FixedIntClass(32);
-new FixedIntClass(64);
-new FixedNatClass(8);
-new FixedNatClass(16);
-new FixedNatClass(32);
-new FixedNatClass(64);
-function Vec(t) {
-  return new VecClass(t);
-}
-function Opt(t) {
-  return new OptClass(t);
-}
-function Record(t) {
-  return new RecordClass(t);
-}
-function Func(args, ret, annotations = []) {
-  return new FuncClass(args, ret, annotations);
-}
-function Service(t) {
-  return new ServiceClass(t);
-}
-class Relations {
-  constructor(relations = /* @__PURE__ */ new Map()) {
-    this.rels = relations;
-  }
-  copy() {
-    const copy = /* @__PURE__ */ new Map();
-    for (const [key, value] of this.rels.entries()) {
-      const valCopy = new Map(value);
-      copy.set(key, valCopy);
-    }
-    return new Relations(copy);
-  }
-  /// Returns whether we know for sure that a relation holds or doesn't (`true` or `false`), or
-  /// if we don't know yet (`undefined`)
-  known(t1, t2) {
-    var _a2;
-    return (_a2 = this.rels.get(t1.name)) == null ? void 0 : _a2.get(t2.name);
-  }
-  addNegative(t1, t2) {
-    this.addNames(t1.name, t2.name, false);
-  }
-  add(t1, t2) {
-    this.addNames(t1.name, t2.name, true);
-  }
-  display() {
-    let result = "";
-    for (const [t1, v] of this.rels) {
-      for (const [t2, known] of v) {
-        const subty = known ? ":<" : "!<:";
-        result += `${t1} ${subty} ${t2}
-`;
-      }
-    }
-    return result;
-  }
-  addNames(t1, t2, isSubtype) {
-    const t1Map = this.rels.get(t1);
-    if (t1Map == void 0) {
-      const newMap = /* @__PURE__ */ new Map();
-      newMap.set(t2, isSubtype);
-      this.rels.set(t1, newMap);
-    } else {
-      t1Map.set(t2, isSubtype);
-    }
-  }
-}
-let subtypeCache = new Relations();
-function eqFunctionAnnotations(t1, t2) {
-  const t1Annotations = new Set(t1.annotations);
-  const t2Annotations = new Set(t2.annotations);
-  if (t1Annotations.size !== t2Annotations.size) {
-    return false;
-  }
-  for (const a of t1Annotations) {
-    if (!t2Annotations.has(a))
-      return false;
-  }
-  return true;
-}
-function canBeOmmitted(t) {
-  return t instanceof OptClass || t instanceof NullClass || t instanceof ReservedClass;
-}
-function subtype(t1, t2) {
-  const relations = subtypeCache.copy();
-  const isSubtype = subtype_(relations, t1, t2);
-  if (isSubtype) {
-    subtypeCache.add(t1, t2);
-  } else {
-    subtypeCache.addNegative(t1, t2);
-  }
-  return isSubtype;
-}
-function subtype_(relations, t1, t2) {
-  if (t1.name === t2.name)
-    return true;
-  const known = relations.known(t1, t2);
-  if (known !== void 0)
-    return known;
-  relations.add(t1, t2);
-  if (t2 instanceof ReservedClass)
-    return true;
-  if (t1 instanceof EmptyClass)
-    return true;
-  if (t1 instanceof NatClass && t2 instanceof IntClass)
-    return true;
-  if (t1 instanceof VecClass && t2 instanceof VecClass)
-    return subtype_(relations, t1._type, t2._type);
-  if (t2 instanceof OptClass)
-    return true;
-  if (t1 instanceof RecordClass && t2 instanceof RecordClass) {
-    const t1Object = t1.fieldsAsObject;
-    for (const [label, ty2] of t2._fields) {
-      const ty1 = t1Object[idlLabelToId(label)];
-      if (!ty1) {
-        if (!canBeOmmitted(ty2))
-          return false;
-      } else {
-        if (!subtype_(relations, ty1, ty2))
-          return false;
-      }
-    }
-    return true;
-  }
-  if (t1 instanceof FuncClass && t2 instanceof FuncClass) {
-    if (!eqFunctionAnnotations(t1, t2))
-      return false;
-    for (let i = 0; i < t1.argTypes.length; i++) {
-      const argTy1 = t1.argTypes[i];
-      if (i < t2.argTypes.length) {
-        if (!subtype_(relations, t2.argTypes[i], argTy1))
-          return false;
-      } else {
-        if (!canBeOmmitted(argTy1))
-          return false;
-      }
-    }
-    for (let i = 0; i < t2.retTypes.length; i++) {
-      const retTy2 = t2.retTypes[i];
-      if (i < t1.retTypes.length) {
-        if (!subtype_(relations, t1.retTypes[i], retTy2))
-          return false;
-      } else {
-        if (!canBeOmmitted(retTy2))
-          return false;
-      }
-    }
-    return true;
-  }
-  if (t1 instanceof VariantClass && t2 instanceof VariantClass) {
-    const t2Object = t2.alternativesAsObject;
-    for (const [label, ty1] of t1._fields) {
-      const ty2 = t2Object[idlLabelToId(label)];
-      if (!ty2)
-        return false;
-      if (!subtype_(relations, ty1, ty2))
-        return false;
-    }
-    return true;
-  }
-  if (t1 instanceof ServiceClass && t2 instanceof ServiceClass) {
-    const t1Object = t1.fieldsAsObject();
-    for (const [name, ty2] of t2._fields) {
-      const ty1 = t1Object[name];
-      if (!ty1)
-        return false;
-      if (!subtype_(relations, ty1, ty2))
-        return false;
-    }
-    return true;
-  }
-  if (t1 instanceof RecClass) {
-    return subtype_(relations, t1.getType(), t2);
-  }
-  if (t2 instanceof RecClass) {
-    return subtype_(relations, t1, t2.getType());
-  }
-  return false;
-}
-function uint8FromBufLike(bufLike) {
-  if (!bufLike) {
-    throw new Error("Input cannot be null or undefined");
-  }
-  if (bufLike instanceof Uint8Array) {
-    return bufLike;
-  }
-  if (bufLike instanceof ArrayBuffer) {
-    return new Uint8Array(bufLike);
-  }
-  if (Array.isArray(bufLike)) {
-    return new Uint8Array(bufLike);
-  }
-  if ("buffer" in bufLike) {
-    return uint8FromBufLike(bufLike.buffer);
-  }
-  return new Uint8Array(bufLike);
-}
-function uint8Equals(a, b) {
-  if (a.length !== b.length)
-    return false;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i])
-      return false;
-  }
-  return true;
-}
-function hashValue(value) {
-  if (typeof value === "string") {
-    return hashString(value);
-  } else if (typeof value === "number") {
-    return sha256(lebEncode(value));
-  } else if (value instanceof Uint8Array || ArrayBuffer.isView(value)) {
-    return sha256(uint8FromBufLike(value));
-  } else if (Array.isArray(value)) {
-    const vals = value.map(hashValue);
-    return sha256(concatBytes(...vals));
-  } else if (value && typeof value === "object" && value._isPrincipal) {
-    return sha256(value.toUint8Array());
-  } else if (typeof value === "object" && value !== null && typeof value.toHash === "function") {
-    return hashValue(value.toHash());
-  } else if (typeof value === "object") {
-    return hashOfMap(value);
-  } else if (typeof value === "bigint") {
-    return sha256(lebEncode(value));
-  }
-  throw InputError.fromCode(new HashValueErrorCode(value));
-}
-const hashString = (value) => {
-  const encoded = new TextEncoder().encode(value);
-  return sha256(encoded);
-};
-function requestIdOf(request) {
-  return hashOfMap(request);
-}
-function hashOfMap(map) {
-  const hashed = Object.entries(map).filter(([, value]) => value !== void 0).map(([key, value]) => {
-    const hashedKey = hashString(key);
-    const hashedValue = hashValue(value);
-    return [hashedKey, hashedValue];
-  });
-  const traversed = hashed;
-  const sorted = traversed.sort(([k1], [k2]) => {
-    return compare(k1, k2);
-  });
-  const concatenated = concatBytes(...sorted.map((x) => concatBytes(...x)));
-  const result = sha256(concatenated);
-  return result;
-}
-const IC_REQUEST_DOMAIN_SEPARATOR = new TextEncoder().encode("\nic-request");
-new TextEncoder().encode("\vic-response");
-const IC_REQUEST_AUTH_DELEGATION_DOMAIN_SEPARATOR = new TextEncoder().encode("ic-request-auth-delegation");
-class SignIdentity {
-  /**
-   * Get the principal represented by this identity. Normally should be a
-   * `Principal.selfAuthenticating()`.
-   */
-  getPrincipal() {
-    if (!this._principal) {
-      this._principal = Principal.selfAuthenticating(new Uint8Array(this.getPublicKey().toDer()));
-    }
-    return this._principal;
-  }
-  /**
-   * Transform a request into a signed version of the request. This is done last
-   * after the transforms on the body of a request. The returned object can be
-   * anything, but must be serializable to CBOR.
-   * @param request - internet computer request to transform
-   */
-  async transformRequest(request) {
-    const { body, ...fields } = request;
-    const requestId = requestIdOf(body);
-    return {
-      ...fields,
-      body: {
-        content: body,
-        sender_pubkey: this.getPublicKey().toDer(),
-        sender_sig: await this.sign(concatBytes(IC_REQUEST_DOMAIN_SEPARATOR, requestId))
-      }
-    };
-  }
-}
-class AnonymousIdentity {
-  getPrincipal() {
-    return Principal.anonymous();
-  }
-  async transformRequest(request) {
-    return {
-      ...request,
-      body: { content: request.body }
-    };
-  }
-}
-/*! noble-curves - MIT License (c) 2022 Paul Miller (paulmillr.com) */
-const _0n$3 = /* @__PURE__ */ BigInt(0);
-const _1n$4 = /* @__PURE__ */ BigInt(1);
-function _abool2(value, title = "") {
-  if (typeof value !== "boolean") {
-    const prefix2 = title && `"${title}"`;
-    throw new Error(prefix2 + "expected boolean, got type=" + typeof value);
-  }
-  return value;
-}
-function _abytes2(value, length, title = "") {
-  const bytes = isBytes(value);
-  const len = value == null ? void 0 : value.length;
-  const needsLen = length !== void 0;
-  if (!bytes || needsLen && len !== length) {
-    const prefix2 = title && `"${title}" `;
-    const ofLen = needsLen ? ` of length ${length}` : "";
-    const got = bytes ? `length=${len}` : `type=${typeof value}`;
-    throw new Error(prefix2 + "expected Uint8Array" + ofLen + ", got " + got);
-  }
-  return value;
-}
-function hexToNumber(hex2) {
-  if (typeof hex2 !== "string")
-    throw new Error("hex string expected, got " + typeof hex2);
-  return hex2 === "" ? _0n$3 : BigInt("0x" + hex2);
-}
-function bytesToNumberBE(bytes) {
-  return hexToNumber(bytesToHex(bytes));
-}
-function bytesToNumberLE(bytes) {
-  abytes(bytes);
-  return hexToNumber(bytesToHex(Uint8Array.from(bytes).reverse()));
-}
-function numberToBytesBE(n, len) {
-  return hexToBytes(n.toString(16).padStart(len * 2, "0"));
-}
-function numberToBytesLE(n, len) {
-  return numberToBytesBE(n, len).reverse();
-}
-function ensureBytes(title, hex2, expectedLength) {
-  let res;
-  if (typeof hex2 === "string") {
-    try {
-      res = hexToBytes(hex2);
-    } catch (e) {
-      throw new Error(title + " must be hex string or Uint8Array, cause: " + e);
-    }
-  } else if (isBytes(hex2)) {
-    res = Uint8Array.from(hex2);
-  } else {
-    throw new Error(title + " must be hex string or Uint8Array");
-  }
-  const len = res.length;
-  if (typeof expectedLength === "number" && len !== expectedLength)
-    throw new Error(title + " of length " + expectedLength + " expected, got " + len);
-  return res;
-}
-function copyBytes(bytes) {
-  return Uint8Array.from(bytes);
-}
-const isPosBig = (n) => typeof n === "bigint" && _0n$3 <= n;
-function inRange(n, min, max) {
-  return isPosBig(n) && isPosBig(min) && isPosBig(max) && min <= n && n < max;
-}
-function aInRange(title, n, min, max) {
-  if (!inRange(n, min, max))
-    throw new Error("expected valid " + title + ": " + min + " <= n < " + max + ", got " + n);
-}
-function bitLen(n) {
-  let len;
-  for (len = 0; n > _0n$3; n >>= _1n$4, len += 1)
-    ;
-  return len;
-}
-const bitMask = (n) => (_1n$4 << BigInt(n)) - _1n$4;
-function _validateObject(object, fields, optFields = {}) {
-  if (!object || typeof object !== "object")
-    throw new Error("expected valid options object");
-  function checkField(fieldName, expectedType, isOpt) {
-    const val = object[fieldName];
-    if (isOpt && val === void 0)
-      return;
-    const current = typeof val;
-    if (current !== expectedType || val === null)
-      throw new Error(`param "${fieldName}" is invalid: expected ${expectedType}, got ${current}`);
-  }
-  Object.entries(fields).forEach(([k, v]) => checkField(k, v, false));
-  Object.entries(optFields).forEach(([k, v]) => checkField(k, v, true));
-}
-function memoized(fn) {
-  const map = /* @__PURE__ */ new WeakMap();
-  return (arg, ...args) => {
-    const val = map.get(arg);
-    if (val !== void 0)
-      return val;
-    const computed = fn(arg, ...args);
-    map.set(arg, computed);
-    return computed;
-  };
-}
-/*! noble-curves - MIT License (c) 2022 Paul Miller (paulmillr.com) */
-const _0n$2 = BigInt(0), _1n$3 = BigInt(1), _2n$2 = /* @__PURE__ */ BigInt(2), _3n = /* @__PURE__ */ BigInt(3);
-const _4n = /* @__PURE__ */ BigInt(4), _5n$1 = /* @__PURE__ */ BigInt(5), _7n = /* @__PURE__ */ BigInt(7);
-const _8n$2 = /* @__PURE__ */ BigInt(8), _9n = /* @__PURE__ */ BigInt(9), _16n = /* @__PURE__ */ BigInt(16);
-function mod(a, b) {
-  const result = a % b;
-  return result >= _0n$2 ? result : b + result;
-}
-function pow2(x, power, modulo) {
-  let res = x;
-  while (power-- > _0n$2) {
-    res *= res;
-    res %= modulo;
-  }
-  return res;
-}
-function invert(number2, modulo) {
-  if (number2 === _0n$2)
-    throw new Error("invert: expected non-zero number");
-  if (modulo <= _0n$2)
-    throw new Error("invert: expected positive modulus, got " + modulo);
-  let a = mod(number2, modulo);
-  let b = modulo;
-  let x = _0n$2, u = _1n$3;
-  while (a !== _0n$2) {
-    const q = b / a;
-    const r = b % a;
-    const m = x - u * q;
-    b = a, a = r, x = u, u = m;
-  }
-  const gcd = b;
-  if (gcd !== _1n$3)
-    throw new Error("invert: does not exist");
-  return mod(x, modulo);
-}
-function assertIsSquare(Fp2, root2, n) {
-  if (!Fp2.eql(Fp2.sqr(root2), n))
-    throw new Error("Cannot find square root");
-}
-function sqrt3mod4(Fp2, n) {
-  const p1div4 = (Fp2.ORDER + _1n$3) / _4n;
-  const root2 = Fp2.pow(n, p1div4);
-  assertIsSquare(Fp2, root2, n);
-  return root2;
-}
-function sqrt5mod8(Fp2, n) {
-  const p5div8 = (Fp2.ORDER - _5n$1) / _8n$2;
-  const n2 = Fp2.mul(n, _2n$2);
-  const v = Fp2.pow(n2, p5div8);
-  const nv = Fp2.mul(n, v);
-  const i = Fp2.mul(Fp2.mul(nv, _2n$2), v);
-  const root2 = Fp2.mul(nv, Fp2.sub(i, Fp2.ONE));
-  assertIsSquare(Fp2, root2, n);
-  return root2;
-}
-function sqrt9mod16(P) {
-  const Fp_ = Field(P);
-  const tn = tonelliShanks(P);
-  const c1 = tn(Fp_, Fp_.neg(Fp_.ONE));
-  const c2 = tn(Fp_, c1);
-  const c3 = tn(Fp_, Fp_.neg(c1));
-  const c4 = (P + _7n) / _16n;
-  return (Fp2, n) => {
-    let tv1 = Fp2.pow(n, c4);
-    let tv2 = Fp2.mul(tv1, c1);
-    const tv3 = Fp2.mul(tv1, c2);
-    const tv4 = Fp2.mul(tv1, c3);
-    const e1 = Fp2.eql(Fp2.sqr(tv2), n);
-    const e2 = Fp2.eql(Fp2.sqr(tv3), n);
-    tv1 = Fp2.cmov(tv1, tv2, e1);
-    tv2 = Fp2.cmov(tv4, tv3, e2);
-    const e3 = Fp2.eql(Fp2.sqr(tv2), n);
-    const root2 = Fp2.cmov(tv1, tv2, e3);
-    assertIsSquare(Fp2, root2, n);
-    return root2;
-  };
-}
-function tonelliShanks(P) {
-  if (P < _3n)
-    throw new Error("sqrt is not defined for small field");
-  let Q = P - _1n$3;
-  let S = 0;
-  while (Q % _2n$2 === _0n$2) {
-    Q /= _2n$2;
-    S++;
-  }
-  let Z = _2n$2;
-  const _Fp = Field(P);
-  while (FpLegendre(_Fp, Z) === 1) {
-    if (Z++ > 1e3)
-      throw new Error("Cannot find square root: probably non-prime P");
-  }
-  if (S === 1)
-    return sqrt3mod4;
-  let cc = _Fp.pow(Z, Q);
-  const Q1div2 = (Q + _1n$3) / _2n$2;
-  return function tonelliSlow(Fp2, n) {
-    if (Fp2.is0(n))
-      return n;
-    if (FpLegendre(Fp2, n) !== 1)
-      throw new Error("Cannot find square root");
-    let M = S;
-    let c = Fp2.mul(Fp2.ONE, cc);
-    let t = Fp2.pow(n, Q);
-    let R = Fp2.pow(n, Q1div2);
-    while (!Fp2.eql(t, Fp2.ONE)) {
-      if (Fp2.is0(t))
-        return Fp2.ZERO;
-      let i = 1;
-      let t_tmp = Fp2.sqr(t);
-      while (!Fp2.eql(t_tmp, Fp2.ONE)) {
-        i++;
-        t_tmp = Fp2.sqr(t_tmp);
-        if (i === M)
-          throw new Error("Cannot find square root");
-      }
-      const exponent = _1n$3 << BigInt(M - i - 1);
-      const b = Fp2.pow(c, exponent);
-      M = i;
-      c = Fp2.sqr(b);
-      t = Fp2.mul(t, c);
-      R = Fp2.mul(R, b);
-    }
-    return R;
-  };
-}
-function FpSqrt(P) {
-  if (P % _4n === _3n)
-    return sqrt3mod4;
-  if (P % _8n$2 === _5n$1)
-    return sqrt5mod8;
-  if (P % _16n === _9n)
-    return sqrt9mod16(P);
-  return tonelliShanks(P);
-}
-const isNegativeLE = (num, modulo) => (mod(num, modulo) & _1n$3) === _1n$3;
-const FIELD_FIELDS = [
-  "create",
-  "isValid",
-  "is0",
-  "neg",
-  "inv",
-  "sqrt",
-  "sqr",
-  "eql",
-  "add",
-  "sub",
-  "mul",
-  "pow",
-  "div",
-  "addN",
-  "subN",
-  "mulN",
-  "sqrN"
-];
-function validateField(field) {
-  const initial = {
-    ORDER: "bigint",
-    MASK: "bigint",
-    BYTES: "number",
-    BITS: "number"
-  };
-  const opts = FIELD_FIELDS.reduce((map, val) => {
-    map[val] = "function";
-    return map;
-  }, initial);
-  _validateObject(field, opts);
-  return field;
-}
-function FpPow(Fp2, num, power) {
-  if (power < _0n$2)
-    throw new Error("invalid exponent, negatives unsupported");
-  if (power === _0n$2)
-    return Fp2.ONE;
-  if (power === _1n$3)
-    return num;
-  let p = Fp2.ONE;
-  let d = num;
-  while (power > _0n$2) {
-    if (power & _1n$3)
-      p = Fp2.mul(p, d);
-    d = Fp2.sqr(d);
-    power >>= _1n$3;
-  }
-  return p;
-}
-function FpInvertBatch(Fp2, nums, passZero = false) {
-  const inverted = new Array(nums.length).fill(passZero ? Fp2.ZERO : void 0);
-  const multipliedAcc = nums.reduce((acc, num, i) => {
-    if (Fp2.is0(num))
-      return acc;
-    inverted[i] = acc;
-    return Fp2.mul(acc, num);
-  }, Fp2.ONE);
-  const invertedAcc = Fp2.inv(multipliedAcc);
-  nums.reduceRight((acc, num, i) => {
-    if (Fp2.is0(num))
-      return acc;
-    inverted[i] = Fp2.mul(acc, inverted[i]);
-    return Fp2.mul(acc, num);
-  }, invertedAcc);
-  return inverted;
-}
-function FpLegendre(Fp2, n) {
-  const p1mod2 = (Fp2.ORDER - _1n$3) / _2n$2;
-  const powered = Fp2.pow(n, p1mod2);
-  const yes = Fp2.eql(powered, Fp2.ONE);
-  const zero = Fp2.eql(powered, Fp2.ZERO);
-  const no = Fp2.eql(powered, Fp2.neg(Fp2.ONE));
-  if (!yes && !zero && !no)
-    throw new Error("invalid Legendre symbol result");
-  return yes ? 1 : zero ? 0 : -1;
-}
-function nLength(n, nBitLength) {
-  if (nBitLength !== void 0)
-    anumber(nBitLength);
-  const _nBitLength = nBitLength !== void 0 ? nBitLength : n.toString(2).length;
-  const nByteLength = Math.ceil(_nBitLength / 8);
-  return { nBitLength: _nBitLength, nByteLength };
-}
-function Field(ORDER, bitLenOrOpts, isLE = false, opts = {}) {
-  if (ORDER <= _0n$2)
-    throw new Error("invalid field: expected ORDER > 0, got " + ORDER);
-  let _nbitLength = void 0;
-  let _sqrt = void 0;
-  let modFromBytes = false;
-  let allowedLengths = void 0;
-  if (typeof bitLenOrOpts === "object" && bitLenOrOpts != null) {
-    if (opts.sqrt || isLE)
-      throw new Error("cannot specify opts in two arguments");
-    const _opts = bitLenOrOpts;
-    if (_opts.BITS)
-      _nbitLength = _opts.BITS;
-    if (_opts.sqrt)
-      _sqrt = _opts.sqrt;
-    if (typeof _opts.isLE === "boolean")
-      isLE = _opts.isLE;
-    if (typeof _opts.modFromBytes === "boolean")
-      modFromBytes = _opts.modFromBytes;
-    allowedLengths = _opts.allowedLengths;
-  } else {
-    if (typeof bitLenOrOpts === "number")
-      _nbitLength = bitLenOrOpts;
-    if (opts.sqrt)
-      _sqrt = opts.sqrt;
-  }
-  const { nBitLength: BITS, nByteLength: BYTES } = nLength(ORDER, _nbitLength);
-  if (BYTES > 2048)
-    throw new Error("invalid field: expected ORDER of <= 2048 bytes");
-  let sqrtP;
-  const f = Object.freeze({
-    ORDER,
-    isLE,
-    BITS,
-    BYTES,
-    MASK: bitMask(BITS),
-    ZERO: _0n$2,
-    ONE: _1n$3,
-    allowedLengths,
-    create: (num) => mod(num, ORDER),
-    isValid: (num) => {
-      if (typeof num !== "bigint")
-        throw new Error("invalid field element: expected bigint, got " + typeof num);
-      return _0n$2 <= num && num < ORDER;
-    },
-    is0: (num) => num === _0n$2,
-    // is valid and invertible
-    isValidNot0: (num) => !f.is0(num) && f.isValid(num),
-    isOdd: (num) => (num & _1n$3) === _1n$3,
-    neg: (num) => mod(-num, ORDER),
-    eql: (lhs, rhs) => lhs === rhs,
-    sqr: (num) => mod(num * num, ORDER),
-    add: (lhs, rhs) => mod(lhs + rhs, ORDER),
-    sub: (lhs, rhs) => mod(lhs - rhs, ORDER),
-    mul: (lhs, rhs) => mod(lhs * rhs, ORDER),
-    pow: (num, power) => FpPow(f, num, power),
-    div: (lhs, rhs) => mod(lhs * invert(rhs, ORDER), ORDER),
-    // Same as above, but doesn't normalize
-    sqrN: (num) => num * num,
-    addN: (lhs, rhs) => lhs + rhs,
-    subN: (lhs, rhs) => lhs - rhs,
-    mulN: (lhs, rhs) => lhs * rhs,
-    inv: (num) => invert(num, ORDER),
-    sqrt: _sqrt || ((n) => {
-      if (!sqrtP)
-        sqrtP = FpSqrt(ORDER);
-      return sqrtP(f, n);
-    }),
-    toBytes: (num) => isLE ? numberToBytesLE(num, BYTES) : numberToBytesBE(num, BYTES),
-    fromBytes: (bytes, skipValidation = true) => {
-      if (allowedLengths) {
-        if (!allowedLengths.includes(bytes.length) || bytes.length > BYTES) {
-          throw new Error("Field.fromBytes: expected " + allowedLengths + " bytes, got " + bytes.length);
-        }
-        const padded = new Uint8Array(BYTES);
-        padded.set(bytes, isLE ? 0 : padded.length - bytes.length);
-        bytes = padded;
-      }
-      if (bytes.length !== BYTES)
-        throw new Error("Field.fromBytes: expected " + BYTES + " bytes, got " + bytes.length);
-      let scalar = isLE ? bytesToNumberLE(bytes) : bytesToNumberBE(bytes);
-      if (modFromBytes)
-        scalar = mod(scalar, ORDER);
-      if (!skipValidation) {
-        if (!f.isValid(scalar))
-          throw new Error("invalid field element: outside of range 0..ORDER");
-      }
-      return scalar;
-    },
-    // TODO: we don't need it here, move out to separate fn
-    invertBatch: (lst) => FpInvertBatch(f, lst),
-    // We can't move this out because Fp6, Fp12 implement it
-    // and it's unclear what to return in there.
-    cmov: (a, b, c) => c ? b : a
-  });
-  return Object.freeze(f);
-}
-/*! noble-curves - MIT License (c) 2022 Paul Miller (paulmillr.com) */
-const _0n$1 = BigInt(0);
-const _1n$2 = BigInt(1);
-function negateCt(condition, item) {
-  const neg = item.negate();
-  return condition ? neg : item;
-}
-function normalizeZ(c, points) {
-  const invertedZs = FpInvertBatch(c.Fp, points.map((p) => p.Z));
-  return points.map((p, i) => c.fromAffine(p.toAffine(invertedZs[i])));
-}
-function validateW(W, bits) {
-  if (!Number.isSafeInteger(W) || W <= 0 || W > bits)
-    throw new Error("invalid window size, expected [1.." + bits + "], got W=" + W);
-}
-function calcWOpts(W, scalarBits) {
-  validateW(W, scalarBits);
-  const windows = Math.ceil(scalarBits / W) + 1;
-  const windowSize = 2 ** (W - 1);
-  const maxNumber = 2 ** W;
-  const mask2 = bitMask(W);
-  const shiftBy = BigInt(W);
-  return { windows, windowSize, mask: mask2, maxNumber, shiftBy };
-}
-function calcOffsets(n, window2, wOpts) {
-  const { windowSize, mask: mask2, maxNumber, shiftBy } = wOpts;
-  let wbits = Number(n & mask2);
-  let nextN = n >> shiftBy;
-  if (wbits > windowSize) {
-    wbits -= maxNumber;
-    nextN += _1n$2;
-  }
-  const offsetStart = window2 * windowSize;
-  const offset = offsetStart + Math.abs(wbits) - 1;
-  const isZero = wbits === 0;
-  const isNeg = wbits < 0;
-  const isNegF = window2 % 2 !== 0;
-  const offsetF = offsetStart;
-  return { nextN, offset, isZero, isNeg, isNegF, offsetF };
-}
-function validateMSMPoints(points, c) {
-  if (!Array.isArray(points))
-    throw new Error("array expected");
-  points.forEach((p, i) => {
-    if (!(p instanceof c))
-      throw new Error("invalid point at index " + i);
-  });
-}
-function validateMSMScalars(scalars, field) {
-  if (!Array.isArray(scalars))
-    throw new Error("array of scalars expected");
-  scalars.forEach((s, i) => {
-    if (!field.isValid(s))
-      throw new Error("invalid scalar at index " + i);
-  });
-}
-const pointPrecomputes = /* @__PURE__ */ new WeakMap();
-const pointWindowSizes = /* @__PURE__ */ new WeakMap();
-function getW(P) {
-  return pointWindowSizes.get(P) || 1;
-}
-function assert0(n) {
-  if (n !== _0n$1)
-    throw new Error("invalid wNAF");
-}
-class wNAF {
-  // Parametrized with a given Point class (not individual point)
-  constructor(Point, bits) {
-    this.BASE = Point.BASE;
-    this.ZERO = Point.ZERO;
-    this.Fn = Point.Fn;
-    this.bits = bits;
-  }
-  // non-const time multiplication ladder
-  _unsafeLadder(elm, n, p = this.ZERO) {
-    let d = elm;
-    while (n > _0n$1) {
-      if (n & _1n$2)
-        p = p.add(d);
-      d = d.double();
-      n >>= _1n$2;
-    }
-    return p;
-  }
-  /**
-   * Creates a wNAF precomputation window. Used for caching.
-   * Default window size is set by `utils.precompute()` and is equal to 8.
-   * Number of precomputed points depends on the curve size:
-   * 2^(𝑊−1) * (Math.ceil(𝑛 / 𝑊) + 1), where:
-   * - 𝑊 is the window size
-   * - 𝑛 is the bitlength of the curve order.
-   * For a 256-bit curve and window size 8, the number of precomputed points is 128 * 33 = 4224.
-   * @param point Point instance
-   * @param W window size
-   * @returns precomputed point tables flattened to a single array
-   */
-  precomputeWindow(point, W) {
-    const { windows, windowSize } = calcWOpts(W, this.bits);
-    const points = [];
-    let p = point;
-    let base = p;
-    for (let window2 = 0; window2 < windows; window2++) {
-      base = p;
-      points.push(base);
-      for (let i = 1; i < windowSize; i++) {
-        base = base.add(p);
-        points.push(base);
-      }
-      p = base.double();
-    }
-    return points;
-  }
-  /**
-   * Implements ec multiplication using precomputed tables and w-ary non-adjacent form.
-   * More compact implementation:
-   * https://github.com/paulmillr/noble-secp256k1/blob/47cb1669b6e506ad66b35fe7d76132ae97465da2/index.ts#L502-L541
-   * @returns real and fake (for const-time) points
-   */
-  wNAF(W, precomputes, n) {
-    if (!this.Fn.isValid(n))
-      throw new Error("invalid scalar");
-    let p = this.ZERO;
-    let f = this.BASE;
-    const wo = calcWOpts(W, this.bits);
-    for (let window2 = 0; window2 < wo.windows; window2++) {
-      const { nextN, offset, isZero, isNeg, isNegF, offsetF } = calcOffsets(n, window2, wo);
-      n = nextN;
-      if (isZero) {
-        f = f.add(negateCt(isNegF, precomputes[offsetF]));
-      } else {
-        p = p.add(negateCt(isNeg, precomputes[offset]));
-      }
-    }
-    assert0(n);
-    return { p, f };
-  }
-  /**
-   * Implements ec unsafe (non const-time) multiplication using precomputed tables and w-ary non-adjacent form.
-   * @param acc accumulator point to add result of multiplication
-   * @returns point
-   */
-  wNAFUnsafe(W, precomputes, n, acc = this.ZERO) {
-    const wo = calcWOpts(W, this.bits);
-    for (let window2 = 0; window2 < wo.windows; window2++) {
-      if (n === _0n$1)
-        break;
-      const { nextN, offset, isZero, isNeg } = calcOffsets(n, window2, wo);
-      n = nextN;
-      if (isZero) {
-        continue;
-      } else {
-        const item = precomputes[offset];
-        acc = acc.add(isNeg ? item.negate() : item);
-      }
-    }
-    assert0(n);
-    return acc;
-  }
-  getPrecomputes(W, point, transform) {
-    let comp = pointPrecomputes.get(point);
-    if (!comp) {
-      comp = this.precomputeWindow(point, W);
-      if (W !== 1) {
-        if (typeof transform === "function")
-          comp = transform(comp);
-        pointPrecomputes.set(point, comp);
-      }
-    }
-    return comp;
-  }
-  cached(point, scalar, transform) {
-    const W = getW(point);
-    return this.wNAF(W, this.getPrecomputes(W, point, transform), scalar);
-  }
-  unsafe(point, scalar, transform, prev) {
-    const W = getW(point);
-    if (W === 1)
-      return this._unsafeLadder(point, scalar, prev);
-    return this.wNAFUnsafe(W, this.getPrecomputes(W, point, transform), scalar, prev);
-  }
-  // We calculate precomputes for elliptic curve point multiplication
-  // using windowed method. This specifies window size and
-  // stores precomputed values. Usually only base point would be precomputed.
-  createCache(P, W) {
-    validateW(W, this.bits);
-    pointWindowSizes.set(P, W);
-    pointPrecomputes.delete(P);
-  }
-  hasCache(elm) {
-    return getW(elm) !== 1;
-  }
-}
-function pippenger(c, fieldN, points, scalars) {
-  validateMSMPoints(points, c);
-  validateMSMScalars(scalars, fieldN);
-  const plength = points.length;
-  const slength = scalars.length;
-  if (plength !== slength)
-    throw new Error("arrays of points and scalars must have equal length");
-  const zero = c.ZERO;
-  const wbits = bitLen(BigInt(plength));
-  let windowSize = 1;
-  if (wbits > 12)
-    windowSize = wbits - 3;
-  else if (wbits > 4)
-    windowSize = wbits - 2;
-  else if (wbits > 0)
-    windowSize = 2;
-  const MASK = bitMask(windowSize);
-  const buckets = new Array(Number(MASK) + 1).fill(zero);
-  const lastBits = Math.floor((fieldN.BITS - 1) / windowSize) * windowSize;
-  let sum = zero;
-  for (let i = lastBits; i >= 0; i -= windowSize) {
-    buckets.fill(zero);
-    for (let j = 0; j < slength; j++) {
-      const scalar = scalars[j];
-      const wbits2 = Number(scalar >> BigInt(i) & MASK);
-      buckets[wbits2] = buckets[wbits2].add(points[j]);
-    }
-    let resI = zero;
-    for (let j = buckets.length - 1, sumI = zero; j > 0; j--) {
-      sumI = sumI.add(buckets[j]);
-      resI = resI.add(sumI);
-    }
-    sum = sum.add(resI);
-    if (i !== 0)
-      for (let j = 0; j < windowSize; j++)
-        sum = sum.double();
-  }
-  return sum;
-}
-function createField(order, field, isLE) {
-  if (field) {
-    if (field.ORDER !== order)
-      throw new Error("Field.ORDER must match order: Fp == p, Fn == n");
-    validateField(field);
-    return field;
-  } else {
-    return Field(order, { isLE });
-  }
-}
-function _createCurveFields(type, CURVE, curveOpts = {}, FpFnLE) {
-  if (FpFnLE === void 0)
-    FpFnLE = type === "edwards";
-  if (!CURVE || typeof CURVE !== "object")
-    throw new Error(`expected valid ${type} CURVE object`);
-  for (const p of ["p", "n", "h"]) {
-    const val = CURVE[p];
-    if (!(typeof val === "bigint" && val > _0n$1))
-      throw new Error(`CURVE.${p} must be positive bigint`);
-  }
-  const Fp2 = createField(CURVE.p, curveOpts.Fp, FpFnLE);
-  const Fn = createField(CURVE.n, curveOpts.Fn, FpFnLE);
-  const _b2 = "d";
-  const params = ["Gx", "Gy", "a", _b2];
-  for (const p of params) {
-    if (!Fp2.isValid(CURVE[p]))
-      throw new Error(`CURVE.${p} must be valid field element of CURVE.Fp`);
-  }
-  CURVE = Object.freeze(Object.assign({}, CURVE));
-  return { CURVE, Fp: Fp2, Fn };
-}
-/*! noble-curves - MIT License (c) 2022 Paul Miller (paulmillr.com) */
-const _0n = BigInt(0), _1n$1 = BigInt(1), _2n$1 = BigInt(2), _8n$1 = BigInt(8);
-function isEdValidXY(Fp2, CURVE, x, y) {
-  const x2 = Fp2.sqr(x);
-  const y2 = Fp2.sqr(y);
-  const left = Fp2.add(Fp2.mul(CURVE.a, x2), y2);
-  const right = Fp2.add(Fp2.ONE, Fp2.mul(CURVE.d, Fp2.mul(x2, y2)));
-  return Fp2.eql(left, right);
-}
-function edwards(params, extraOpts = {}) {
-  const validated = _createCurveFields("edwards", params, extraOpts, extraOpts.FpFnLE);
-  const { Fp: Fp2, Fn } = validated;
-  let CURVE = validated.CURVE;
-  const { h: cofactor } = CURVE;
-  _validateObject(extraOpts, {}, { uvRatio: "function" });
-  const MASK = _2n$1 << BigInt(Fn.BYTES * 8) - _1n$1;
-  const modP = (n) => Fp2.create(n);
-  const uvRatio2 = extraOpts.uvRatio || ((u, v) => {
-    try {
-      return { isValid: true, value: Fp2.sqrt(Fp2.div(u, v)) };
-    } catch (e) {
-      return { isValid: false, value: _0n };
-    }
-  });
-  if (!isEdValidXY(Fp2, CURVE, CURVE.Gx, CURVE.Gy))
-    throw new Error("bad curve params: generator point");
-  function acoord(title, n, banZero = false) {
-    const min = banZero ? _1n$1 : _0n;
-    aInRange("coordinate " + title, n, min, MASK);
-    return n;
-  }
-  function aextpoint(other) {
-    if (!(other instanceof Point))
-      throw new Error("ExtendedPoint expected");
-  }
-  const toAffineMemo = memoized((p, iz) => {
-    const { X: X2, Y, Z } = p;
-    const is0 = p.is0();
-    if (iz == null)
-      iz = is0 ? _8n$1 : Fp2.inv(Z);
-    const x = modP(X2 * iz);
-    const y = modP(Y * iz);
-    const zz = Fp2.mul(Z, iz);
-    if (is0)
-      return { x: _0n, y: _1n$1 };
-    if (zz !== _1n$1)
-      throw new Error("invZ was invalid");
-    return { x, y };
-  });
-  const assertValidMemo = memoized((p) => {
-    const { a, d } = CURVE;
-    if (p.is0())
-      throw new Error("bad point: ZERO");
-    const { X: X2, Y, Z, T } = p;
-    const X22 = modP(X2 * X2);
-    const Y2 = modP(Y * Y);
-    const Z2 = modP(Z * Z);
-    const Z4 = modP(Z2 * Z2);
-    const aX2 = modP(X22 * a);
-    const left = modP(Z2 * modP(aX2 + Y2));
-    const right = modP(Z4 + modP(d * modP(X22 * Y2)));
-    if (left !== right)
-      throw new Error("bad point: equation left != right (1)");
-    const XY = modP(X2 * Y);
-    const ZT = modP(Z * T);
-    if (XY !== ZT)
-      throw new Error("bad point: equation left != right (2)");
-    return true;
-  });
-  class Point {
-    constructor(X2, Y, Z, T) {
-      this.X = acoord("x", X2);
-      this.Y = acoord("y", Y);
-      this.Z = acoord("z", Z, true);
-      this.T = acoord("t", T);
-      Object.freeze(this);
-    }
-    static CURVE() {
-      return CURVE;
-    }
-    static fromAffine(p) {
-      if (p instanceof Point)
-        throw new Error("extended point not allowed");
-      const { x, y } = p || {};
-      acoord("x", x);
-      acoord("y", y);
-      return new Point(x, y, _1n$1, modP(x * y));
-    }
-    // Uses algo from RFC8032 5.1.3.
-    static fromBytes(bytes, zip215 = false) {
-      const len = Fp2.BYTES;
-      const { a, d } = CURVE;
-      bytes = copyBytes(_abytes2(bytes, len, "point"));
-      _abool2(zip215, "zip215");
-      const normed = copyBytes(bytes);
-      const lastByte = bytes[len - 1];
-      normed[len - 1] = lastByte & -129;
-      const y = bytesToNumberLE(normed);
-      const max = zip215 ? MASK : Fp2.ORDER;
-      aInRange("point.y", y, _0n, max);
-      const y2 = modP(y * y);
-      const u = modP(y2 - _1n$1);
-      const v = modP(d * y2 - a);
-      let { isValid, value: x } = uvRatio2(u, v);
-      if (!isValid)
-        throw new Error("bad point: invalid y coordinate");
-      const isXOdd = (x & _1n$1) === _1n$1;
-      const isLastByteOdd = (lastByte & 128) !== 0;
-      if (!zip215 && x === _0n && isLastByteOdd)
-        throw new Error("bad point: x=0 and x_0=1");
-      if (isLastByteOdd !== isXOdd)
-        x = modP(-x);
-      return Point.fromAffine({ x, y });
-    }
-    static fromHex(bytes, zip215 = false) {
-      return Point.fromBytes(ensureBytes("point", bytes), zip215);
-    }
-    get x() {
-      return this.toAffine().x;
-    }
-    get y() {
-      return this.toAffine().y;
-    }
-    precompute(windowSize = 8, isLazy = true) {
-      wnaf.createCache(this, windowSize);
-      if (!isLazy)
-        this.multiply(_2n$1);
-      return this;
-    }
-    // Useful in fromAffine() - not for fromBytes(), which always created valid points.
-    assertValidity() {
-      assertValidMemo(this);
-    }
-    // Compare one point to another.
-    equals(other) {
-      aextpoint(other);
-      const { X: X1, Y: Y1, Z: Z1 } = this;
-      const { X: X2, Y: Y2, Z: Z2 } = other;
-      const X1Z2 = modP(X1 * Z2);
-      const X2Z1 = modP(X2 * Z1);
-      const Y1Z2 = modP(Y1 * Z2);
-      const Y2Z1 = modP(Y2 * Z1);
-      return X1Z2 === X2Z1 && Y1Z2 === Y2Z1;
-    }
-    is0() {
-      return this.equals(Point.ZERO);
-    }
-    negate() {
-      return new Point(modP(-this.X), this.Y, this.Z, modP(-this.T));
-    }
-    // Fast algo for doubling Extended Point.
-    // https://hyperelliptic.org/EFD/g1p/auto-twisted-extended.html#doubling-dbl-2008-hwcd
-    // Cost: 4M + 4S + 1*a + 6add + 1*2.
-    double() {
-      const { a } = CURVE;
-      const { X: X1, Y: Y1, Z: Z1 } = this;
-      const A = modP(X1 * X1);
-      const B = modP(Y1 * Y1);
-      const C = modP(_2n$1 * modP(Z1 * Z1));
-      const D = modP(a * A);
-      const x1y1 = X1 + Y1;
-      const E = modP(modP(x1y1 * x1y1) - A - B);
-      const G = D + B;
-      const F = G - C;
-      const H = D - B;
-      const X3 = modP(E * F);
-      const Y3 = modP(G * H);
-      const T3 = modP(E * H);
-      const Z3 = modP(F * G);
-      return new Point(X3, Y3, Z3, T3);
-    }
-    // Fast algo for adding 2 Extended Points.
-    // https://hyperelliptic.org/EFD/g1p/auto-twisted-extended.html#addition-add-2008-hwcd
-    // Cost: 9M + 1*a + 1*d + 7add.
-    add(other) {
-      aextpoint(other);
-      const { a, d } = CURVE;
-      const { X: X1, Y: Y1, Z: Z1, T: T1 } = this;
-      const { X: X2, Y: Y2, Z: Z2, T: T2 } = other;
-      const A = modP(X1 * X2);
-      const B = modP(Y1 * Y2);
-      const C = modP(T1 * d * T2);
-      const D = modP(Z1 * Z2);
-      const E = modP((X1 + Y1) * (X2 + Y2) - A - B);
-      const F = D - C;
-      const G = D + C;
-      const H = modP(B - a * A);
-      const X3 = modP(E * F);
-      const Y3 = modP(G * H);
-      const T3 = modP(E * H);
-      const Z3 = modP(F * G);
-      return new Point(X3, Y3, Z3, T3);
-    }
-    subtract(other) {
-      return this.add(other.negate());
-    }
-    // Constant-time multiplication.
-    multiply(scalar) {
-      if (!Fn.isValidNot0(scalar))
-        throw new Error("invalid scalar: expected 1 <= sc < curve.n");
-      const { p, f } = wnaf.cached(this, scalar, (p2) => normalizeZ(Point, p2));
-      return normalizeZ(Point, [p, f])[0];
-    }
-    // Non-constant-time multiplication. Uses double-and-add algorithm.
-    // It's faster, but should only be used when you don't care about
-    // an exposed private key e.g. sig verification.
-    // Does NOT allow scalars higher than CURVE.n.
-    // Accepts optional accumulator to merge with multiply (important for sparse scalars)
-    multiplyUnsafe(scalar, acc = Point.ZERO) {
-      if (!Fn.isValid(scalar))
-        throw new Error("invalid scalar: expected 0 <= sc < curve.n");
-      if (scalar === _0n)
-        return Point.ZERO;
-      if (this.is0() || scalar === _1n$1)
-        return this;
-      return wnaf.unsafe(this, scalar, (p) => normalizeZ(Point, p), acc);
-    }
-    // Checks if point is of small order.
-    // If you add something to small order point, you will have "dirty"
-    // point with torsion component.
-    // Multiplies point by cofactor and checks if the result is 0.
-    isSmallOrder() {
-      return this.multiplyUnsafe(cofactor).is0();
-    }
-    // Multiplies point by curve order and checks if the result is 0.
-    // Returns `false` is the point is dirty.
-    isTorsionFree() {
-      return wnaf.unsafe(this, CURVE.n).is0();
-    }
-    // Converts Extended point to default (x, y) coordinates.
-    // Can accept precomputed Z^-1 - for example, from invertBatch.
-    toAffine(invertedZ) {
-      return toAffineMemo(this, invertedZ);
-    }
-    clearCofactor() {
-      if (cofactor === _1n$1)
-        return this;
-      return this.multiplyUnsafe(cofactor);
-    }
-    toBytes() {
-      const { x, y } = this.toAffine();
-      const bytes = Fp2.toBytes(y);
-      bytes[bytes.length - 1] |= x & _1n$1 ? 128 : 0;
-      return bytes;
-    }
-    toHex() {
-      return bytesToHex(this.toBytes());
-    }
-    toString() {
-      return `<Point ${this.is0() ? "ZERO" : this.toHex()}>`;
-    }
-    // TODO: remove
-    get ex() {
-      return this.X;
-    }
-    get ey() {
-      return this.Y;
-    }
-    get ez() {
-      return this.Z;
-    }
-    get et() {
-      return this.T;
-    }
-    static normalizeZ(points) {
-      return normalizeZ(Point, points);
-    }
-    static msm(points, scalars) {
-      return pippenger(Point, Fn, points, scalars);
-    }
-    _setWindowSize(windowSize) {
-      this.precompute(windowSize);
-    }
-    toRawBytes() {
-      return this.toBytes();
-    }
-  }
-  Point.BASE = new Point(CURVE.Gx, CURVE.Gy, _1n$1, modP(CURVE.Gx * CURVE.Gy));
-  Point.ZERO = new Point(_0n, _1n$1, _1n$1, _0n);
-  Point.Fp = Fp2;
-  Point.Fn = Fn;
-  const wnaf = new wNAF(Point, Fn.BITS);
-  Point.BASE.precompute(8);
-  return Point;
-}
-function eddsa(Point, cHash, eddsaOpts = {}) {
-  if (typeof cHash !== "function")
-    throw new Error('"hash" function param is required');
-  _validateObject(eddsaOpts, {}, {
-    adjustScalarBytes: "function",
-    randomBytes: "function",
-    domain: "function",
-    prehash: "function",
-    mapToCurve: "function"
-  });
-  const { prehash } = eddsaOpts;
-  const { BASE, Fp: Fp2, Fn } = Point;
-  const randomBytes$1 = eddsaOpts.randomBytes || randomBytes;
-  const adjustScalarBytes2 = eddsaOpts.adjustScalarBytes || ((bytes) => bytes);
-  const domain = eddsaOpts.domain || ((data, ctx, phflag) => {
-    _abool2(phflag, "phflag");
-    if (ctx.length || phflag)
-      throw new Error("Contexts/pre-hash are not supported");
-    return data;
-  });
-  function modN_LE(hash) {
-    return Fn.create(bytesToNumberLE(hash));
-  }
-  function getPrivateScalar(key) {
-    const len = lengths.secretKey;
-    key = ensureBytes("private key", key, len);
-    const hashed = ensureBytes("hashed private key", cHash(key), 2 * len);
-    const head = adjustScalarBytes2(hashed.slice(0, len));
-    const prefix2 = hashed.slice(len, 2 * len);
-    const scalar = modN_LE(head);
-    return { head, prefix: prefix2, scalar };
-  }
-  function getExtendedPublicKey(secretKey) {
-    const { head, prefix: prefix2, scalar } = getPrivateScalar(secretKey);
-    const point = BASE.multiply(scalar);
-    const pointBytes = point.toBytes();
-    return { head, prefix: prefix2, scalar, point, pointBytes };
-  }
-  function getPublicKey(secretKey) {
-    return getExtendedPublicKey(secretKey).pointBytes;
-  }
-  function hashDomainToScalar(context = Uint8Array.of(), ...msgs) {
-    const msg = concatBytes(...msgs);
-    return modN_LE(cHash(domain(msg, ensureBytes("context", context), !!prehash)));
-  }
-  function sign(msg, secretKey, options = {}) {
-    msg = ensureBytes("message", msg);
-    if (prehash)
-      msg = prehash(msg);
-    const { prefix: prefix2, scalar, pointBytes } = getExtendedPublicKey(secretKey);
-    const r = hashDomainToScalar(options.context, prefix2, msg);
-    const R = BASE.multiply(r).toBytes();
-    const k = hashDomainToScalar(options.context, R, pointBytes, msg);
-    const s = Fn.create(r + k * scalar);
-    if (!Fn.isValid(s))
-      throw new Error("sign failed: invalid s");
-    const rs = concatBytes(R, Fn.toBytes(s));
-    return _abytes2(rs, lengths.signature, "result");
-  }
-  const verifyOpts = { zip215: true };
-  function verify(sig, msg, publicKey, options = verifyOpts) {
-    const { context, zip215 } = options;
-    const len = lengths.signature;
-    sig = ensureBytes("signature", sig, len);
-    msg = ensureBytes("message", msg);
-    publicKey = ensureBytes("publicKey", publicKey, lengths.publicKey);
-    if (zip215 !== void 0)
-      _abool2(zip215, "zip215");
-    if (prehash)
-      msg = prehash(msg);
-    const mid = len / 2;
-    const r = sig.subarray(0, mid);
-    const s = bytesToNumberLE(sig.subarray(mid, len));
-    let A, R, SB;
-    try {
-      A = Point.fromBytes(publicKey, zip215);
-      R = Point.fromBytes(r, zip215);
-      SB = BASE.multiplyUnsafe(s);
-    } catch (error) {
-      return false;
-    }
-    if (!zip215 && A.isSmallOrder())
-      return false;
-    const k = hashDomainToScalar(context, R.toBytes(), A.toBytes(), msg);
-    const RkA = R.add(A.multiplyUnsafe(k));
-    return RkA.subtract(SB).clearCofactor().is0();
-  }
-  const _size = Fp2.BYTES;
-  const lengths = {
-    secretKey: _size,
-    publicKey: _size,
-    signature: 2 * _size,
-    seed: _size
-  };
-  function randomSecretKey(seed = randomBytes$1(lengths.seed)) {
-    return _abytes2(seed, lengths.seed, "seed");
-  }
-  function keygen(seed) {
-    const secretKey = utils.randomSecretKey(seed);
-    return { secretKey, publicKey: getPublicKey(secretKey) };
-  }
-  function isValidSecretKey(key) {
-    return isBytes(key) && key.length === Fn.BYTES;
-  }
-  function isValidPublicKey(key, zip215) {
-    try {
-      return !!Point.fromBytes(key, zip215);
-    } catch (error) {
-      return false;
-    }
-  }
-  const utils = {
-    getExtendedPublicKey,
-    randomSecretKey,
-    isValidSecretKey,
-    isValidPublicKey,
-    /**
-     * Converts ed public key to x public key. Uses formula:
-     * - ed25519:
-     *   - `(u, v) = ((1+y)/(1-y), sqrt(-486664)*u/x)`
-     *   - `(x, y) = (sqrt(-486664)*u/v, (u-1)/(u+1))`
-     * - ed448:
-     *   - `(u, v) = ((y-1)/(y+1), sqrt(156324)*u/x)`
-     *   - `(x, y) = (sqrt(156324)*u/v, (1+u)/(1-u))`
-     */
-    toMontgomery(publicKey) {
-      const { y } = Point.fromBytes(publicKey);
-      const size = lengths.publicKey;
-      const is25519 = size === 32;
-      if (!is25519 && size !== 57)
-        throw new Error("only defined for 25519 and 448");
-      const u = is25519 ? Fp2.div(_1n$1 + y, _1n$1 - y) : Fp2.div(y - _1n$1, y + _1n$1);
-      return Fp2.toBytes(u);
-    },
-    toMontgomerySecret(secretKey) {
-      const size = lengths.secretKey;
-      _abytes2(secretKey, size);
-      const hashed = cHash(secretKey.subarray(0, size));
-      return adjustScalarBytes2(hashed).subarray(0, size);
-    },
-    /** @deprecated */
-    randomPrivateKey: randomSecretKey,
-    /** @deprecated */
-    precompute(windowSize = 8, point = Point.BASE) {
-      return point.precompute(windowSize, false);
-    }
-  };
-  return Object.freeze({
-    keygen,
-    getPublicKey,
-    sign,
-    verify,
-    utils,
-    Point,
-    lengths
-  });
-}
-function _eddsa_legacy_opts_to_new(c) {
-  const CURVE = {
-    a: c.a,
-    d: c.d,
-    p: c.Fp.ORDER,
-    n: c.n,
-    h: c.h,
-    Gx: c.Gx,
-    Gy: c.Gy
-  };
-  const Fp2 = c.Fp;
-  const Fn = Field(CURVE.n, c.nBitLength, true);
-  const curveOpts = { Fp: Fp2, Fn, uvRatio: c.uvRatio };
-  const eddsaOpts = {
-    randomBytes: c.randomBytes,
-    adjustScalarBytes: c.adjustScalarBytes,
-    domain: c.domain,
-    prehash: c.prehash,
-    mapToCurve: c.mapToCurve
-  };
-  return { CURVE, curveOpts, hash: c.hash, eddsaOpts };
-}
-function _eddsa_new_output_to_legacy(c, eddsa2) {
-  const Point = eddsa2.Point;
-  const legacy = Object.assign({}, eddsa2, {
-    ExtendedPoint: Point,
-    CURVE: c,
-    nBitLength: Point.Fn.BITS,
-    nByteLength: Point.Fn.BYTES
-  });
-  return legacy;
-}
-function twistedEdwards(c) {
-  const { CURVE, curveOpts, hash, eddsaOpts } = _eddsa_legacy_opts_to_new(c);
-  const Point = edwards(CURVE, curveOpts);
-  const EDDSA = eddsa(Point, hash, eddsaOpts);
-  return _eddsa_new_output_to_legacy(c, EDDSA);
-}
-/*! noble-curves - MIT License (c) 2022 Paul Miller (paulmillr.com) */
-const _1n = BigInt(1), _2n = BigInt(2);
-BigInt(3);
-const _5n = BigInt(5), _8n = BigInt(8);
-const ed25519_CURVE_p = BigInt("0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed");
-const ed25519_CURVE = /* @__PURE__ */ (() => ({
-  p: ed25519_CURVE_p,
-  n: BigInt("0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ed"),
-  h: _8n,
-  a: BigInt("0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffec"),
-  d: BigInt("0x52036cee2b6ffe738cc740797779e89800700a4d4141d8ab75eb4dca135978a3"),
-  Gx: BigInt("0x216936d3cd6e53fec0a4e231fdd6dc5c692cc7609525a7b2c9562d608f25d51a"),
-  Gy: BigInt("0x6666666666666666666666666666666666666666666666666666666666666658")
-}))();
-function ed25519_pow_2_252_3(x) {
-  const _10n = BigInt(10), _20n = BigInt(20), _40n = BigInt(40), _80n = BigInt(80);
-  const P = ed25519_CURVE_p;
-  const x2 = x * x % P;
-  const b2 = x2 * x % P;
-  const b4 = pow2(b2, _2n, P) * b2 % P;
-  const b5 = pow2(b4, _1n, P) * x % P;
-  const b10 = pow2(b5, _5n, P) * b5 % P;
-  const b20 = pow2(b10, _10n, P) * b10 % P;
-  const b40 = pow2(b20, _20n, P) * b20 % P;
-  const b80 = pow2(b40, _40n, P) * b40 % P;
-  const b160 = pow2(b80, _80n, P) * b80 % P;
-  const b240 = pow2(b160, _80n, P) * b80 % P;
-  const b250 = pow2(b240, _10n, P) * b10 % P;
-  const pow_p_5_8 = pow2(b250, _2n, P) * x % P;
-  return { pow_p_5_8, b2 };
-}
-function adjustScalarBytes(bytes) {
-  bytes[0] &= 248;
-  bytes[31] &= 127;
-  bytes[31] |= 64;
-  return bytes;
-}
-const ED25519_SQRT_M1 = /* @__PURE__ */ BigInt("19681161376707505956807079304988542015446066515923890162744021073123829784752");
-function uvRatio(u, v) {
-  const P = ed25519_CURVE_p;
-  const v3 = mod(v * v * v, P);
-  const v7 = mod(v3 * v3 * v, P);
-  const pow = ed25519_pow_2_252_3(u * v7).pow_p_5_8;
-  let x = mod(u * v3 * pow, P);
-  const vx2 = mod(v * x * x, P);
-  const root1 = x;
-  const root2 = mod(x * ED25519_SQRT_M1, P);
-  const useRoot1 = vx2 === u;
-  const useRoot2 = vx2 === mod(-u, P);
-  const noRoot = vx2 === mod(-u * ED25519_SQRT_M1, P);
-  if (useRoot1)
-    x = root1;
-  if (useRoot2 || noRoot)
-    x = root2;
-  if (isNegativeLE(x, P))
-    x = mod(-x, P);
-  return { isValid: useRoot1 || useRoot2, value: x };
-}
-const Fp = /* @__PURE__ */ (() => Field(ed25519_CURVE.p, { isLE: true }))();
-const ed25519Defaults = /* @__PURE__ */ (() => ({
-  ...ed25519_CURVE,
-  Fp,
-  hash: sha512,
-  adjustScalarBytes,
-  // dom2
-  // Ratio of u to v. Allows us to combine inversion and square root. Uses algo from RFC8032 5.1.3.
-  // Constant-time, u/√v
-  uvRatio
-}))();
-const ed25519 = /* @__PURE__ */ (() => twistedEdwards(ed25519Defaults))();
-const encodeLenBytes = (len) => {
-  if (len <= 127) {
-    return 1;
-  } else if (len <= 255) {
-    return 2;
-  } else if (len <= 65535) {
-    return 3;
-  } else if (len <= 16777215) {
-    return 4;
-  } else {
-    throw InputError.fromCode(new DerEncodeErrorCode("Length too long (> 4 bytes)"));
-  }
-};
-const encodeLen = (buf, offset, len) => {
-  if (len <= 127) {
-    buf[offset] = len;
-    return 1;
-  } else if (len <= 255) {
-    buf[offset] = 129;
-    buf[offset + 1] = len;
-    return 2;
-  } else if (len <= 65535) {
-    buf[offset] = 130;
-    buf[offset + 1] = len >> 8;
-    buf[offset + 2] = len;
-    return 3;
-  } else if (len <= 16777215) {
-    buf[offset] = 131;
-    buf[offset + 1] = len >> 16;
-    buf[offset + 2] = len >> 8;
-    buf[offset + 3] = len;
-    return 4;
-  } else {
-    throw InputError.fromCode(new DerEncodeErrorCode("Length too long (> 4 bytes)"));
-  }
-};
-const decodeLenBytes = (buf, offset) => {
-  if (buf[offset] < 128)
-    return 1;
-  if (buf[offset] === 128)
-    throw InputError.fromCode(new DerDecodeErrorCode("Invalid length 0"));
-  if (buf[offset] === 129)
-    return 2;
-  if (buf[offset] === 130)
-    return 3;
-  if (buf[offset] === 131)
-    return 4;
-  throw InputError.fromCode(new DerDecodeErrorCode("Length too long (> 4 bytes)"));
-};
-const decodeLen = (buf, offset) => {
-  const lenBytes = decodeLenBytes(buf, offset);
-  if (lenBytes === 1)
-    return buf[offset];
-  else if (lenBytes === 2)
-    return buf[offset + 1];
-  else if (lenBytes === 3)
-    return (buf[offset + 1] << 8) + buf[offset + 2];
-  else if (lenBytes === 4)
-    return (buf[offset + 1] << 16) + (buf[offset + 2] << 8) + buf[offset + 3];
-  throw InputError.fromCode(new DerDecodeErrorCode("Length too long (> 4 bytes)"));
-};
-Uint8Array.from([
-  ...[48, 12],
-  // SEQUENCE
-  ...[6, 10],
-  // OID with 10 bytes
-  ...[43, 6, 1, 4, 1, 131, 184, 67, 1, 1]
-  // DER encoded COSE
-]);
-const ED25519_OID = Uint8Array.from([
-  ...[48, 5],
-  // SEQUENCE
-  ...[6, 3],
-  // OID with 3 bytes
-  ...[43, 101, 112]
-  // id-Ed25519 OID
-]);
-Uint8Array.from([
-  ...[48, 16],
-  // SEQUENCE
-  ...[6, 7],
-  // OID with 7 bytes
-  ...[42, 134, 72, 206, 61, 2, 1],
-  // OID ECDSA
-  ...[6, 5],
-  // OID with 5 bytes
-  ...[43, 129, 4, 0, 10]
-  // OID secp256k1
-]);
-Uint8Array.from([
-  ...[48, 29],
-  // SEQUENCE, length 29 bytes
-  // Algorithm OID
-  ...[6, 13],
-  ...[43, 6, 1, 4, 1, 130, 220, 124, 5, 3, 1, 2, 1],
-  // Curve OID
-  ...[6, 12],
-  ...[43, 6, 1, 4, 1, 130, 220, 124, 5, 3, 2, 1]
-]);
-function wrapDER(payload, oid) {
-  const bitStringHeaderLength = 2 + encodeLenBytes(payload.byteLength + 1);
-  const len = oid.byteLength + bitStringHeaderLength + payload.byteLength;
-  let offset = 0;
-  const buf = new Uint8Array(1 + encodeLenBytes(len) + len);
-  buf[offset++] = 48;
-  offset += encodeLen(buf, offset, len);
-  buf.set(oid, offset);
-  offset += oid.byteLength;
-  buf[offset++] = 3;
-  offset += encodeLen(buf, offset, payload.byteLength + 1);
-  buf[offset++] = 0;
-  buf.set(new Uint8Array(payload), offset);
-  return buf;
-}
-const unwrapDER = (derEncoded, oid) => {
-  let offset = 0;
-  const expect = (n, msg) => {
-    if (buf[offset++] !== n) {
-      throw InputError.fromCode(new DerDecodeErrorCode(`Expected ${msg} at offset ${offset}`));
-    }
-  };
-  const buf = new Uint8Array(derEncoded);
-  expect(48, "sequence");
-  offset += decodeLenBytes(buf, offset);
-  if (!uint8Equals(buf.slice(offset, offset + oid.byteLength), oid)) {
-    throw InputError.fromCode(new DerDecodeErrorCode("Not the expected OID."));
-  }
-  offset += oid.byteLength;
-  expect(3, "bit string");
-  const payloadLen = decodeLen(buf, offset) - 1;
-  offset += decodeLenBytes(buf, offset);
-  expect(0, "0 padding");
-  const result = buf.slice(offset);
-  if (payloadLen !== result.length) {
-    throw InputError.fromCode(new DerDecodeLengthMismatchErrorCode(payloadLen, result.length));
-  }
-  return result;
-};
-function isObject(value) {
-  return value !== null && typeof value === "object";
-}
-const _Ed25519PublicKey = class _Ed25519PublicKey {
-  // `fromRaw` and `fromDer` should be used for instantiation, not this constructor.
-  constructor(key) {
-    __privateAdd(this, _rawKey);
-    __privateAdd(this, _derKey);
-    if (key.byteLength !== _Ed25519PublicKey.RAW_KEY_LENGTH) {
-      throw new Error("An Ed25519 public key must be exactly 32bytes long");
-    }
-    __privateSet(this, _rawKey, key);
-    __privateSet(this, _derKey, _Ed25519PublicKey.derEncode(key));
-  }
-  /**
-   * Construct Ed25519PublicKey from an existing PublicKey
-   * @param {unknown} maybeKey - existing PublicKey, ArrayBuffer, DerEncodedPublicKey, or hex string
-   * @returns {Ed25519PublicKey} Instance of Ed25519PublicKey
-   */
-  static from(maybeKey) {
-    if (typeof maybeKey === "string") {
-      const key = hexToBytes(maybeKey);
-      return this.fromRaw(key);
-    } else if (isObject(maybeKey)) {
-      const key = maybeKey;
-      if (isObject(key) && Object.hasOwnProperty.call(key, "__derEncodedPublicKey__")) {
-        return this.fromDer(key);
-      } else if (ArrayBuffer.isView(key)) {
-        const view = key;
-        return this.fromRaw(uint8FromBufLike$1(view.buffer));
-      } else if (key instanceof ArrayBuffer) {
-        return this.fromRaw(uint8FromBufLike$1(key));
-      } else if ("rawKey" in key && key.rawKey instanceof Uint8Array) {
-        return this.fromRaw(key.rawKey);
-      } else if ("derKey" in key) {
-        return this.fromDer(key.derKey);
-      } else if ("toDer" in key) {
-        return this.fromDer(key.toDer());
-      }
-    }
-    throw new Error("Cannot construct Ed25519PublicKey from the provided key.");
-  }
-  static fromRaw(rawKey) {
-    return new _Ed25519PublicKey(rawKey);
-  }
-  static fromDer(derKey) {
-    return new _Ed25519PublicKey(this.derDecode(derKey));
-  }
-  static derEncode(publicKey) {
-    const key = wrapDER(publicKey, ED25519_OID);
-    key.__derEncodedPublicKey__ = void 0;
-    return key;
-  }
-  static derDecode(key) {
-    const unwrapped = unwrapDER(key, ED25519_OID);
-    if (unwrapped.length !== this.RAW_KEY_LENGTH) {
-      throw new Error("An Ed25519 public key must be exactly 32bytes long");
-    }
-    return unwrapped;
-  }
-  get rawKey() {
-    return __privateGet(this, _rawKey);
-  }
-  get derKey() {
-    return __privateGet(this, _derKey);
-  }
-  toDer() {
-    return this.derKey;
-  }
-  toRaw() {
-    return this.rawKey;
-  }
-};
-_rawKey = new WeakMap();
-_derKey = new WeakMap();
-_Ed25519PublicKey.RAW_KEY_LENGTH = 32;
-let Ed25519PublicKey = _Ed25519PublicKey;
-const _Ed25519KeyIdentity = class _Ed25519KeyIdentity extends SignIdentity {
-  // `fromRaw` and `fromDer` should be used for instantiation, not this constructor.
-  constructor(publicKey, privateKey) {
-    super();
-    __privateAdd(this, _publicKey);
-    __privateAdd(this, _privateKey);
-    __privateSet(this, _publicKey, Ed25519PublicKey.from(publicKey));
-    __privateSet(this, _privateKey, privateKey);
-  }
-  /**
-   * Generate a new Ed25519KeyIdentity.
-   * @param seed a 32-byte seed for the private key. If not provided, a random seed will be generated.
-   * @returns Ed25519KeyIdentity
-   */
-  static generate(seed) {
-    if (seed && seed.length !== 32) {
-      throw new Error("Ed25519 Seed needs to be 32 bytes long.");
-    }
-    if (!seed)
-      seed = ed25519.utils.randomPrivateKey();
-    if (uint8Equals$1(seed, new Uint8Array(new Array(32).fill(0)))) {
-      console.warn("Seed is all zeros. This is not a secure seed. Please provide a seed with sufficient entropy if this is a production environment.");
-    }
-    const sk = new Uint8Array(32);
-    for (let i = 0; i < 32; i++) {
-      sk[i] = seed[i];
-    }
-    const pk = ed25519.getPublicKey(sk);
-    return _Ed25519KeyIdentity.fromKeyPair(pk, sk);
-  }
-  static fromParsedJson(obj) {
-    const [publicKeyDer, privateKeyRaw] = obj;
-    return new _Ed25519KeyIdentity(Ed25519PublicKey.fromDer(hexToBytes(publicKeyDer)), hexToBytes(privateKeyRaw));
-  }
-  static fromJSON(json) {
-    const parsed = JSON.parse(json);
-    if (Array.isArray(parsed)) {
-      if (typeof parsed[0] === "string" && typeof parsed[1] === "string") {
-        return this.fromParsedJson([parsed[0], parsed[1]]);
-      } else {
-        throw new Error("Deserialization error: JSON must have at least 2 items.");
-      }
-    }
-    throw new Error(`Deserialization error: Invalid JSON type for string: ${JSON.stringify(json)}`);
-  }
-  static fromKeyPair(publicKey, privateKey) {
-    return new _Ed25519KeyIdentity(Ed25519PublicKey.fromRaw(publicKey), privateKey);
-  }
-  static fromSecretKey(secretKey) {
-    const publicKey = ed25519.getPublicKey(secretKey);
-    return _Ed25519KeyIdentity.fromKeyPair(publicKey, secretKey);
-  }
-  /**
-   * Serialize this key to JSON.
-   */
-  toJSON() {
-    return [bytesToHex(__privateGet(this, _publicKey).toDer()), bytesToHex(__privateGet(this, _privateKey))];
-  }
-  /**
-   * Return a copy of the key pair.
-   */
-  getKeyPair() {
-    return {
-      secretKey: __privateGet(this, _privateKey),
-      publicKey: __privateGet(this, _publicKey)
-    };
-  }
-  /**
-   * Return the public key.
-   */
-  getPublicKey() {
-    return __privateGet(this, _publicKey);
-  }
-  /**
-   * Signs a blob of data, with this identity's private key.
-   * @param challenge - challenge to sign with this identity's secretKey, producing a signature
-   */
-  async sign(challenge) {
-    const signature = ed25519.sign(challenge, __privateGet(this, _privateKey).slice(0, 32));
-    Object.defineProperty(signature, "__signature__", {
-      enumerable: false,
-      value: void 0
-    });
-    return signature;
-  }
-  /**
-   * Verify
-   * @param sig - signature to verify
-   * @param msg - message to verify
-   * @param pk - public key
-   * @returns - true if the signature is valid, false otherwise
-   */
-  static verify(sig, msg, pk) {
-    const [signature, message, publicKey] = [sig, msg, pk].map((x) => {
-      if (typeof x === "string") {
-        x = hexToBytes(x);
-      }
-      return uint8FromBufLike$1(x);
-    });
-    return ed25519.verify(signature, message, publicKey);
-  }
-};
-_publicKey = new WeakMap();
-_privateKey = new WeakMap();
-let Ed25519KeyIdentity = _Ed25519KeyIdentity;
-class CryptoError extends Error {
-  constructor(message) {
-    super(message);
-    this.message = message;
-    Object.setPrototypeOf(this, CryptoError.prototype);
-  }
-}
-function _getEffectiveCrypto(subtleCrypto) {
-  if (typeof global !== "undefined" && global["crypto"] && global["crypto"]["subtle"]) {
-    return global["crypto"]["subtle"];
-  }
-  if (subtleCrypto) {
-    return subtleCrypto;
-  } else if (typeof crypto !== "undefined" && crypto["subtle"]) {
-    return crypto.subtle;
-  } else {
-    throw new CryptoError("Global crypto was not available and none was provided. Please inlcude a SubtleCrypto implementation. See https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto");
-  }
-}
-class ECDSAKeyIdentity extends SignIdentity {
-  /**
-   * Generates a randomly generated identity for use in calls to the Internet Computer.
-   * @param {CryptoKeyOptions} options optional settings
-   * @param {CryptoKeyOptions['extractable']} options.extractable - whether the key should allow itself to be used. Set to false for maximum security.
-   * @param {CryptoKeyOptions['keyUsages']} options.keyUsages - a list of key usages that the key can be used for
-   * @param {CryptoKeyOptions['subtleCrypto']} options.subtleCrypto interface
-   * @returns a {@link ECDSAKeyIdentity}
-   */
-  static async generate(options) {
-    const { extractable = false, keyUsages = ["sign", "verify"], subtleCrypto } = options ?? {};
-    const effectiveCrypto = _getEffectiveCrypto(subtleCrypto);
-    const keyPair = await effectiveCrypto.generateKey({
-      name: "ECDSA",
-      namedCurve: "P-256"
-    }, extractable, keyUsages);
-    const derKey = uint8FromBufLike$1(await effectiveCrypto.exportKey("spki", keyPair.publicKey));
-    Object.assign(derKey, {
-      __derEncodedPublicKey__: void 0
-    });
-    return new this(keyPair, derKey, effectiveCrypto);
-  }
-  /**
-   * generates an identity from a public and private key. Please ensure that you are generating these keys securely and protect the user's private key
-   * @param keyPair a CryptoKeyPair
-   * @param subtleCrypto - a SubtleCrypto interface in case one is not available globally
-   * @returns an {@link ECDSAKeyIdentity}
-   */
-  static async fromKeyPair(keyPair, subtleCrypto) {
-    const effectiveCrypto = _getEffectiveCrypto(subtleCrypto);
-    const derKey = uint8FromBufLike$1(await effectiveCrypto.exportKey("spki", keyPair.publicKey));
-    Object.assign(derKey, {
-      __derEncodedPublicKey__: void 0
-    });
-    return new ECDSAKeyIdentity(keyPair, derKey, effectiveCrypto);
-  }
-  // `fromKeyPair` and `generate` should be used for instantiation, not this constructor.
-  constructor(keyPair, derKey, subtleCrypto) {
-    super();
-    this._keyPair = keyPair;
-    this._derKey = derKey;
-    this._subtleCrypto = subtleCrypto;
-  }
-  /**
-   * Return the internally-used key pair.
-   * @returns a CryptoKeyPair
-   */
-  getKeyPair() {
-    return this._keyPair;
-  }
-  /**
-   * Return the public key.
-   * @returns an {@link PublicKey & DerCryptoKey}
-   */
-  getPublicKey() {
-    const derKey = this._derKey;
-    const key = Object.create(this._keyPair.publicKey);
-    key.toDer = function() {
-      return derKey;
-    };
-    return key;
-  }
-  /**
-   * Signs a blob of data, with this identity's private key.
-   * @param {Uint8Array} challenge - challenge to sign with this identity's secretKey, producing a signature
-   * @returns {Promise<Signature>} signature
-   */
-  async sign(challenge) {
-    const params = {
-      name: "ECDSA",
-      hash: { name: "SHA-256" }
-    };
-    const signature = uint8FromBufLike$1(await this._subtleCrypto.sign(params, this._keyPair.privateKey, challenge));
-    Object.assign(signature, {
-      __signature__: void 0
-    });
-    return signature;
-  }
-}
-class PartialIdentity {
-  constructor(inner) {
-    __privateAdd(this, _inner);
-    __privateSet(this, _inner, inner);
-  }
-  /**
-   * The raw public key of this identity.
-   */
-  get rawKey() {
-    return __privateGet(this, _inner).rawKey;
-  }
-  /**
-   * The DER-encoded public key of this identity.
-   */
-  get derKey() {
-    return __privateGet(this, _inner).derKey;
-  }
-  /**
-   * The DER-encoded public key of this identity.
-   */
-  toDer() {
-    return __privateGet(this, _inner).toDer();
-  }
-  /**
-   * The inner {@link PublicKey} used by this identity.
-   */
-  getPublicKey() {
-    return __privateGet(this, _inner);
-  }
-  /**
-   * The {@link Principal} of this identity.
-   */
-  getPrincipal() {
-    if (!__privateGet(this, _inner).rawKey) {
-      throw new Error("Cannot get principal from a public key without a raw key.");
-    }
-    return Principal.fromUint8Array(new Uint8Array(__privateGet(this, _inner).rawKey));
-  }
-  /**
-   * Required for the Identity interface, but cannot implemented for just a public key.
-   */
-  transformRequest() {
-    return Promise.reject("Not implemented. You are attempting to use a partial identity to sign calls, but this identity only has access to the public key.To sign calls, use a DelegationIdentity instead.");
-  }
-}
-_inner = new WeakMap();
-function safeBytesToHex(data) {
-  if (data instanceof Uint8Array) {
-    return bytesToHex(data);
-  }
-  return bytesToHex(new Uint8Array(data));
-}
-function _parseBlob(value) {
-  if (typeof value !== "string" || value.length < 64) {
-    throw new Error("Invalid public key.");
-  }
-  return hexToBytes(value);
-}
-class Delegation {
-  constructor(pubkey, expiration, targets) {
-    this.pubkey = pubkey;
-    this.expiration = expiration;
-    this.targets = targets;
-  }
-  toCborValue() {
-    return {
-      pubkey: this.pubkey,
-      expiration: this.expiration,
-      ...this.targets && {
-        targets: this.targets
-      }
-    };
-  }
-  toJSON() {
-    return {
-      expiration: this.expiration.toString(16),
-      pubkey: safeBytesToHex(this.pubkey),
-      ...this.targets && { targets: this.targets.map((p) => p.toHex()) }
-    };
-  }
-}
-async function _createSingleDelegation(from, to, expiration, targets) {
-  const delegation = new Delegation(
-    to.toDer(),
-    BigInt(+expiration) * BigInt(1e6),
-    // In nanoseconds.
-    targets
-  );
-  const challenge = new Uint8Array([
-    ...IC_REQUEST_AUTH_DELEGATION_DOMAIN_SEPARATOR,
-    ...new Uint8Array(requestIdOf({ ...delegation }))
-  ]);
-  const signature = await from.sign(challenge);
-  return {
-    delegation,
-    signature
-  };
-}
-class DelegationChain {
-  /**
-   * Create a delegation chain between two (or more) keys. By default, the expiration time
-   * will be very short (15 minutes).
-   *
-   * To build a chain of more than 2 identities, this function needs to be called multiple times,
-   * passing the previous delegation chain into the options argument. For example:
-   * @example
-   * const rootKey = createKey();
-   * const middleKey = createKey();
-   * const bottomeKey = createKey();
-   *
-   * const rootToMiddle = await DelegationChain.create(
-   *   root, middle.getPublicKey(), Date.parse('2100-01-01'),
-   * );
-   * const middleToBottom = await DelegationChain.create(
-   *   middle, bottom.getPublicKey(), Date.parse('2100-01-01'), { previous: rootToMiddle },
-   * );
-   *
-   * // We can now use a delegation identity that uses the delegation above:
-   * const identity = DelegationIdentity.fromDelegation(bottomKey, middleToBottom);
-   * @param from The identity that will delegate.
-   * @param to The identity that gets delegated. It can now sign messages as if it was the
-   *           identity above.
-   * @param expiration The length the delegation is valid. By default, 15 minutes from calling
-   *                   this function.
-   * @param options A set of options for this delegation. expiration and previous
-   * @param options.previous - Another DelegationChain that this chain should start with.
-   * @param options.targets - targets that scope the delegation (e.g. Canister Principals)
-   */
-  static async create(from, to, expiration = new Date(Date.now() + 15 * 60 * 1e3), options = {}) {
-    var _a2, _b2;
-    const delegation = await _createSingleDelegation(from, to, expiration, options.targets);
-    return new DelegationChain([...((_a2 = options.previous) == null ? void 0 : _a2.delegations) || [], delegation], ((_b2 = options.previous) == null ? void 0 : _b2.publicKey) || from.getPublicKey().toDer());
-  }
-  /**
-   * Creates a DelegationChain object from a JSON string.
-   * @param json The JSON string to parse.
-   */
-  static fromJSON(json) {
-    const { publicKey, delegations } = typeof json === "string" ? JSON.parse(json) : json;
-    if (!Array.isArray(delegations)) {
-      throw new Error("Invalid delegations.");
-    }
-    const parsedDelegations = delegations.map((signedDelegation) => {
-      const { delegation, signature } = signedDelegation;
-      const { pubkey, expiration, targets } = delegation;
-      if (targets !== void 0 && !Array.isArray(targets)) {
-        throw new Error("Invalid targets.");
-      }
-      return {
-        delegation: new Delegation(
-          _parseBlob(pubkey),
-          BigInt("0x" + expiration),
-          // expiration in JSON is an hexa string (See toJSON() below).
-          targets && targets.map((t) => {
-            if (typeof t !== "string") {
-              throw new Error("Invalid target.");
-            }
-            return Principal.fromHex(t);
-          })
-        ),
-        signature: _parseBlob(signature)
-      };
-    });
-    return new this(parsedDelegations, _parseBlob(publicKey));
-  }
-  /**
-   * Creates a DelegationChain object from a list of delegations and a DER-encoded public key.
-   * @param delegations The list of delegations.
-   * @param publicKey The DER-encoded public key of the key-pair signing the first delegation.
-   */
-  static fromDelegations(delegations, publicKey) {
-    return new this(delegations, publicKey);
-  }
-  constructor(delegations, publicKey) {
-    this.delegations = delegations;
-    this.publicKey = publicKey;
-  }
-  toJSON() {
-    return {
-      delegations: this.delegations.map((signedDelegation) => {
-        const { delegation, signature } = signedDelegation;
-        const { targets } = delegation;
-        return {
-          delegation: {
-            expiration: delegation.expiration.toString(16),
-            pubkey: safeBytesToHex(delegation.pubkey),
-            ...targets && {
-              targets: targets.map((t) => t.toHex())
-            }
-          },
-          signature: safeBytesToHex(signature)
-        };
-      }),
-      publicKey: safeBytesToHex(this.publicKey)
-    };
-  }
-}
-class DelegationIdentity extends SignIdentity {
-  /**
-   * Create a delegation without having access to delegateKey.
-   * @param key The key used to sign the requests.
-   * @param delegation A delegation object created using `createDelegation`.
-   */
-  static fromDelegation(key, delegation) {
-    return new this(key, delegation);
-  }
-  constructor(_inner2, _delegation2) {
-    super();
-    this._inner = _inner2;
-    this._delegation = _delegation2;
-  }
-  getDelegation() {
-    return this._delegation;
-  }
-  getPublicKey() {
-    return {
-      derKey: this._delegation.publicKey,
-      toDer: () => this._delegation.publicKey
-    };
-  }
-  sign(blob) {
-    return this._inner.sign(blob);
-  }
-  async transformRequest(request) {
-    const { body, ...fields } = request;
-    const requestId = await requestIdOf(body);
-    return {
-      ...fields,
-      body: {
-        content: body,
-        sender_sig: await this.sign(new Uint8Array([...IC_REQUEST_DOMAIN_SEPARATOR, ...new Uint8Array(requestId)])),
-        sender_delegation: this._delegation.delegations,
-        sender_pubkey: this._delegation.publicKey
-      }
-    };
-  }
-}
-const _PartialDelegationIdentity = class _PartialDelegationIdentity extends PartialIdentity {
-  constructor(inner, delegation) {
-    super(inner);
-    __privateAdd(this, _delegation);
-    __privateSet(this, _delegation, delegation);
-  }
-  /**
-   * The Delegation Chain of this identity.
-   */
-  get delegation() {
-    return __privateGet(this, _delegation);
-  }
-  /**
-   * Create a {@link PartialDelegationIdentity} from a {@link PublicKey} and a {@link DelegationChain}.
-   * @param key The {@link PublicKey} to delegate to.
-   * @param delegation a {@link DelegationChain} targeting the inner key.
-   */
-  static fromDelegation(key, delegation) {
-    return new _PartialDelegationIdentity(key, delegation);
-  }
-};
-_delegation = new WeakMap();
-let PartialDelegationIdentity = _PartialDelegationIdentity;
-function isDelegationValid(chain, checks) {
-  for (const { delegation } of chain.delegations) {
-    if (+new Date(Number(delegation.expiration / BigInt(1e6))) <= +Date.now()) {
-      return false;
-    }
-  }
-  const scopes = [];
-  for (const s of scopes) {
-    const scope = s.toText();
-    for (const { delegation } of chain.delegations) {
-      if (delegation.targets === void 0) {
-        continue;
-      }
-      let none = true;
-      for (const target of delegation.targets) {
-        if (target.toText() === scope) {
-          none = false;
-          break;
-        }
-      }
-      if (none) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
-const events = ["mousedown", "mousemove", "keydown", "touchstart", "wheel"];
-class IdleManager {
-  /**
-   * @protected
-   * @param options {@link IdleManagerOptions}
-   */
-  constructor(options = {}) {
-    __publicField(this, "callbacks", []);
-    __publicField(this, "idleTimeout", 10 * 60 * 1e3);
-    __publicField(this, "timeoutID");
-    const { onIdle, idleTimeout = 10 * 60 * 1e3 } = options || {};
-    this.callbacks = onIdle ? [onIdle] : [];
-    this.idleTimeout = idleTimeout;
-    const _resetTimer = this._resetTimer.bind(this);
-    window.addEventListener("load", _resetTimer, true);
-    events.forEach(function(name) {
-      document.addEventListener(name, _resetTimer, true);
-    });
-    const debounce = (func, wait) => {
-      let timeout;
-      return (...args) => {
-        const context = this;
-        const later = function() {
-          timeout = void 0;
-          func.apply(context, args);
-        };
-        clearTimeout(timeout);
-        timeout = window.setTimeout(later, wait);
-      };
-    };
-    if (options == null ? void 0 : options.captureScroll) {
-      const scroll = debounce(_resetTimer, (options == null ? void 0 : options.scrollDebounce) ?? 100);
-      window.addEventListener("scroll", scroll, true);
-    }
-    _resetTimer();
-  }
-  /**
-   * Creates an {@link IdleManager}
-   * @param {IdleManagerOptions} options Optional configuration
-   * @see {@link IdleManagerOptions}
-   * @param options.onIdle Callback once user has been idle. Use to prompt for fresh login, and use `Actor.agentOf(your_actor).invalidateIdentity()` to protect the user
-   * @param options.idleTimeout timeout in ms
-   * @param options.captureScroll capture scroll events
-   * @param options.scrollDebounce scroll debounce time in ms
-   */
-  static create(options = {}) {
-    return new this(options);
-  }
-  /**
-   * @param {IdleCB} callback function to be called when user goes idle
-   */
-  registerCallback(callback) {
-    this.callbacks.push(callback);
-  }
-  /**
-   * Cleans up the idle manager and its listeners
-   */
-  exit() {
-    clearTimeout(this.timeoutID);
-    window.removeEventListener("load", this._resetTimer, true);
-    const _resetTimer = this._resetTimer.bind(this);
-    events.forEach(function(name) {
-      document.removeEventListener(name, _resetTimer, true);
-    });
-    this.callbacks.forEach((cb) => cb());
-  }
-  /**
-   * Resets the timeouts during cleanup
-   */
-  _resetTimer() {
-    const exit = this.exit.bind(this);
-    window.clearTimeout(this.timeoutID);
-    this.timeoutID = window.setTimeout(exit, this.idleTimeout);
-  }
-}
-const instanceOfAny = (object, constructors) => constructors.some((c) => object instanceof c);
-let idbProxyableTypes;
-let cursorAdvanceMethods;
-function getIdbProxyableTypes() {
-  return idbProxyableTypes || (idbProxyableTypes = [
-    IDBDatabase,
-    IDBObjectStore,
-    IDBIndex,
-    IDBCursor,
-    IDBTransaction
-  ]);
-}
-function getCursorAdvanceMethods() {
-  return cursorAdvanceMethods || (cursorAdvanceMethods = [
-    IDBCursor.prototype.advance,
-    IDBCursor.prototype.continue,
-    IDBCursor.prototype.continuePrimaryKey
-  ]);
-}
-const cursorRequestMap = /* @__PURE__ */ new WeakMap();
-const transactionDoneMap = /* @__PURE__ */ new WeakMap();
-const transactionStoreNamesMap = /* @__PURE__ */ new WeakMap();
-const transformCache = /* @__PURE__ */ new WeakMap();
-const reverseTransformCache = /* @__PURE__ */ new WeakMap();
-function promisifyRequest(request) {
-  const promise = new Promise((resolve, reject) => {
-    const unlisten = () => {
-      request.removeEventListener("success", success);
-      request.removeEventListener("error", error);
-    };
-    const success = () => {
-      resolve(wrap(request.result));
-      unlisten();
-    };
-    const error = () => {
-      reject(request.error);
-      unlisten();
-    };
-    request.addEventListener("success", success);
-    request.addEventListener("error", error);
-  });
-  promise.then((value) => {
-    if (value instanceof IDBCursor) {
-      cursorRequestMap.set(value, request);
-    }
-  }).catch(() => {
-  });
-  reverseTransformCache.set(promise, request);
-  return promise;
-}
-function cacheDonePromiseForTransaction(tx) {
-  if (transactionDoneMap.has(tx))
-    return;
-  const done = new Promise((resolve, reject) => {
-    const unlisten = () => {
-      tx.removeEventListener("complete", complete);
-      tx.removeEventListener("error", error);
-      tx.removeEventListener("abort", error);
-    };
-    const complete = () => {
-      resolve();
-      unlisten();
-    };
-    const error = () => {
-      reject(tx.error || new DOMException("AbortError", "AbortError"));
-      unlisten();
-    };
-    tx.addEventListener("complete", complete);
-    tx.addEventListener("error", error);
-    tx.addEventListener("abort", error);
-  });
-  transactionDoneMap.set(tx, done);
-}
-let idbProxyTraps = {
-  get(target, prop, receiver) {
-    if (target instanceof IDBTransaction) {
-      if (prop === "done")
-        return transactionDoneMap.get(target);
-      if (prop === "objectStoreNames") {
-        return target.objectStoreNames || transactionStoreNamesMap.get(target);
-      }
-      if (prop === "store") {
-        return receiver.objectStoreNames[1] ? void 0 : receiver.objectStore(receiver.objectStoreNames[0]);
-      }
-    }
-    return wrap(target[prop]);
-  },
-  set(target, prop, value) {
-    target[prop] = value;
-    return true;
-  },
-  has(target, prop) {
-    if (target instanceof IDBTransaction && (prop === "done" || prop === "store")) {
-      return true;
-    }
-    return prop in target;
-  }
-};
-function replaceTraps(callback) {
-  idbProxyTraps = callback(idbProxyTraps);
-}
-function wrapFunction(func) {
-  if (func === IDBDatabase.prototype.transaction && !("objectStoreNames" in IDBTransaction.prototype)) {
-    return function(storeNames, ...args) {
-      const tx = func.call(unwrap(this), storeNames, ...args);
-      transactionStoreNamesMap.set(tx, storeNames.sort ? storeNames.sort() : [storeNames]);
-      return wrap(tx);
-    };
-  }
-  if (getCursorAdvanceMethods().includes(func)) {
-    return function(...args) {
-      func.apply(unwrap(this), args);
-      return wrap(cursorRequestMap.get(this));
-    };
-  }
-  return function(...args) {
-    return wrap(func.apply(unwrap(this), args));
-  };
-}
-function transformCachableValue(value) {
-  if (typeof value === "function")
-    return wrapFunction(value);
-  if (value instanceof IDBTransaction)
-    cacheDonePromiseForTransaction(value);
-  if (instanceOfAny(value, getIdbProxyableTypes()))
-    return new Proxy(value, idbProxyTraps);
-  return value;
-}
-function wrap(value) {
-  if (value instanceof IDBRequest)
-    return promisifyRequest(value);
-  if (transformCache.has(value))
-    return transformCache.get(value);
-  const newValue = transformCachableValue(value);
-  if (newValue !== value) {
-    transformCache.set(value, newValue);
-    reverseTransformCache.set(newValue, value);
-  }
-  return newValue;
-}
-const unwrap = (value) => reverseTransformCache.get(value);
-function openDB(name, version, { blocked, upgrade, blocking, terminated } = {}) {
-  const request = indexedDB.open(name, version);
-  const openPromise = wrap(request);
-  if (upgrade) {
-    request.addEventListener("upgradeneeded", (event) => {
-      upgrade(wrap(request.result), event.oldVersion, event.newVersion, wrap(request.transaction), event);
-    });
-  }
-  if (blocked) {
-    request.addEventListener("blocked", (event) => blocked(
-      // Casting due to https://github.com/microsoft/TypeScript-DOM-lib-generator/pull/1405
-      event.oldVersion,
-      event.newVersion,
-      event
-    ));
-  }
-  openPromise.then((db) => {
-    if (terminated)
-      db.addEventListener("close", () => terminated());
-    if (blocking) {
-      db.addEventListener("versionchange", (event) => blocking(event.oldVersion, event.newVersion, event));
-    }
-  }).catch(() => {
-  });
-  return openPromise;
-}
-const readMethods = ["get", "getKey", "getAll", "getAllKeys", "count"];
-const writeMethods = ["put", "add", "delete", "clear"];
-const cachedMethods = /* @__PURE__ */ new Map();
-function getMethod(target, prop) {
-  if (!(target instanceof IDBDatabase && !(prop in target) && typeof prop === "string")) {
-    return;
-  }
-  if (cachedMethods.get(prop))
-    return cachedMethods.get(prop);
-  const targetFuncName = prop.replace(/FromIndex$/, "");
-  const useIndex = prop !== targetFuncName;
-  const isWrite = writeMethods.includes(targetFuncName);
-  if (
-    // Bail if the target doesn't exist on the target. Eg, getAll isn't in Edge.
-    !(targetFuncName in (useIndex ? IDBIndex : IDBObjectStore).prototype) || !(isWrite || readMethods.includes(targetFuncName))
-  ) {
-    return;
-  }
-  const method = async function(storeName, ...args) {
-    const tx = this.transaction(storeName, isWrite ? "readwrite" : "readonly");
-    let target2 = tx.store;
-    if (useIndex)
-      target2 = target2.index(args.shift());
-    return (await Promise.all([
-      target2[targetFuncName](...args),
-      isWrite && tx.done
-    ]))[0];
-  };
-  cachedMethods.set(prop, method);
-  return method;
-}
-replaceTraps((oldTraps) => ({
-  ...oldTraps,
-  get: (target, prop, receiver) => getMethod(target, prop) || oldTraps.get(target, prop, receiver),
-  has: (target, prop) => !!getMethod(target, prop) || oldTraps.has(target, prop)
-}));
-const AUTH_DB_NAME = "auth-client-db";
-const OBJECT_STORE_NAME = "ic-keyval";
-const _openDbStore = async (dbName = AUTH_DB_NAME, storeName = OBJECT_STORE_NAME, version) => {
-  if (isBrowser && (localStorage == null ? void 0 : localStorage.getItem(KEY_STORAGE_DELEGATION))) {
-    localStorage.removeItem(KEY_STORAGE_DELEGATION);
-    localStorage.removeItem(KEY_STORAGE_KEY);
-  }
-  return await openDB(dbName, version, {
-    upgrade: (database) => {
-      if (database.objectStoreNames.contains(storeName)) {
-        database.clear(storeName);
-      }
-      database.createObjectStore(storeName);
-    }
-  });
-};
-async function _getValue(db, storeName, key) {
-  return await db.get(storeName, key);
-}
-async function _setValue(db, storeName, key, value) {
-  return await db.put(storeName, value, key);
-}
-async function _removeValue(db, storeName, key) {
-  return await db.delete(storeName, key);
-}
-class IdbKeyVal {
-  // Do not use - instead prefer create
-  constructor(_db, _storeName) {
-    __publicField(this, "_db");
-    __publicField(this, "_storeName");
-    this._db = _db;
-    this._storeName = _storeName;
-  }
-  /**
-   * @param {DBCreateOptions} options - DBCreateOptions
-   * @param {DBCreateOptions['dbName']} options.dbName name for the indexeddb database
-   * @default
-   * @param {DBCreateOptions['storeName']} options.storeName name for the indexeddb Data Store
-   * @default
-   * @param {DBCreateOptions['version']} options.version version of the database. Increment to safely upgrade
-   */
-  static async create(options) {
-    const { dbName = AUTH_DB_NAME, storeName = OBJECT_STORE_NAME, version = DB_VERSION } = options ?? {};
-    const db = await _openDbStore(dbName, storeName, version);
-    return new IdbKeyVal(db, storeName);
-  }
-  /**
-   * Basic setter
-   * @param {IDBValidKey} key string | number | Date | BufferSource | IDBValidKey[]
-   * @param value value to set
-   * @returns void
-   */
-  async set(key, value) {
-    return await _setValue(this._db, this._storeName, key, value);
-  }
-  /**
-   * Basic getter
-   * Pass in a type T for type safety if you know the type the value will have if it is found
-   * @param {IDBValidKey} key string | number | Date | BufferSource | IDBValidKey[]
-   * @returns `Promise<T | null>`
-   * @example
-   * await get<string>('exampleKey') -> 'exampleValue'
-   */
-  async get(key) {
-    return await _getValue(this._db, this._storeName, key) ?? null;
-  }
-  /**
-   * Remove a key
-   * @param key {@link IDBValidKey}
-   * @returns void
-   */
-  async remove(key) {
-    return await _removeValue(this._db, this._storeName, key);
-  }
-}
-const KEY_STORAGE_KEY = "identity";
-const KEY_STORAGE_DELEGATION = "delegation";
-const KEY_VECTOR = "iv";
-const DB_VERSION = 1;
-const isBrowser = typeof window !== "undefined";
-class LocalStorage {
-  constructor(prefix2 = "ic-", _localStorage) {
-    __publicField(this, "prefix");
-    __publicField(this, "_localStorage");
-    this.prefix = prefix2;
-    this._localStorage = _localStorage;
-  }
-  get(key) {
-    return Promise.resolve(this._getLocalStorage().getItem(this.prefix + key));
-  }
-  set(key, value) {
-    this._getLocalStorage().setItem(this.prefix + key, value);
-    return Promise.resolve();
-  }
-  remove(key) {
-    this._getLocalStorage().removeItem(this.prefix + key);
-    return Promise.resolve();
-  }
-  _getLocalStorage() {
-    if (this._localStorage) {
-      return this._localStorage;
-    }
-    const ls = typeof window === "undefined" ? typeof global === "undefined" ? typeof self === "undefined" ? void 0 : self.localStorage : global.localStorage : window.localStorage;
-    if (!ls) {
-      throw new Error("Could not find local storage.");
-    }
-    return ls;
-  }
-}
-class IdbStorage {
-  /**
-   * @param options - DBCreateOptions
-   * @param options.dbName - name for the indexeddb database
-   * @param options.storeName - name for the indexeddb Data Store
-   * @param options.version - version of the database. Increment to safely upgrade
-   * @example
-   * ```ts
-   * const storage = new IdbStorage({ dbName: 'my-db', storeName: 'my-store', version: 2 });
-   * ```
-   */
-  constructor(options) {
-    __privateAdd(this, _options);
-    // Initializes a KeyVal on first request
-    __publicField(this, "initializedDb");
-    __privateSet(this, _options, options ?? {});
-  }
-  get _db() {
-    return new Promise((resolve, reject) => {
-      if (this.initializedDb) {
-        resolve(this.initializedDb);
-        return;
-      }
-      IdbKeyVal.create(__privateGet(this, _options)).then((db) => {
-        this.initializedDb = db;
-        resolve(db);
-      }).catch(reject);
-    });
-  }
-  async get(key) {
-    const db = await this._db;
-    return await db.get(key);
-  }
-  async set(key, value) {
-    const db = await this._db;
-    await db.set(key, value);
-  }
-  async remove(key) {
-    const db = await this._db;
-    await db.remove(key);
-  }
-}
-_options = new WeakMap();
-const NANOSECONDS_PER_SECOND = BigInt(1e9);
-const SECONDS_PER_HOUR = BigInt(3600);
-const NANOSECONDS_PER_HOUR = NANOSECONDS_PER_SECOND * SECONDS_PER_HOUR;
-const IDENTITY_PROVIDER_DEFAULT = "https://identity.internetcomputer.org";
-const IDENTITY_PROVIDER_ENDPOINT = "#authorize";
-const DEFAULT_MAX_TIME_TO_LIVE = BigInt(8) * NANOSECONDS_PER_HOUR;
-const ECDSA_KEY_LABEL = "ECDSA";
-const ED25519_KEY_LABEL = "Ed25519";
-const INTERRUPT_CHECK_INTERVAL = 500;
-const ERROR_USER_INTERRUPT = "UserInterrupt";
-class AuthClient {
-  constructor(_identity, _key, _chain, _storage, idleManager, _createOptions, _idpWindow, _eventHandler) {
-    __publicField(this, "_identity");
-    __publicField(this, "_key");
-    __publicField(this, "_chain");
-    __publicField(this, "_storage");
-    __publicField(this, "idleManager");
-    __publicField(this, "_createOptions");
-    __publicField(this, "_idpWindow");
-    __publicField(this, "_eventHandler");
-    this._identity = _identity;
-    this._key = _key;
-    this._chain = _chain;
-    this._storage = _storage;
-    this.idleManager = idleManager;
-    this._createOptions = _createOptions;
-    this._idpWindow = _idpWindow;
-    this._eventHandler = _eventHandler;
-    this._registerDefaultIdleCallback();
-  }
-  /**
-   * Create an AuthClient to manage authentication and identity
-   * @param {AuthClientCreateOptions} options - Options for creating an {@link AuthClient}
-   * @see {@link AuthClientCreateOptions}
-   * @param options.identity Optional Identity to use as the base
-   * @see {@link SignIdentity}
-   * @param options.storage Storage mechanism for delegation credentials
-   * @see {@link AuthClientStorage}
-   * @param options.keyType Type of key to use for the base key
-   * @param {IdleOptions} options.idleOptions Configures an {@link IdleManager}
-   * @see {@link IdleOptions}
-   * Default behavior is to clear stored identity and reload the page when a user goes idle, unless you set the disableDefaultIdleCallback flag or pass in a custom idle callback.
-   * @example
-   * const authClient = await AuthClient.create({
-   *   idleOptions: {
-   *     disableIdle: true
-   *   }
-   * })
-   */
-  static async create(options = {}) {
-    var _a2;
-    const storage = options.storage ?? new IdbStorage();
-    const keyType = options.keyType ?? ECDSA_KEY_LABEL;
-    let key = null;
-    if (options.identity) {
-      key = options.identity;
-    } else {
-      let maybeIdentityStorage = await storage.get(KEY_STORAGE_KEY);
-      if (!maybeIdentityStorage && isBrowser) {
-        try {
-          const fallbackLocalStorage = new LocalStorage();
-          const localChain = await fallbackLocalStorage.get(KEY_STORAGE_DELEGATION);
-          const localKey = await fallbackLocalStorage.get(KEY_STORAGE_KEY);
-          if (localChain && localKey && keyType === ECDSA_KEY_LABEL) {
-            console.log("Discovered an identity stored in localstorage. Migrating to IndexedDB");
-            await storage.set(KEY_STORAGE_DELEGATION, localChain);
-            await storage.set(KEY_STORAGE_KEY, localKey);
-            maybeIdentityStorage = localChain;
-            await fallbackLocalStorage.remove(KEY_STORAGE_DELEGATION);
-            await fallbackLocalStorage.remove(KEY_STORAGE_KEY);
-          }
-        } catch (error) {
-          console.error("error while attempting to recover localstorage: " + error);
-        }
-      }
-      if (maybeIdentityStorage) {
-        try {
-          if (typeof maybeIdentityStorage === "object") {
-            if (keyType === ED25519_KEY_LABEL && typeof maybeIdentityStorage === "string") {
-              key = Ed25519KeyIdentity.fromJSON(maybeIdentityStorage);
-            } else {
-              key = await ECDSAKeyIdentity.fromKeyPair(maybeIdentityStorage);
-            }
-          } else if (typeof maybeIdentityStorage === "string") {
-            key = Ed25519KeyIdentity.fromJSON(maybeIdentityStorage);
-          }
-        } catch {
-        }
-      }
-    }
-    let identity = new AnonymousIdentity();
-    let chain = null;
-    if (key) {
-      try {
-        const chainStorage = await storage.get(KEY_STORAGE_DELEGATION);
-        if (typeof chainStorage === "object" && chainStorage !== null) {
-          throw new Error("Delegation chain is incorrectly stored. A delegation chain should be stored as a string.");
-        }
-        if (options.identity) {
-          identity = options.identity;
-        } else if (chainStorage) {
-          chain = DelegationChain.fromJSON(chainStorage);
-          if (!isDelegationValid(chain)) {
-            await _deleteStorage(storage);
-            key = null;
-          } else {
-            if ("toDer" in key) {
-              identity = PartialDelegationIdentity.fromDelegation(key, chain);
-            } else {
-              identity = DelegationIdentity.fromDelegation(key, chain);
-            }
-          }
-        }
-      } catch (e) {
-        console.error(e);
-        await _deleteStorage(storage);
-        key = null;
-      }
-    }
-    let idleManager;
-    if ((_a2 = options.idleOptions) == null ? void 0 : _a2.disableIdle) {
-      idleManager = void 0;
-    } else if (chain || options.identity) {
-      idleManager = IdleManager.create(options.idleOptions);
-    }
-    if (!key) {
-      if (keyType === ED25519_KEY_LABEL) {
-        key = Ed25519KeyIdentity.generate();
-        await storage.set(KEY_STORAGE_KEY, JSON.stringify(key.toJSON()));
-      } else {
-        if (options.storage && keyType === ECDSA_KEY_LABEL) {
-          console.warn(`You are using a custom storage provider that may not support CryptoKey storage. If you are using a custom storage provider that does not support CryptoKey storage, you should use '${ED25519_KEY_LABEL}' as the key type, as it can serialize to a string`);
-        }
-        key = await ECDSAKeyIdentity.generate();
-        await storage.set(KEY_STORAGE_KEY, key.getKeyPair());
-      }
-    }
-    return new this(identity, key, chain, storage, idleManager, options);
-  }
-  _registerDefaultIdleCallback() {
-    var _a2, _b2;
-    const idleOptions = (_a2 = this._createOptions) == null ? void 0 : _a2.idleOptions;
-    if (!(idleOptions == null ? void 0 : idleOptions.onIdle) && !(idleOptions == null ? void 0 : idleOptions.disableDefaultIdleCallback)) {
-      (_b2 = this.idleManager) == null ? void 0 : _b2.registerCallback(() => {
-        this.logout();
-        location.reload();
-      });
-    }
-  }
-  async _handleSuccess(message, onSuccess) {
-    var _a2, _b2;
-    const delegations = message.delegations.map((signedDelegation) => {
-      return {
-        delegation: new Delegation(signedDelegation.delegation.pubkey, signedDelegation.delegation.expiration, signedDelegation.delegation.targets),
-        signature: signedDelegation.signature
-      };
-    });
-    const delegationChain = DelegationChain.fromDelegations(delegations, message.userPublicKey);
-    const key = this._key;
-    if (!key) {
-      return;
-    }
-    this._chain = delegationChain;
-    if ("toDer" in key) {
-      this._identity = PartialDelegationIdentity.fromDelegation(key, this._chain);
-    } else {
-      this._identity = DelegationIdentity.fromDelegation(key, this._chain);
-    }
-    (_a2 = this._idpWindow) == null ? void 0 : _a2.close();
-    const idleOptions = (_b2 = this._createOptions) == null ? void 0 : _b2.idleOptions;
-    if (!this.idleManager && !(idleOptions == null ? void 0 : idleOptions.disableIdle)) {
-      this.idleManager = IdleManager.create(idleOptions);
-      this._registerDefaultIdleCallback();
-    }
-    this._removeEventListener();
-    delete this._idpWindow;
-    if (this._chain) {
-      await this._storage.set(KEY_STORAGE_DELEGATION, JSON.stringify(this._chain.toJSON()));
-    }
-    onSuccess == null ? void 0 : onSuccess(message);
-  }
-  getIdentity() {
-    return this._identity;
-  }
-  async isAuthenticated() {
-    return !this.getIdentity().getPrincipal().isAnonymous() && this._chain !== null && isDelegationValid(this._chain);
-  }
-  /**
-   * AuthClient Login - Opens up a new window to authenticate with Internet Identity
-   * @param {AuthClientLoginOptions} options - Options for logging in, merged with the options set during creation if any. Note: we only perform a shallow merge for the `customValues` property.
-   * @param options.identityProvider Identity provider
-   * @param options.maxTimeToLive Expiration of the authentication in nanoseconds
-   * @param options.allowPinAuthentication If present, indicates whether or not the Identity Provider should allow the user to authenticate and/or register using a temporary key/PIN identity. Authenticating dapps may want to prevent users from using Temporary keys/PIN identities because Temporary keys/PIN identities are less secure than Passkeys (webauthn credentials) and because Temporary keys/PIN identities generally only live in a browser database (which may get cleared by the browser/OS).
-   * @param options.derivationOrigin Origin for Identity Provider to use while generating the delegated identity
-   * @param options.windowOpenerFeatures Configures the opened authentication window
-   * @param options.onSuccess Callback once login has completed
-   * @param options.onError Callback in case authentication fails
-   * @param options.customValues Extra values to be passed in the login request during the authorize-ready phase. Note: we only perform a shallow merge for the `customValues` property.
-   * @example
-   * const authClient = await AuthClient.create();
-   * authClient.login({
-   *  identityProvider: 'http://<canisterID>.127.0.0.1:8000',
-   *  maxTimeToLive: BigInt (7) * BigInt(24) * BigInt(3_600_000_000_000), // 1 week
-   *  windowOpenerFeatures: "toolbar=0,location=0,menubar=0,width=500,height=500,left=100,top=100",
-   *  onSuccess: () => {
-   *    console.log('Login Successful!');
-   *  },
-   *  onError: (error) => {
-   *    console.error('Login Failed: ', error);
-   *  }
-   * });
-   */
-  async login(options) {
-    var _a2, _b2, _c2;
-    const loginOptions = mergeLoginOptions((_a2 = this._createOptions) == null ? void 0 : _a2.loginOptions, options);
-    const maxTimeToLive = (loginOptions == null ? void 0 : loginOptions.maxTimeToLive) ?? DEFAULT_MAX_TIME_TO_LIVE;
-    const identityProviderUrl = new URL(((_b2 = loginOptions == null ? void 0 : loginOptions.identityProvider) == null ? void 0 : _b2.toString()) || IDENTITY_PROVIDER_DEFAULT);
-    identityProviderUrl.hash = IDENTITY_PROVIDER_ENDPOINT;
-    (_c2 = this._idpWindow) == null ? void 0 : _c2.close();
-    this._removeEventListener();
-    this._eventHandler = this._getEventHandler(identityProviderUrl, {
-      maxTimeToLive,
-      ...loginOptions
-    });
-    window.addEventListener("message", this._eventHandler);
-    this._idpWindow = window.open(identityProviderUrl.toString(), "idpWindow", loginOptions == null ? void 0 : loginOptions.windowOpenerFeatures) ?? void 0;
-    const checkInterruption = () => {
-      if (this._idpWindow) {
-        if (this._idpWindow.closed) {
-          this._handleFailure(ERROR_USER_INTERRUPT, loginOptions == null ? void 0 : loginOptions.onError);
-        } else {
-          setTimeout(checkInterruption, INTERRUPT_CHECK_INTERVAL);
-        }
-      }
-    };
-    checkInterruption();
-  }
-  _getEventHandler(identityProviderUrl, options) {
-    return async (event) => {
-      var _a2, _b2, _c2;
-      if (event.origin !== identityProviderUrl.origin) {
-        return;
-      }
-      const message = event.data;
-      switch (message.kind) {
-        case "authorize-ready": {
-          const request = {
-            kind: "authorize-client",
-            sessionPublicKey: new Uint8Array((_a2 = this._key) == null ? void 0 : _a2.getPublicKey().toDer()),
-            maxTimeToLive: options == null ? void 0 : options.maxTimeToLive,
-            allowPinAuthentication: options == null ? void 0 : options.allowPinAuthentication,
-            derivationOrigin: (_b2 = options == null ? void 0 : options.derivationOrigin) == null ? void 0 : _b2.toString(),
-            // Pass any custom values to the IDP.
-            ...options == null ? void 0 : options.customValues
-          };
-          (_c2 = this._idpWindow) == null ? void 0 : _c2.postMessage(request, identityProviderUrl.origin);
-          break;
-        }
-        case "authorize-client-success":
-          try {
-            await this._handleSuccess(message, options == null ? void 0 : options.onSuccess);
-          } catch (err) {
-            this._handleFailure(err.message, options == null ? void 0 : options.onError);
-          }
-          break;
-        case "authorize-client-failure":
-          this._handleFailure(message.text, options == null ? void 0 : options.onError);
-          break;
-      }
-    };
-  }
-  _handleFailure(errorMessage, onError) {
-    var _a2;
-    (_a2 = this._idpWindow) == null ? void 0 : _a2.close();
-    onError == null ? void 0 : onError(errorMessage);
-    this._removeEventListener();
-    delete this._idpWindow;
-  }
-  _removeEventListener() {
-    if (this._eventHandler) {
-      window.removeEventListener("message", this._eventHandler);
-    }
-    this._eventHandler = void 0;
-  }
-  async logout(options = {}) {
-    await _deleteStorage(this._storage);
-    this._identity = new AnonymousIdentity();
-    this._chain = null;
-    if (options.returnTo) {
-      try {
-        window.history.pushState({}, "", options.returnTo);
-      } catch {
-        window.location.href = options.returnTo;
-      }
-    }
-  }
-}
-async function _deleteStorage(storage) {
-  await storage.remove(KEY_STORAGE_KEY);
-  await storage.remove(KEY_STORAGE_DELEGATION);
-  await storage.remove(KEY_VECTOR);
-}
-function mergeLoginOptions(loginOptions, otherLoginOptions) {
-  if (!loginOptions && !otherLoginOptions) {
-    return void 0;
-  }
-  const customValues = (loginOptions == null ? void 0 : loginOptions.customValues) || (otherLoginOptions == null ? void 0 : otherLoginOptions.customValues) ? {
-    ...loginOptions == null ? void 0 : loginOptions.customValues,
-    ...otherLoginOptions == null ? void 0 : otherLoginOptions.customValues
-  } : void 0;
-  return {
-    ...loginOptions,
-    ...otherLoginOptions,
-    customValues
-  };
-}
-const Certification = Record({
-  "date": Text,
-  "name": Text,
-  "issuer": Text
-});
-const CodingAchievement = Record({
-  "rank": Text,
-  "platform": Text,
-  "score": Nat
-});
-const Education = Record({
-  "field": Text,
-  "startYear": Nat,
-  "endYear": Nat,
-  "institution": Text,
-  "degree": Text
-});
-const Experience = Record({
-  "endDate": Opt(Text),
-  "role": Text,
-  "description": Text,
-  "company": Text,
-  "startDate": Text
-});
-const PersonalInfo = Record({
-  "linkedin": Text,
-  "title": Text,
-  "name": Text,
-  "email": Text,
-  "website": Text,
-  "phone": Text,
-  "location": Text,
-  "github": Text
-});
-const Project = Record({
-  "link": Text,
-  "name": Text,
-  "description": Text,
-  "technologies": Vec(Text)
-});
-const Skill = Record({
-  "name": Text,
-  "level": Nat,
-  "category": Text
-});
-Service({
-  "getCertifications": Func([], [Vec(Certification)], ["query"]),
-  "getCodingAchievements": Func(
-    [],
-    [Vec(CodingAchievement)],
-    ["query"]
-  ),
-  "getEducation": Func([], [Vec(Education)], ["query"]),
-  "getExperiences": Func([], [Vec(Experience)], ["query"]),
-  "getPersonalInfo": Func([], [PersonalInfo], ["query"]),
-  "getProjects": Func([], [Vec(Project)], ["query"]),
-  "getSkills": Func([], [Vec(Skill)], ["query"])
-});
-new TextEncoder().encode("icfs-chunk/");
-new TextEncoder().encode(
-  "icfs-metadata/"
-);
-new TextEncoder().encode("ynode/");
-var define_process_env_default = {};
-const DEFAULT_STORAGE_GATEWAY_URL = "https://blob.caffeine.ai";
-const DEFAULT_BUCKET_NAME = "default-bucket";
-const DEFAULT_PROJECT_ID = "0000000-0000-0000-0000-00000000000";
-let configCache = null;
-async function loadConfig() {
-  if (configCache) {
-    return configCache;
-  }
-  const backendCanisterId = define_process_env_default.CANISTER_ID_BACKEND;
-  const envBaseUrl = define_process_env_default.BASE_URL || "/";
-  const baseUrl = envBaseUrl.endsWith("/") ? envBaseUrl : `${envBaseUrl}/`;
-  try {
-    const response = await fetch(`${baseUrl}env.json`);
-    const config = await response.json();
-    if (!backendCanisterId && config.backend_canister_id === "undefined") {
-      console.error("CANISTER_ID_BACKEND is not set");
-      throw new Error("CANISTER_ID_BACKEND is not set");
-    }
-    const fullConfig = {
-      backend_host: config.backend_host === "undefined" ? void 0 : config.backend_host,
-      backend_canister_id: config.backend_canister_id === "undefined" ? backendCanisterId : config.backend_canister_id,
-      storage_gateway_url: "https://blob.caffeine.ai",
-      bucket_name: DEFAULT_BUCKET_NAME,
-      project_id: config.project_id !== "undefined" ? config.project_id : DEFAULT_PROJECT_ID,
-      ii_derivation_origin: config.ii_derivation_origin === "undefined" ? void 0 : config.ii_derivation_origin
-    };
-    configCache = fullConfig;
-    return fullConfig;
-  } catch {
-    if (!backendCanisterId) {
-      console.error("CANISTER_ID_BACKEND is not set");
-      throw new Error("CANISTER_ID_BACKEND is not set");
-    }
-    const fallbackConfig = {
-      backend_host: void 0,
-      backend_canister_id: backendCanisterId,
-      storage_gateway_url: DEFAULT_STORAGE_GATEWAY_URL,
-      bucket_name: DEFAULT_BUCKET_NAME,
-      project_id: DEFAULT_PROJECT_ID,
-      ii_derivation_origin: void 0
-    };
-    return fallbackConfig;
-  }
-}
-const ONE_HOUR_IN_NANOSECONDS = BigInt(36e11);
-const DEFAULT_IDENTITY_PROVIDER = "https://id.ai";
-const InternetIdentityReactContext = reactExports.createContext(
-  void 0
-);
-async function createAuthClient(createOptions) {
-  const config = await loadConfig();
-  const options = {
-    idleOptions: {
-      // Default behaviour of this hook is not to logout and reload window on identity expiration
-      disableDefaultIdleCallback: true,
-      disableIdle: true,
-      ...createOptions == null ? void 0 : createOptions.idleOptions
-    },
-    loginOptions: {
-      derivationOrigin: config.ii_derivation_origin
-    },
-    ...createOptions
-  };
-  const authClient = await AuthClient.create(options);
-  return authClient;
-}
-function InternetIdentityProvider({
-  children,
-  createOptions
-}) {
-  const [authClient, setAuthClient] = reactExports.useState(
-    void 0
-  );
-  const [identity, setIdentity] = reactExports.useState(void 0);
-  const [loginStatus, setStatus] = reactExports.useState("initializing");
-  const [loginError, setError] = reactExports.useState(void 0);
-  const setErrorMessage = reactExports.useCallback((message) => {
-    setStatus("loginError");
-    setError(new Error(message));
-  }, []);
-  const handleLoginSuccess = reactExports.useCallback(() => {
-    const latestIdentity = authClient == null ? void 0 : authClient.getIdentity();
-    if (!latestIdentity) {
-      setErrorMessage("Identity not found after successful login");
-      return;
-    }
-    setIdentity(latestIdentity);
-    setStatus("success");
-  }, [authClient, setErrorMessage]);
-  const handleLoginError = reactExports.useCallback(
-    (maybeError) => {
-      setErrorMessage(maybeError ?? "Login failed");
-    },
-    [setErrorMessage]
-  );
-  const login = reactExports.useCallback(() => {
-    if (!authClient) {
-      setErrorMessage(
-        "AuthClient is not initialized yet, make sure to call `login` on user interaction e.g. click."
-      );
-      return;
-    }
-    const currentIdentity = authClient.getIdentity();
-    if (!currentIdentity.getPrincipal().isAnonymous() && currentIdentity instanceof DelegationIdentity && isDelegationValid(currentIdentity.getDelegation())) {
-      setErrorMessage("User is already authenticated");
-      return;
-    }
-    const options = {
-      identityProvider: DEFAULT_IDENTITY_PROVIDER,
-      onSuccess: handleLoginSuccess,
-      onError: handleLoginError,
-      maxTimeToLive: ONE_HOUR_IN_NANOSECONDS * BigInt(24 * 30)
-      // 30 days
-    };
-    setStatus("logging-in");
-    void authClient.login(options);
-  }, [authClient, handleLoginError, handleLoginSuccess, setErrorMessage]);
-  const clear = reactExports.useCallback(() => {
-    if (!authClient) {
-      setErrorMessage("Auth client not initialized");
-      return;
-    }
-    void authClient.logout().then(() => {
-      setIdentity(void 0);
-      setAuthClient(void 0);
-      setStatus("idle");
-      setError(void 0);
-    }).catch((unknownError) => {
-      setStatus("loginError");
-      setError(
-        unknownError instanceof Error ? unknownError : new Error("Logout failed")
-      );
-    });
-  }, [authClient, setErrorMessage]);
-  reactExports.useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        setStatus("initializing");
-        let existingClient = authClient;
-        if (!existingClient) {
-          existingClient = await createAuthClient(createOptions);
-          if (cancelled) return;
-          setAuthClient(existingClient);
-        }
-        const isAuthenticated = await existingClient.isAuthenticated();
-        if (cancelled) return;
-        if (isAuthenticated) {
-          const loadedIdentity = existingClient.getIdentity();
-          setIdentity(loadedIdentity);
-        }
-      } catch (unknownError) {
-        setStatus("loginError");
-        setError(
-          unknownError instanceof Error ? unknownError : new Error("Initialization failed")
-        );
-      } finally {
-        if (!cancelled) setStatus("idle");
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [createOptions, authClient]);
-  const value = reactExports.useMemo(
-    () => ({
-      identity,
-      login,
-      clear,
-      loginStatus,
-      isInitializing: loginStatus === "initializing",
-      isLoginIdle: loginStatus === "idle",
-      isLoggingIn: loginStatus === "logging-in",
-      isLoginSuccess: loginStatus === "success",
-      isLoginError: loginStatus === "loginError",
-      loginError
-    }),
-    [identity, login, clear, loginStatus, loginError]
-  );
-  return reactExports.createElement(InternetIdentityReactContext.Provider, {
-    value,
-    children
-  });
-}
-BigInt.prototype.toJSON = function() {
-  return this.toString();
-};
 const queryClient = new QueryClient();
 ReactDOM.createRoot(document.getElementById("root")).render(
-  /* @__PURE__ */ jsxRuntimeExports.jsx(QueryClientProvider, { client: queryClient, children: /* @__PURE__ */ jsxRuntimeExports.jsx(InternetIdentityProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) }) })
+  /* @__PURE__ */ jsxRuntimeExports.jsx(QueryClientProvider, { client: queryClient, children: /* @__PURE__ */ jsxRuntimeExports.jsx(PortfolioProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) }) })
 );

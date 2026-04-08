@@ -4,7 +4,8 @@ export function SectionDivider() {
       <div
         className="h-px max-w-7xl mx-auto"
         style={{
-          background: "linear-gradient(to right, transparent, oklch(0.24 0.038 250), transparent)",
+          background:
+            "linear-gradient(to right, transparent, oklch(0.45 0.15 195 / 0.35), oklch(0.5 0.2 312 / 0.4), transparent)",
         }}
       />
     </div>

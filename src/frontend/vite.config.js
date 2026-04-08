@@ -1,19 +1,26 @@
-import { fileURLToPath, URL } from "url";
+import { fileURLToPath } from "url";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
-import environment from "vite-plugin-environment";
-
-const ii_url =
-  process.env.DFX_NETWORK === "local"
-    ? `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:8081/`
-    : `https://identity.internetcomputer.org/`;
-
-process.env.II_URL = process.env.II_URL || ii_url;
-process.env.STORAGE_GATEWAY_URL =
-  process.env.STORAGE_GATEWAY_URL || "https://blob.caffeine.ai";
 
 export default defineConfig({
-  logLevel: "error",
+  server: {
+    host: "0.0.0.0",
+    port: 5000,
+    allowedHosts: true,
+    fs: {
+      allow: [
+        fileURLToPath(new URL(".", import.meta.url)),
+        fileURLToPath(new URL("..", import.meta.url)),
+        fileURLToPath(new URL("../..", import.meta.url)),
+      ],
+    },
+    proxy: {
+      "/api": {
+        target: "http://127.0.0.1:3001",
+        changeOrigin: true,
+      },
+    },
+  },
   build: {
     emptyOutDir: true,
     sourcemap: false,
@@ -29,35 +36,11 @@ export default defineConfig({
       },
     },
   },
-  server: {
-    host: "0.0.0.0",
-    port: 5000,
-    allowedHosts: true,
-    proxy: {
-      "/api": {
-        target: "http://127.0.0.1:4943",
-        changeOrigin: true,
-      },
-    },
-  },
-  plugins: [
-    environment("all", { prefix: "CANISTER_" }),
-    environment("all", { prefix: "DFX_" }),
-    environment(["II_URL"]),
-    environment(["STORAGE_GATEWAY_URL"]),
-    react(),
-  ],
+  plugins: [react()],
   resolve: {
-    alias: [
-      {
-        find: "declarations",
-        replacement: fileURLToPath(new URL("../declarations", import.meta.url)),
-      },
-      {
-        find: "@",
-        replacement: fileURLToPath(new URL("./src", import.meta.url)),
-      },
-    ],
-    dedupe: ["@dfinity/agent"],
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@portfolio-seed": fileURLToPath(new URL("../server/seed/portfolio-seed.json", import.meta.url)),
+    },
   },
 });

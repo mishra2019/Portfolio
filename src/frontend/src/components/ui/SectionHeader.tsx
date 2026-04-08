@@ -19,7 +19,7 @@ export function SectionHeader({ title, highlight, subtitle }: SectionHeaderProps
         {title} <span>{highlight}</span>
       </h2>
       {subtitle && (
-        <p className="text-sm mt-1" style={{ color: "oklch(0.65 0.02 255)" }}>
+        <p className="text-sm mt-1" style={{ color: "var(--pf-text-muted)" }}>
           {subtitle}
         </p>
       )}

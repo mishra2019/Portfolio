@@ -18,11 +18,11 @@
     "jsx": "react-jsx",
     "types": ["vite/client", "node"],
     "paths": {
-      "declarations/*": ["../declarations/*"],
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@portfolio-seed": ["../server/seed/portfolio-seed.json"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "../server/seed/portfolio-seed.json"],
   "exclude": [
     "node_modules",
     "dist",

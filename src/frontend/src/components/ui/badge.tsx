@@ -17,6 +17,12 @@ const badgeVariants = cva(
           "border-transparent bg-destructive text-destructive-foreground [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
           "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+        blue:
+          "border border-[oklch(0.62_0.2_195/0.45)] bg-[oklch(0.55_0.18_195/0.14)] text-[var(--pf-accent)] [a&]:hover:bg-[oklch(0.55_0.2_195/0.22)]",
+        muted:
+          "border border-[oklch(0.3_0.06_285)] bg-[oklch(0.14_0.04_285)] text-[oklch(0.72_0.04_95)]",
+        ghost:
+          "border border-[oklch(0.3_0.06_285/0.6)] bg-transparent text-[oklch(0.78_0.03_95)]",
       },
     },
     defaultVariants: {

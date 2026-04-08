@@ -21,8 +21,8 @@ if [ ! -d "$CALM_MOTOKO_CORE" ]; then
     exit 1
 fi
 
-pnpm install --prefer-offline --child-concurrency 2 --network-concurrency 6
-pnpm --filter '@caffeine/template-frontend' build:skip-bindings
+npm install --prefer-offline
+npm run build -w @roshan/portfolio-web
 node scripts/prune-unused-images.js
 node scripts/resize-images.js
 

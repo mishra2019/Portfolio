@@ -5,7 +5,7 @@ build:
   steps:
     - type: script
       commands:
-        - pnpm install --frozen-lockfile --prefer-offline --child-concurrency 2 --network-concurrency 6
+        - npm ci --prefer-offline || npm install --prefer-offline
         - node ../../scripts/resize-images.js
         - |
           cat > env.json <<EOF
@@ -16,7 +16,7 @@ build:
             "ii_derivation_origin": "undefined"
           }
           EOF
-        - pnpm --filter '@caffeine/template-frontend' build:skip-bindings
+        - npm run build:skip-bindings -w @roshan/portfolio-web
 
     - type: pre-built
       url: https://github.com/dfinity/sdk/raw/refs/tags/0.27.0/src/distributed/assetstorage.wasm.gz

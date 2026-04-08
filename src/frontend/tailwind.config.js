@@ -16,9 +16,11 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        inter: ['Inter', 'sans-serif'],
-        bricolage: ['Bricolage Grotesque', 'system-ui', 'sans-serif'],
+        sans: ['Outfit', 'system-ui', 'sans-serif'],
+        outfit: ['Outfit', 'sans-serif'],
+        syne: ['Syne', 'system-ui', 'sans-serif'],
+        bricolage: ['Syne', 'Bricolage Grotesque', 'system-ui', 'sans-serif'],
+        inter: ['Outfit', 'sans-serif'],
       },
       colors: {
         border: "oklch(var(--border))",
@@ -72,15 +74,15 @@ export default {
           ring: "oklch(var(--sidebar-ring))",
         },
         navy: {
-          900: '#0B1220',
-          800: '#0F1A2B',
-          700: '#0F1B2C',
-          600: '#141F2E',
-          500: '#172334',
-          400: '#223047',
+          900: '#0a0612',
+          800: '#100a18',
+          700: '#140d1f',
+          600: '#1a1228',
+          500: '#221a32',
+          400: '#2d2440',
         },
         blue: {
-          accent: '#2F80FF',
+          accent: '#2de8d6',
         },
       },
       borderRadius: {

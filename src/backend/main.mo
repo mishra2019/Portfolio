@@ -9,6 +9,7 @@ actor {
     phone : Text;
     linkedin : Text;
     github : Text;
+    leetcode : Text;
     website : Text;
     location : Text;
   };
@@ -55,90 +56,95 @@ actor {
   };
 
   let personalInfo : PersonalInfo = {
-    name = "Ashish Sah";
-    title = "Full Stack Developer";
-    email = "ashish@example.com";
-    phone = "+1 123-456-7890";
-    linkedin = "linkedin.com/in/ashishsah";
-    github = "github.com/ashishsah";
-    website = "ashishsah.com";
-    location = "Pune, India";
+    name = "Roshan Mishra";
+    title = "Full Stack Engineer";
+    email = "mroshanmishra0072@gmail.com";
+    phone = "+91 8420070594";
+    linkedin = "https://www.linkedin.com/in/roshan-mishra-51a821174";
+    github = "";
+    leetcode = "https://leetcode.com/u/roshanmishra0072";
+    website = "";
+    location = "Bengaluru, India";
   };
 
   let skillsArray = [
-    { name = "Motoko"; category = "Programming Language"; level = 4 },
-    { name = "ReactJS"; category = "Frontend Framework"; level = 5 },
-    { name = "NodeJS"; category = "Backend Framework"; level = 4 },
-    { name = "Java"; category = "Programming Language"; level = 5 },
+    { name = "TypeScript"; category = "Languages"; level = 5 },
+    { name = "Node.js"; category = "Backend"; level = 5 },
+    { name = "React"; category = "Frontend"; level = 5 },
+    { name = "MongoDB"; category = "Data"; level = 5 },
+    { name = "AWS Lambda"; category = "Cloud"; level = 4 },
+    { name = "Java"; category = "Languages"; level = 4 },
   ];
 
   let experiencesArray = [
     {
-      company = "Acme Corp";
-      role = "Software Engineer";
-      startDate = "2019-01";
-      endDate = ?"2021-06";
-      description = "Worked on developing cloud-based solutions.";
-    },
-    {
-      company = "Tech Solutions";
-      role = "Full Stack Developer";
-      startDate = "2021-07";
+      company = "MONKSPACES.AI";
+      role = "Software Development Engineer (SDE-1)";
+      startDate = "2023-06";
       endDate = null;
-      description = "Building scalable web applications.";
+      description = "Booking engines, rule-based availability, REST APIs, payments (Razorpay, Stripe, Hitpay), AWS Lambda/S3/SQS.";
     },
   ];
 
   let projectsArray = [
     {
-      name = "Portfolio Website";
-      description = "Personal portfolio website showcasing skills and projects.";
-      technologies = ["ReactJS", "CSS", "HTML"];
-      link = "ashishsah.com";
+      name = "Full-Stack E-commerce Platform";
+      description = "Redux, React, Node, MongoDB; performance and data-fetch optimization.";
+      technologies = ["React", "Node.js", "MongoDB", "Material-UI", "Redux"];
+      link = "";
     },
     {
-      name = "IdeaShare";
-      description = "Idea sharing platform for collaboration and feedback.";
-      technologies = ["NodeJS", "MongoDB", "Express"];
-      link = "github.com/ashishsah/ideashare";
+      name = "Enterprise Inventory Management System";
+      description = "Real-time inventory for 1000+ SKUs; role-based access control.";
+      technologies = ["Angular", "Node.js", "MongoDB", "REST"];
+      link = "";
     },
   ];
 
   let certificationsArray = [
     {
-      name = "AWS Certified Developer";
-      issuer = "Amazon Web Services";
-      date = "2020-08";
+      name = "Supervised Machine Learning: Regression and Classification";
+      issuer = "Coursera";
+      date = "May 2025";
     },
     {
-      name = "Google Cloud Certified Professional";
-      issuer = "Google";
-      date = "2021-05";
+      name = "Engineering: Undergraduate & Masters Asia Virtual Experience Program";
+      issuer = "Microsoft";
+      date = "";
+    },
+    {
+      name = "InsighT Python";
+      issuer = "TCS InsighT";
+      date = "";
+    },
+    {
+      name = "Introduction to Programming in C";
+      issuer = "TCS iON Digital Learning Hub";
+      date = "";
+    },
+    {
+      name = "Introduction to R Software";
+      issuer = "NPTEL";
+      date = "";
+    },
+    {
+      name = "National Level Quiz on Java (Core) & SQL (Oracle)";
+      issuer = "IQAC & Dept. of CS, Govt. General Degree College, Singur";
+      date = "";
     },
   ];
 
   let educationArray = [
     {
-      institution = "Savitribai Phule Pune University";
-      degree = "Bachelor of Engineering";
-      field = "Computer Science";
-      startYear = 2015;
-      endYear = 2019;
+      institution = "Government College of Engineering and Ceramic Technology, Kolkata";
+      degree = "Bachelor of Technology";
+      field = "Computer Science and Engineering";
+      startYear = 2019;
+      endYear = 2023;
     },
   ];
 
-  let codingAchievementsArray = [
-    {
-      platform = "LeetCode";
-      rank = "Top 5%";
-      score = 1500;
-    },
-    {
-      platform = "Codeforces";
-      rank = "Expert";
-      score = 1750;
-    },
-  ];
+  let codingAchievementsArray = [] : [CodingAchievement];
 
   public query ({ caller }) func getPersonalInfo() : async PersonalInfo {
     personalInfo;

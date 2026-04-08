@@ -1,17 +1,50 @@
+import { motion, type HTMLMotionProps } from "motion/react";
 import type * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+const slideOffset = {
+  left: { x: -36, y: 0 },
+  right: { x: 36, y: 0 },
+  up: { x: 0, y: 40 },
+  down: { x: 0, y: -40 },
+  none: { x: 0, y: 0 },
+} as const;
+
+export type CardSlideFrom = keyof typeof slideOffset;
+
+export type CardProps = Omit<HTMLMotionProps<"div">, "initial" | "animate" | "whileInView"> & {
+  delay?: number;
+  slideFrom?: CardSlideFrom;
+};
+
+function Card({ className, delay = 0, slideFrom = "up", children, ...props }: CardProps) {
+  const off = slideOffset[slideFrom];
+
   return (
-    <div
+    <motion.div
       data-slot="card"
+      initial={{ opacity: 0, ...off }}
+      whileInView={{ opacity: 1, x: 0, y: 0 }}
+      viewport={{ once: true, margin: "-32px 0px -8% 0px" }}
+      transition={{
+        duration: 0.55,
+        delay,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+      whileHover={{
+        y: -6,
+        transition: { type: "spring", stiffness: 420, damping: 28 },
+      }}
+      whileTap={{ scale: 0.992 }}
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        "portfolio-card pf-card-shell flex flex-col gap-6 rounded-2xl py-6 shadow-none text-[var(--pf-text)] overflow-hidden will-change-transform",
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+    </motion.div>
   );
 }
 
@@ -63,11 +96,7 @@ function CardAction({ className, ...props }: React.ComponentProps<"div">) {
 
 function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <div
-      data-slot="card-content"
-      className={cn("px-6", className)}
-      {...props}
-    />
+    <div data-slot="card-content" className={cn("px-6", className)} {...props} />
   );
 }
 

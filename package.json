@@ -1,18 +1,27 @@
 {
-  "name": "@caffeine/template-app",
+  "name": "@roshan/portfolio",
+  "private": true,
   "type": "module",
+  "workspaces": [
+    "src/frontend",
+    "src/server"
+  ],
   "engines": {
-    "node": ">=16.0.0",
-    "pnpm": ">=7.0.0",
-    "npm": "please use pnpm"
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   },
   "scripts": {
-    "build": "pnpm -r --if-present run build",
-    "typecheck": "pnpm -r --if-present run typecheck",
-    "check": "pnpm -r --if-present run check",
-    "fix": "pnpm -r --if-present run fix"
+    "dev": "concurrently -n server,web -c blue,green \"npm run dev -w @roshan/portfolio-api\" \"npm start -w @roshan/portfolio-web\"",
+    "start:frontend": "npm start -w @roshan/portfolio-web",
+    "start:server": "npm run dev -w @roshan/portfolio-api",
+    "seed": "npm run seed -w @roshan/portfolio-api",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "check": "npm run check --workspaces --if-present",
+    "fix": "npm run fix --workspaces --if-present"
   },
   "devDependencies": {
+    "concurrently": "^9.1.2",
     "sharp": "^0.34.4"
   }
 }

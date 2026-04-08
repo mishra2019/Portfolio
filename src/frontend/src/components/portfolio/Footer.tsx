@@ -1,44 +1,83 @@
 import { Code2, Github, Heart, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 import { motion } from "motion/react";
-import { personalInfo } from "../../data/portfolioData";
+import { useMemo } from "react";
+import type { ComponentType } from "react";
+import { SiLeetcode } from "react-icons/si";
+import { usePortfolioData } from "../../hooks/PortfolioProvider";
+import { initialsFromName } from "../../utils/initials";
 
-const NAV_SECTIONS = [
-  {
-    label: "Portfolio",
-    links: [
-      { text: "Home",           href: "#hero" },
-      { text: "Skills",         href: "#skills" },
-      { text: "Experience",     href: "#experience" },
-      { text: "Projects",       href: "#projects" },
-      { text: "Certifications", href: "#certifications" },
-      { text: "Achievements",   href: "#achievements" },
-    ],
-  },
-  {
-    label: "Connect",
-    links: [
-      { text: "Email Me",       href: `mailto:${personalInfo.email}` },
-      { text: "LinkedIn",       href: `https://${personalInfo.linkedin}` },
-      { text: "GitHub",         href: `https://${personalInfo.github}` },
-      { text: "Notes",          href: "#notes" },
-      { text: "Summary",        href: "#summary" },
-    ],
-  },
-];
-
-const CONTACT_DETAILS = [
-  { icon: Mail,   text: personalInfo.email,    href: `mailto:${personalInfo.email}` },
-  { icon: Phone,  text: personalInfo.phone,    href: undefined },
-  { icon: MapPin, text: personalInfo.location, href: undefined },
-];
-
-const SOCIAL = [
-  { icon: Linkedin, href: `https://${personalInfo.linkedin}`, label: "LinkedIn" },
-  { icon: Github,   href: `https://${personalInfo.github}`,   label: "GitHub" },
-  { icon: Mail,     href: `mailto:${personalInfo.email}`,     label: "Email" },
-];
+function externalHref(raw: string): string {
+  const t = raw.trim();
+  if (!t) return "";
+  return /^https?:\/\//i.test(t) ? t : `https://${t}`;
+}
 
 export function Footer() {
+  const { personalInfo, profileSummary, codingAchievements, awards } = usePortfolioData();
+  const initials = useMemo(() => initialsFromName(personalInfo.name), [personalInfo.name]);
+  const footerBio = useMemo(() => {
+    const t = profileSummary.trim();
+    if (t.length <= 220) return t;
+    return `${t.slice(0, 217).trim()}…`;
+  }, [profileSummary]);
+  const showAchievements = codingAchievements.length > 0 || awards.length > 0;
+
+  const navSections = useMemo(() => {
+    const portfolioLinks: { text: string; href: string }[] = [
+      { text: "Home", href: "#hero" },
+      { text: "Skills", href: "#skills" },
+      { text: "Experience", href: "#experience" },
+      { text: "Projects", href: "#projects" },
+      { text: "Certifications", href: "#certifications" },
+    ];
+    if (showAchievements) portfolioLinks.push({ text: "Achievements", href: "#achievements" });
+
+    const connectLinks: { text: string; href: string }[] = [
+      { text: "Email Me", href: `mailto:${personalInfo.email}` },
+    ];
+    if (personalInfo.linkedin.trim()) {
+      connectLinks.push({ text: "LinkedIn", href: externalHref(personalInfo.linkedin) });
+    }
+    if (personalInfo.github.trim()) {
+      connectLinks.push({ text: "GitHub", href: externalHref(personalInfo.github) });
+    }
+    const lc = (personalInfo.leetcode ?? "").trim();
+    if (lc) {
+      connectLinks.push({ text: "LeetCode", href: externalHref(lc) });
+    }
+    connectLinks.push({ text: "Notes", href: "#notes" }, { text: "Summary", href: "#summary" });
+
+    return [
+      { label: "Portfolio", links: portfolioLinks },
+      { label: "Connect", links: connectLinks },
+    ];
+  }, [personalInfo, showAchievements]);
+
+  const contactDetails = useMemo(
+    () => [
+      { icon: Mail, text: personalInfo.email, href: `mailto:${personalInfo.email}` },
+      { icon: Phone, text: personalInfo.phone, href: undefined as string | undefined },
+      { icon: MapPin, text: personalInfo.location, href: undefined as string | undefined },
+    ],
+    [personalInfo],
+  );
+
+  const social = useMemo(() => {
+    const items: { icon: ComponentType<{ className?: string }>; href: string; label: string }[] = [];
+    if (personalInfo.linkedin.trim()) {
+      items.push({ icon: Linkedin, href: externalHref(personalInfo.linkedin), label: "LinkedIn" });
+    }
+    if (personalInfo.github.trim()) {
+      items.push({ icon: Github, href: externalHref(personalInfo.github), label: "GitHub" });
+    }
+    const lc = (personalInfo.leetcode ?? "").trim();
+    if (lc) {
+      items.push({ icon: SiLeetcode, href: externalHref(lc), label: "LeetCode" });
+    }
+    items.push({ icon: Mail, href: `mailto:${personalInfo.email}`, label: "Email" });
+    return items;
+  }, [personalInfo]);
+
   return (
     <footer id="footer" className="relative overflow-hidden">
       {/* top glow bar */}
@@ -59,25 +98,25 @@ export function Footer() {
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="footer-avatar">
-                  <span>AS</span>
+                  <span>{initials}</span>
                 </div>
                 <div>
-                  <p className="text-lg font-bold leading-tight" style={{ color: "oklch(0.96 0.012 255)" }}>
+                  <p className="text-lg font-bold leading-tight font-syne" style={{ color: "var(--pf-text)" }}>
                     {personalInfo.name}
                   </p>
-                  <p className="text-xs" style={{ color: "oklch(0.55 0.015 255)" }}>
+                  <p className="text-xs" style={{ color: "var(--pf-text-muted)" }}>
                     {personalInfo.title}
                   </p>
                 </div>
               </div>
 
-              <p className="text-sm leading-relaxed mb-6 max-w-sm" style={{ color: "oklch(0.58 0.018 255)" }}>
-                Senior Software Engineer specializing in Salesforce Ecosystem, AI integrations, and cloud automation. Building scalable, revenue-impacting solutions.
+              <p className="text-sm leading-relaxed mb-6 max-w-sm" style={{ color: "var(--pf-text-secondary)" }}>
+                {footerBio}
               </p>
 
               {/* Social icons */}
               <div className="flex items-center gap-3">
-                {SOCIAL.map((s) => {
+                {social.map((s) => {
                   const Icon = s.icon;
                   return (
                     <a
@@ -96,7 +135,7 @@ export function Footer() {
             </motion.div>
 
             {/* Nav columns */}
-            {NAV_SECTIONS.map((section, si) => (
+            {navSections.map((section, si) => (
               <motion.div
                 key={section.label}
                 initial={{ opacity: 0, y: 20 }}
@@ -126,14 +165,14 @@ export function Footer() {
             >
               <p className="footer-nav-heading">Get in Touch</p>
               <ul className="space-y-4">
-                {CONTACT_DETAILS.map((c) => {
+                {contactDetails.map((c) => {
                   const Icon = c.icon;
                   const inner = (
                     <div className="flex items-start gap-3">
                       <span className="footer-contact-icon-wrap">
                         <Icon className="w-3.5 h-3.5" />
                       </span>
-                      <span className="text-sm break-all" style={{ color: "oklch(0.68 0.018 255)" }}>
+                      <span className="text-sm break-all" style={{ color: "var(--pf-text-secondary)" }}>
                         {c.text}
                       </span>
                     </div>
@@ -158,7 +197,7 @@ export function Footer() {
                   <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
                 </span>
-                <span className="text-xs font-medium" style={{ color: "oklch(0.72 0.14 145)" }}>
+                <span className="text-xs font-medium" style={{ color: "oklch(0.82 0.12 165)" }}>
                   Open to new opportunities
                 </span>
               </div>
@@ -170,12 +209,12 @@ export function Footer() {
 
           {/* ── bottom bar ── */}
           <div className="footer-bottom">
-            <p className="text-xs" style={{ color: "oklch(0.45 0.012 255)" }}>
+            <p className="text-xs" style={{ color: "var(--pf-text-muted)" }}>
               © {new Date().getFullYear()} {personalInfo.name} — All rights reserved
             </p>
-            <p className="text-xs flex items-center gap-1" style={{ color: "oklch(0.45 0.012 255)" }}>
-              Built with <Heart className="w-3 h-3 text-red-400" /> and
-              <Code2 className="w-3 h-3" style={{ color: "#2F80FF" }} />
+            <p className="text-xs flex items-center gap-1" style={{ color: "var(--pf-text-muted)" }}>
+              Built with <Heart className="w-3 h-3 text-rose-400" /> and
+              <Code2 className="w-3 h-3" style={{ color: "var(--pf-accent)" }} />
               React + Vite
             </p>
           </div>

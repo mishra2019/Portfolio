@@ -1,7 +1,8 @@
 import { motion } from "motion/react";
-import { profileSummary } from "../../data/portfolioData";
+import { usePortfolioData } from "../../hooks/PortfolioProvider";
 
 export function Summary() {
+  const { profileSummary } = usePortfolioData();
   return (
     <section id="summary" className="py-12 px-4 sm:px-6 lg:px-10 section-alt">
       <div className="max-w-7xl mx-auto">
@@ -16,7 +17,7 @@ export function Summary() {
           </h2>
 
           <div className="summary-display-static">
-            <p className="text-sm sm:text-base leading-relaxed" style={{ color: "oklch(0.72 0.022 255)" }}>
+            <p className="text-sm sm:text-base leading-relaxed" style={{ color: "var(--pf-text-secondary)" }}>
               {profileSummary}
             </p>
           </div>

@@ -76,6 +76,6 @@ async function connectDb() {
 
 listen();
 connectDb().catch((err) => {
-  console.error("[roshan-portfolio-api] MongoDB failed:", err);
-  process.exit(1);
+  // Do not exit — exiting causes Render 502. /api/health stays up; /api/portfolio returns 503 until DB works.
+  console.error("[roshan-portfolio-api] MongoDB failed (fix MONGODB_URI in Render env):", err);
 });

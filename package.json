@@ -11,6 +11,7 @@
     "npm": ">=9.0.0"
   },
   "scripts": {
+    "start": "npm start -w @roshan/portfolio-api",
     "dev": "concurrently -n server,web -c blue,green \"npm run dev -w @roshan/portfolio-api\" \"npm start -w @roshan/portfolio-web\"",
     "start:frontend": "npm start -w @roshan/portfolio-web",
     "start:server": "npm run dev -w @roshan/portfolio-api",

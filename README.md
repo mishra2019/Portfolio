@@ -258,10 +258,11 @@ After the first deploy or any change to these variables, trigger a **new deploym
 ### Optional: Render “one-click” details
 
 1. **New** → **Web Service** → connect repo.  
-2. **Root Directory:** `src/server`  
+2. **Root Directory:** **`src/server`** *or* leave **empty** (repo root). Root uses `npm start` → `@roshan/portfolio-api`.  
 3. **Build:** `npm install` — **Start:** `npm start`  
-4. **Environment:** add `MONGODB_URI`  
-5. Open **Shell** on Render (or seed from your laptop) and run `npm run seed` with repo checked out and `MONGODB_URI` set if the DB is not empty or you want to force seed content from the file.
+4. **Environment:** add **`MONGODB_URI`** (Atlas SRV). Without it, the API cannot reach MongoDB; **`/api/health`** should still return 200 after deploy.  
+5. **502 Bad Gateway:** usually the Node process crashed (wrong root dir / no `start` script) or never bound to **`PORT`**. Check **Logs** for errors. Atlas must allow **`0.0.0.0/0`** (or Render egress).  
+6. Open **Shell** on Render (or seed from your laptop) and run `npm run seed` with production `MONGODB_URI` if `/api/portfolio` is 404.
 
 ---
 

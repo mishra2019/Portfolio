@@ -62,7 +62,7 @@ actor {
     phone = "+91 8420070594";
     linkedin = "https://www.linkedin.com/in/roshan-mishra-51a821174";
     github = "";
-    leetcode = "https://leetcode.com/u/roshanmishra0072";
+    leetcode = "https://leetcode.com/u/mishraroshan/";
     website = "";
     location = "Bengaluru, India";
   };

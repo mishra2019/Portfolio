@@ -31,7 +31,15 @@ export async function fetchPortfolio(): Promise<PortfolioPayload> {
 
   const ct = res.headers.get("content-type") || "";
   if (!res.ok) {
-    throw new Error(`Portfolio API returned ${res.status}`);
+    const text = await res.text();
+    let extra = "";
+    try {
+      const j = JSON.parse(text) as { error?: string };
+      if (typeof j.error === "string") extra = ` — ${j.error}`;
+    } catch {
+      if (text.length > 0 && text.length < 240) extra = ` — ${text}`;
+    }
+    throw new Error(`Portfolio API returned ${res.status}${extra}`);
   }
   if (!ct.includes("application/json")) {
     throw new Error(

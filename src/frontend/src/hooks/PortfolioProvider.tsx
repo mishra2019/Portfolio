@@ -21,13 +21,18 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   }
 
   if (query.isError || !query.data) {
+    const detail =
+      query.error instanceof Error ? query.error.message : query.error != null ? String(query.error) : null;
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-2 px-4 text-center bg-[var(--pf-deep)] text-[var(--pf-text)]">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 px-4 text-center bg-[var(--pf-deep)] text-[var(--pf-text)]">
         <p className="font-semibold">Could not load portfolio</p>
+        {detail ? (
+          <p className="text-sm opacity-90 max-w-lg whitespace-pre-wrap break-words font-mono text-left">{detail}</p>
+        ) : null}
         <p className="text-sm opacity-70 max-w-md">
-          For local dev: start the API (MongoDB + Express) so Vite can proxy <code className="text-xs">/api</code>, or set{" "}
-          <code className="text-xs">VITE_API_BASE_URL</code>. For a static deploy (e.g. Vercel only), set{" "}
-          <code className="text-xs">VITE_STATIC_PORTFOLIO=true</code> at build time.
+          Local dev: run <code className="text-xs">npm run dev</code> (API + Vite). Production: set{" "}
+          <code className="text-xs">VITE_API_BASE_URL</code> on Vercel to your Render API origin and redeploy. Static-only:{" "}
+          <code className="text-xs">VITE_STATIC_PORTFOLIO=true</code>.
         </p>
       </div>
     );

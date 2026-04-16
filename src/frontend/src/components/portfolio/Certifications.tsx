@@ -50,7 +50,7 @@ export function Certifications() {
                     </p>
                   </div>
                   {cert.date ? (
-                    <div className="pt-2 border-t border-[oklch(0.28_0.06_285/0.45)]">
+                    <div className="pt-2 border-t border-[oklch(0.34_0.014_85/0.45)]">
                       <Badge variant="muted" className="self-start">
                         {cert.date}
                       </Badge>

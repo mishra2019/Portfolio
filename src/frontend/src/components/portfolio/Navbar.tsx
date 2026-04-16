@@ -110,8 +110,8 @@ export function Navbar() {
             exit={{ opacity: 0, height: 0 }}
             className="md:hidden border-t overflow-hidden"
             style={{
-              background: "oklch(0.08 0.045 292 / 0.98)",
-              borderColor: "oklch(0.3 0.07 285 / 0.55)",
+              background: "oklch(0.15 0.008 85 / 0.98)",
+              borderColor: "oklch(0.34 0.014 85 / 0.55)",
             }}
           >
             <nav className="flex flex-col px-4 py-4 gap-1">

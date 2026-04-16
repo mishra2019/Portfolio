@@ -11,6 +11,8 @@ export type PersonalInfo = {
   website: string;
   /** Path under Vite `public/`, e.g. /Roshan_mishra.pdf — served as-is for download */
   resumePdf?: string;
+  /** Path under `public/` for hero/footer headshot, e.g. /profile-photo.png */
+  profilePhoto?: string;
 };
 
 export type SkillCategory = {

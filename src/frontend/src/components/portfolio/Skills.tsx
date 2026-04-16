@@ -29,7 +29,7 @@ export function Skills() {
                   {cat.icon}
                 </motion.span>
                 <div className="min-w-0 flex-1">
-                  <div className="h-px w-full max-w-[48px] rounded-full bg-[oklch(0.55_0.2_195/0.5)] mb-2" />
+                  <div className="h-px w-full max-w-[48px] rounded-full bg-[oklch(0.4_0.02_85/0.45)] mb-2" />
                   <h3 className="text-[13px] font-semibold leading-tight font-syne" style={{ color: "var(--pf-text)" }}>
                     {cat.category}
                   </h3>

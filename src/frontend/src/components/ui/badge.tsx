@@ -18,11 +18,11 @@ const badgeVariants = cva(
         outline:
           "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         blue:
-          "border border-[oklch(0.62_0.2_195/0.45)] bg-[oklch(0.55_0.18_195/0.14)] text-[var(--pf-accent)] [a&]:hover:bg-[oklch(0.55_0.2_195/0.22)]",
+          "border border-[oklch(0.38_0.04_252/0.4)] bg-[oklch(0.24_0.03_252/0.3)] text-[oklch(0.82_0.06_252)] [a&]:hover:bg-[oklch(0.28_0.035_252/0.4)]",
         muted:
-          "border border-[oklch(0.3_0.06_285)] bg-[oklch(0.14_0.04_285)] text-[oklch(0.72_0.04_95)]",
+          "border border-[oklch(0.34_0.014_85)] bg-[oklch(0.2_0.008_85)] text-[oklch(0.72_0.015_85)]",
         ghost:
-          "border border-[oklch(0.3_0.06_285/0.6)] bg-transparent text-[oklch(0.78_0.03_95)]",
+          "border border-[oklch(0.34_0.014_85/0.65)] bg-transparent text-[oklch(0.74_0.018_85)]",
       },
     },
     defaultVariants: {

@@ -2556,7 +2556,7 @@ var react_production = {};
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-var REACT_ELEMENT_TYPE$1 = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE$2 = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE$1 = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE$1 = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE$1 = Symbol.for("react.profiler"), REACT_CONSUMER_TYPE$1 = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE$1 = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE$1 = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE$1 = Symbol.for("react.suspense"), REACT_MEMO_TYPE$1 = Symbol.for("react.memo"), REACT_LAZY_TYPE$1 = Symbol.for("react.lazy"), MAYBE_ITERATOR_SYMBOL$1 = Symbol.iterator;
+var REACT_ELEMENT_TYPE$1 = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE$2 = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE$1 = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE$1 = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE$1 = Symbol.for("react.profiler"), REACT_CONSUMER_TYPE$1 = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE$1 = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE$1 = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE$1 = Symbol.for("react.suspense"), REACT_MEMO_TYPE$1 = Symbol.for("react.memo"), REACT_LAZY_TYPE$2 = Symbol.for("react.lazy"), MAYBE_ITERATOR_SYMBOL$1 = Symbol.iterator;
 function getIteratorFn$1(maybeIterable) {
   if (null === maybeIterable || "object" !== typeof maybeIterable) return null;
   maybeIterable = MAYBE_ITERATOR_SYMBOL$1 && maybeIterable[MAYBE_ITERATOR_SYMBOL$1] || maybeIterable["@@iterator"];
@@ -2680,7 +2680,7 @@ function mapIntoArray(children, array, escapedPrefix, nameSoFar, callback) {
           case REACT_PORTAL_TYPE$2:
             invokeCallback = true;
             break;
-          case REACT_LAZY_TYPE$1:
+          case REACT_LAZY_TYPE$2:
             return invokeCallback = children._init, mapIntoArray(
               invokeCallback(children._payload),
               array,
@@ -2889,7 +2889,7 @@ react_production.forwardRef = function(render) {
 react_production.isValidElement = isValidElement;
 react_production.lazy = function(ctor) {
   return {
-    $$typeof: REACT_LAZY_TYPE$1,
+    $$typeof: REACT_LAZY_TYPE$2,
     _payload: { _status: -1, _result: ctor },
     _init: lazyInitializer
   };
@@ -3700,7 +3700,7 @@ function findCurrentHostFiberImpl(node) {
   }
   return null;
 }
-var assign = Object.assign, REACT_LEGACY_ELEMENT_TYPE = Symbol.for("react.element"), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_PROVIDER_TYPE = Symbol.for("react.provider"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy");
+var assign = Object.assign, REACT_LEGACY_ELEMENT_TYPE = Symbol.for("react.element"), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_PROVIDER_TYPE = Symbol.for("react.provider"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE$1 = Symbol.for("react.lazy");
 var REACT_ACTIVITY_TYPE = Symbol.for("react.activity");
 var REACT_MEMO_CACHE_SENTINEL = Symbol.for("react.memo_cache_sentinel");
 var MAYBE_ITERATOR_SYMBOL = Symbol.iterator;
@@ -3744,7 +3744,7 @@ function getComponentNameFromType(type) {
         return type;
       case REACT_MEMO_TYPE:
         return innerType = type.displayName || null, null !== innerType ? innerType : getComponentNameFromType(type.type) || "Memo";
-      case REACT_LAZY_TYPE:
+      case REACT_LAZY_TYPE$1:
         innerType = type._payload;
         type = type._init;
         try {
@@ -5366,7 +5366,7 @@ function createFiberFromTypeAndProps(type, key, pendingProps, owner, mode, lanes
             case REACT_MEMO_TYPE:
               fiberTag = 14;
               break a;
-            case REACT_LAZY_TYPE:
+            case REACT_LAZY_TYPE$1:
               fiberTag = 16;
               owner = null;
               break a;
@@ -6211,7 +6211,7 @@ function useThenable(thenable) {
   null === (null === workInProgressHook ? index2.memoizedState : workInProgressHook.next) && (index2 = index2.alternate, ReactSharedInternals.H = null === index2 || null === index2.memoizedState ? HooksDispatcherOnMount : HooksDispatcherOnUpdate);
   return thenable;
 }
-function use(usable) {
+function use$1(usable) {
   if (null !== usable && "object" === typeof usable) {
     if ("function" === typeof usable.then) return useThenable(usable);
     if (usable.$$typeof === REACT_CONTEXT_TYPE) return readContext(usable);
@@ -6953,7 +6953,7 @@ function entangleTransitionUpdate(root2, queue, lane) {
 }
 var ContextOnlyDispatcher = {
   readContext,
-  use,
+  use: use$1,
   useCallback: throwInvalidHookError,
   useContext: throwInvalidHookError,
   useEffect: throwInvalidHookError,
@@ -6977,7 +6977,7 @@ var ContextOnlyDispatcher = {
   useCacheRefresh: throwInvalidHookError
 }, HooksDispatcherOnMount = {
   readContext,
-  use,
+  use: use$1,
   useCallback: function(callback, deps) {
     mountWorkInProgressHook().memoizedState = [
       callback,
@@ -7153,7 +7153,7 @@ var ContextOnlyDispatcher = {
   }
 }, HooksDispatcherOnUpdate = {
   readContext,
-  use,
+  use: use$1,
   useCallback: updateCallback,
   useContext: readContext,
   useEffect: updateEffect,
@@ -7196,7 +7196,7 @@ var ContextOnlyDispatcher = {
   useCacheRefresh: updateRefresh
 }, HooksDispatcherOnRerender = {
   readContext,
-  use,
+  use: use$1,
   useCallback: updateCallback,
   useContext: readContext,
   useEffect: updateEffect,
@@ -7321,7 +7321,7 @@ function createChildReconciler(shouldTrackSideEffects) {
         lanes,
         element.key
       );
-    if (null !== current && (current.elementType === elementType || "object" === typeof elementType && null !== elementType && elementType.$$typeof === REACT_LAZY_TYPE && resolveLazy(elementType) === current.type))
+    if (null !== current && (current.elementType === elementType || "object" === typeof elementType && null !== elementType && elementType.$$typeof === REACT_LAZY_TYPE$1 && resolveLazy(elementType) === current.type))
       return current = useFiber(current, element.props), coerceRef(current, element), current.return = returnFiber, current;
     current = createFiberFromTypeAndProps(
       element.type,
@@ -7378,7 +7378,7 @@ function createChildReconciler(shouldTrackSideEffects) {
             returnFiber.mode,
             lanes
           ), newChild.return = returnFiber, newChild;
-        case REACT_LAZY_TYPE:
+        case REACT_LAZY_TYPE$1:
           var init = newChild._init;
           newChild = init(newChild._payload);
           return createChild(returnFiber, newChild, lanes);
@@ -7412,7 +7412,7 @@ function createChildReconciler(shouldTrackSideEffects) {
           return newChild.key === key ? updateElement(returnFiber, oldFiber, newChild, lanes) : null;
         case REACT_PORTAL_TYPE:
           return newChild.key === key ? updatePortal(returnFiber, oldFiber, newChild, lanes) : null;
-        case REACT_LAZY_TYPE:
+        case REACT_LAZY_TYPE$1:
           return key = newChild._init, newChild = key(newChild._payload), updateSlot(returnFiber, oldFiber, newChild, lanes);
       }
       if (isArrayImpl(newChild) || getIteratorFn(newChild))
@@ -7448,7 +7448,7 @@ function createChildReconciler(shouldTrackSideEffects) {
           return existingChildren = existingChildren.get(
             null === newChild.key ? newIdx : newChild.key
           ) || null, updatePortal(returnFiber, existingChildren, newChild, lanes);
-        case REACT_LAZY_TYPE:
+        case REACT_LAZY_TYPE$1:
           var init = newChild._init;
           newChild = init(newChild._payload);
           return updateFromMap(
@@ -7586,7 +7586,7 @@ function createChildReconciler(shouldTrackSideEffects) {
                     returnFiber = lanes;
                     break a;
                   }
-                } else if (currentFirstChild.elementType === key || "object" === typeof key && null !== key && key.$$typeof === REACT_LAZY_TYPE && resolveLazy(key) === currentFirstChild.type) {
+                } else if (currentFirstChild.elementType === key || "object" === typeof key && null !== key && key.$$typeof === REACT_LAZY_TYPE$1 && resolveLazy(key) === currentFirstChild.type) {
                   deleteRemainingChildren(
                     returnFiber,
                     currentFirstChild.sibling
@@ -7642,7 +7642,7 @@ function createChildReconciler(shouldTrackSideEffects) {
             returnFiber = lanes;
           }
           return placeSingleChild(returnFiber);
-        case REACT_LAZY_TYPE:
+        case REACT_LAZY_TYPE$1:
           return key = newChild._init, newChild = key(newChild._payload), reconcileChildFibersImpl(
             returnFiber,
             currentFirstChild,
@@ -14651,70 +14651,6 @@ function checkDCE() {
 }
 var clientExports = client.exports;
 const ReactDOM = /* @__PURE__ */ getDefaultExportFromCjs(clientExports);
-const scriptRel = "modulepreload";
-const assetsURL = function(dep) {
-  return "/" + dep;
-};
-const seen = {};
-const __vitePreload = function preload2(baseModule, deps, importerUrl) {
-  let promise = Promise.resolve();
-  if (deps && deps.length > 0) {
-    document.getElementsByTagName("link");
-    const cspNonceMeta = document.querySelector(
-      "meta[property=csp-nonce]"
-    );
-    const cspNonce = (cspNonceMeta == null ? void 0 : cspNonceMeta.nonce) || (cspNonceMeta == null ? void 0 : cspNonceMeta.getAttribute("nonce"));
-    promise = Promise.allSettled(
-      deps.map((dep) => {
-        dep = assetsURL(dep);
-        if (dep in seen) return;
-        seen[dep] = true;
-        const isCss = dep.endsWith(".css");
-        const cssSelector = isCss ? '[rel="stylesheet"]' : "";
-        if (document.querySelector(`link[href="${dep}"]${cssSelector}`)) {
-          return;
-        }
-        const link = document.createElement("link");
-        link.rel = isCss ? "stylesheet" : scriptRel;
-        if (!isCss) {
-          link.as = "script";
-        }
-        link.crossOrigin = "";
-        link.href = dep;
-        if (cspNonce) {
-          link.setAttribute("nonce", cspNonce);
-        }
-        document.head.appendChild(link);
-        if (isCss) {
-          return new Promise((res, rej) => {
-            link.addEventListener("load", res);
-            link.addEventListener(
-              "error",
-              () => rej(new Error(`Unable to preload CSS for ${dep}`))
-            );
-          });
-        }
-      })
-    );
-  }
-  function handlePreloadError(err) {
-    const e = new Event("vite:preloadError", {
-      cancelable: true
-    });
-    e.payload = err;
-    window.dispatchEvent(e);
-    if (!e.defaultPrevented) {
-      throw err;
-    }
-  }
-  return promise.then((res) => {
-    for (const item of res || []) {
-      if (item.status !== "rejected") continue;
-      handlePreloadError(item.reason);
-    }
-    return baseModule().catch(handlePreloadError);
-  });
-};
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -14820,31 +14756,60 @@ const createLucideIcon = (iconName, iconNode) => {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$a = [
+const __iconNode$g = [
+  [
+    "path",
+    {
+      d: "m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526",
+      key: "1yiouv"
+    }
+  ],
+  ["circle", { cx: "12", cy: "8", r: "6", key: "1vp47v" }]
+];
+const Award = createLucideIcon("award", __iconNode$g);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$f = [
   ["path", { d: "m18 16 4-4-4-4", key: "1inbqp" }],
   ["path", { d: "m6 8-4 4 4 4", key: "15zrgr" }],
   ["path", { d: "m14.5 4-5 16", key: "e7oirm" }]
 ];
-const CodeXml = createLucideIcon("code-xml", __iconNode$a);
+const CodeXml = createLucideIcon("code-xml", __iconNode$f);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$9 = [
+const __iconNode$e = [
   ["path", { d: "M12 15V3", key: "m9g1x1" }],
   ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
   ["path", { d: "m7 10 5 5 5-5", key: "brsn70" }]
 ];
-const Download = createLucideIcon("download", __iconNode$9);
+const Download = createLucideIcon("download", __iconNode$e);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$8 = [
+const __iconNode$d = [
+  ["path", { d: "M15 3h6v6", key: "1q9fwt" }],
+  ["path", { d: "M10 14 21 3", key: "gplh6r" }],
+  ["path", { d: "M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6", key: "a6xqqp" }]
+];
+const ExternalLink = createLucideIcon("external-link", __iconNode$d);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$c = [
   [
     "path",
     {
@@ -14854,14 +14819,32 @@ const __iconNode$8 = [
   ],
   ["path", { d: "M9 18c-4.51 2-5-2-7-2", key: "9comsn" }]
 ];
-const Github = createLucideIcon("github", __iconNode$8);
+const Github = createLucideIcon("github", __iconNode$c);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$7 = [
+const __iconNode$b = [
+  [
+    "path",
+    {
+      d: "M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z",
+      key: "j76jl0"
+    }
+  ],
+  ["path", { d: "M22 10v6", key: "1lu8f3" }],
+  ["path", { d: "M6 12.5V16a6 3 0 0 0 12 0v-3.5", key: "1r8lef" }]
+];
+const GraduationCap = createLucideIcon("graduation-cap", __iconNode$b);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$a = [
   [
     "path",
     {
@@ -14870,14 +14853,14 @@ const __iconNode$7 = [
     }
   ]
 ];
-const Heart = createLucideIcon("heart", __iconNode$7);
+const Heart = createLucideIcon("heart", __iconNode$a);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$6 = [
+const __iconNode$9 = [
   [
     "path",
     {
@@ -14888,7 +14871,47 @@ const __iconNode$6 = [
   ["rect", { width: "4", height: "12", x: "2", y: "9", key: "mk3on5" }],
   ["circle", { cx: "4", cy: "4", r: "2", key: "bt5ra8" }]
 ];
-const Linkedin = createLucideIcon("linkedin", __iconNode$6);
+const Linkedin = createLucideIcon("linkedin", __iconNode$9);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$8 = [
+  ["path", { d: "m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7", key: "132q7q" }],
+  ["rect", { x: "2", y: "4", width: "20", height: "16", rx: "2", key: "izxlao" }]
+];
+const Mail = createLucideIcon("mail", __iconNode$8);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$7 = [
+  [
+    "path",
+    {
+      d: "M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0",
+      key: "1r0f0z"
+    }
+  ],
+  ["circle", { cx: "12", cy: "10", r: "3", key: "ilqhr7" }]
+];
+const MapPin = createLucideIcon("map-pin", __iconNode$7);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$6 = [
+  ["path", { d: "M4 12h16", key: "1lakjw" }],
+  ["path", { d: "M4 18h16", key: "19g7jn" }],
+  ["path", { d: "M4 6h16", key: "1o0s65" }]
+];
+const Menu = createLucideIcon("menu", __iconNode$6);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -14896,10 +14919,9 @@ const Linkedin = createLucideIcon("linkedin", __iconNode$6);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$5 = [
-  ["path", { d: "m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7", key: "132q7q" }],
-  ["rect", { x: "2", y: "4", width: "20", height: "16", rx: "2", key: "izxlao" }]
+  ["path", { d: "M7.9 20A9 9 0 1 0 4 16.1L2 22Z", key: "vv11sd" }]
 ];
-const Mail = createLucideIcon("mail", __iconNode$5);
+const MessageCircle = createLucideIcon("message-circle", __iconNode$5);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -14910,13 +14932,12 @@ const __iconNode$4 = [
   [
     "path",
     {
-      d: "M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0",
-      key: "1r0f0z"
+      d: "M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384",
+      key: "9njp5v"
     }
-  ],
-  ["circle", { cx: "12", cy: "10", r: "3", key: "ilqhr7" }]
+  ]
 ];
-const MapPin = createLucideIcon("map-pin", __iconNode$4);
+const Phone = createLucideIcon("phone", __iconNode$4);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -14924,11 +14945,10 @@ const MapPin = createLucideIcon("map-pin", __iconNode$4);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$3 = [
-  ["path", { d: "M4 12h16", key: "1lakjw" }],
-  ["path", { d: "M4 18h16", key: "19g7jn" }],
-  ["path", { d: "M4 6h16", key: "1o0s65" }]
+  ["path", { d: "M5 12h14", key: "1ays0h" }],
+  ["path", { d: "M12 5v14", key: "s699le" }]
 ];
-const Menu = createLucideIcon("menu", __iconNode$3);
+const Plus = createLucideIcon("plus", __iconNode$3);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -14936,9 +14956,10 @@ const Menu = createLucideIcon("menu", __iconNode$3);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$2 = [
-  ["path", { d: "M7.9 20A9 9 0 1 0 4 16.1L2 22Z", key: "vv11sd" }]
+  ["path", { d: "M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z", key: "qazsjp" }],
+  ["path", { d: "M15 3v4a2 2 0 0 0 2 2h4", key: "40519r" }]
 ];
-const MessageCircle = createLucideIcon("message-circle", __iconNode$2);
+const StickyNote = createLucideIcon("sticky-note", __iconNode$2);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -14946,15 +14967,13 @@ const MessageCircle = createLucideIcon("message-circle", __iconNode$2);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$1 = [
-  [
-    "path",
-    {
-      d: "M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384",
-      key: "9njp5v"
-    }
-  ]
+  ["path", { d: "M3 6h18", key: "d0wm0j" }],
+  ["path", { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6", key: "4alrt4" }],
+  ["path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2", key: "v07s0e" }],
+  ["line", { x1: "10", x2: "10", y1: "11", y2: "17", key: "1uufr5" }],
+  ["line", { x1: "14", x2: "14", y1: "11", y2: "17", key: "xtxkd" }]
 ];
-const Phone = createLucideIcon("phone", __iconNode$1);
+const Trash2 = createLucideIcon("trash-2", __iconNode$1);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -15332,27 +15351,27 @@ const rgba = {
   transform: ({ red, green, blue, alpha: alpha$1 = 1 }) => "rgba(" + rgbUnit.transform(red) + ", " + rgbUnit.transform(green) + ", " + rgbUnit.transform(blue) + ", " + sanitize(alpha.transform(alpha$1)) + ")"
 };
 function parseHex(v) {
-  let r = "";
+  let r2 = "";
   let g = "";
   let b = "";
   let a = "";
   if (v.length > 5) {
-    r = v.substring(1, 3);
+    r2 = v.substring(1, 3);
     g = v.substring(3, 5);
     b = v.substring(5, 7);
     a = v.substring(7, 9);
   } else {
-    r = v.substring(1, 2);
+    r2 = v.substring(1, 2);
     g = v.substring(2, 3);
     b = v.substring(3, 4);
     a = v.substring(4, 5);
-    r += r;
+    r2 += r2;
     g += g;
     b += b;
     a += a;
   }
   return {
-    red: parseInt(r, 16),
+    red: parseInt(r2, 16),
     green: parseInt(g, 16),
     blue: parseInt(b, 16),
     alpha: a ? parseInt(a, 16) / 255 : 1
@@ -21076,18 +21095,18 @@ const MotionConfigContext = reactExports.createContext({
   isStatic: false,
   reducedMotion: "never"
 });
-function setRef(ref, value) {
+function setRef$1(ref, value) {
   if (typeof ref === "function") {
     return ref(value);
   } else if (ref !== null && ref !== void 0) {
     ref.current = value;
   }
 }
-function composeRefs(...refs) {
+function composeRefs$1(...refs) {
   return (node) => {
     let hasCleanup = false;
     const cleanups = refs.map((ref) => {
-      const cleanup = setRef(ref, node);
+      const cleanup = setRef$1(ref, node);
       if (!hasCleanup && typeof cleanup === "function") {
         hasCleanup = true;
       }
@@ -21100,7 +21119,7 @@ function composeRefs(...refs) {
           if (typeof cleanup === "function") {
             cleanup();
           } else {
-            setRef(refs[i], null);
+            setRef$1(refs[i], null);
           }
         }
       };
@@ -21108,7 +21127,7 @@ function composeRefs(...refs) {
   };
 }
 function useComposedRefs(...refs) {
-  return reactExports.useCallback(composeRefs(...refs), refs);
+  return reactExports.useCallback(composeRefs$1(...refs), refs);
 }
 class PopChildMeasure extends reactExports.Component {
   getSnapshotBeforeUpdate(prevProps) {
@@ -23035,138 +23054,209 @@ const featureBundle = {
   ...layout
 };
 const motion = /* @__PURE__ */ createMotionProxy(featureBundle, createDomVisualElement);
-var DefaultContext = {
-  color: void 0,
-  size: void 0,
-  className: void 0,
-  style: void 0,
-  attr: void 0
+const personalInfo = {
+  name: "Roshan Mishra",
+  title: "Full Stack Engineer",
+  email: "mroshanmishra0072@gmail.com",
+  phone: "+91 8420070594",
+  location: "Bengaluru, India",
+  linkedin: "https://www.linkedin.com/in/roshan-mishra-51a821174",
+  github: "",
+  leetcode: "https://leetcode.com/u/mishraroshan/",
+  website: "",
+  resumePdf: "/Roshan_mishra.pdf",
+  profilePhoto: "/profile-photo.png"
 };
-var IconContext = React$2.createContext && /* @__PURE__ */ React$2.createContext(DefaultContext);
-var _excluded = ["attr", "size", "title"];
-function _objectWithoutProperties(e, t) {
-  if (null == e) return {};
-  var o, r, i = _objectWithoutPropertiesLoose(e, t);
-  if (Object.getOwnPropertySymbols) {
-    var n = Object.getOwnPropertySymbols(e);
-    for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]);
+const heroRoles = [
+  "I'm a Full Stack Engineer",
+  "I'm a Backend Developer",
+  "I'm a Booking & Availability Specialist",
+  "I'm a REST API Builder",
+  "I'm a SaaS Engineer",
+  "I'm a Problem Solver"
+];
+const profileSummary = "Full Stack Engineer with strong experience building scalable SaaS systems. Specialized in booking engines, rule-based availability systems, and high-performance REST APIs. Proven ability to translate complex business rules into reliable, production-grade software for product companies.";
+const skillCategories = [
+  {
+    category: "Languages & Foundations",
+    icon: "⚙️",
+    skills: [
+      "Java",
+      "JavaScript",
+      "TypeScript",
+      "SQL",
+      "Object-Oriented Programming",
+      "Data Structures & Algorithms",
+      "System Design"
+    ]
+  },
+  {
+    category: "Backend & APIs",
+    icon: "🖥️",
+    skills: [
+      "Node.js",
+      "Express.js",
+      "Mongoose",
+      "Microservices",
+      "RESTful APIs",
+      "CI/CD",
+      "Agile"
+    ]
+  },
+  {
+    category: "Frontend",
+    icon: "🎨",
+    skills: [
+      "React",
+      "HTML5",
+      "CSS3",
+      "Bootstrap",
+      "Angular"
+    ]
+  },
+  {
+    category: "Data, Cloud & DevOps",
+    icon: "☁️",
+    skills: [
+      "MongoDB",
+      "MySQL",
+      "Git",
+      "AWS Lambda",
+      "AWS S3",
+      "SQS",
+      "Docker"
+    ]
+  },
+  {
+    category: "AI & LLM",
+    icon: "🤖",
+    skills: [
+      "OpenAI (GPT-4)",
+      "Prompt engineering",
+      "GitHub Copilot"
+    ]
   }
-  return i;
-}
-function _objectWithoutPropertiesLoose(r, e) {
-  if (null == r) return {};
-  var t = {};
-  for (var n in r) if ({}.hasOwnProperty.call(r, n)) {
-    if (-1 !== e.indexOf(n)) continue;
-    t[n] = r[n];
+];
+const experiences = [
+  {
+    role: "Software Development Engineer (SDE-1)",
+    company: "MONKSPACES.AI",
+    startDate: "Jun 2023",
+    description: [
+      "Owned backend design and implementation of a production booking engine for the full rental lifecycle — lead intake, availability validation, unit allocation, payments, and contract creation — for nightly, monthly, and yearly rental models.",
+      "Designed a rule-based availability engine combining contract types (fixed, fixed-with-rollover, month-to-month), stay types, and occupancy states to prevent booking conflicts across thousands of units.",
+      "Modeled contract and occupancy state machines (booked, occupied, under-notice, shifting, moved-out, shifted) for edge cases such as early move-outs, tenant shifts, and rollover extensions.",
+      "Built services powering an availability calendar with past, present, and future visibility at property, unit, and category levels for operations and inventory planning.",
+      "Optimized critical APIs and MongoDB queries in booking and availability flows, reducing latency under concurrent access.",
+      "Integrated Razorpay, Stripe, and Hitpay with idempotent APIs and failure-safe workflows, supporting 10,000+ users with minimal payment inconsistencies.",
+      "Delivered backend modules for mall operations (gate pass, work permits, checklists), cutting manual workflows by about 40% and improving traceability.",
+      "Implemented event-driven and serverless workflows on AWS Lambda, S3, and SQS for scalability, fault tolerance, and high availability.",
+      "Partnered with product and operations to turn ambiguous rules into deterministic production backend logic."
+    ]
   }
-  return t;
-}
-function _extends() {
-  return _extends = Object.assign ? Object.assign.bind() : function(n) {
-    for (var e = 1; e < arguments.length; e++) {
-      var t = arguments[e];
-      for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]);
-    }
-    return n;
-  }, _extends.apply(null, arguments);
-}
-function ownKeys(e, r) {
-  var t = Object.keys(e);
-  if (Object.getOwnPropertySymbols) {
-    var o = Object.getOwnPropertySymbols(e);
-    r && (o = o.filter(function(r2) {
-      return Object.getOwnPropertyDescriptor(e, r2).enumerable;
-    })), t.push.apply(t, o);
+];
+const projects = [
+  {
+    name: "Full-Stack E-commerce Platform",
+    description: "Scalable e-commerce app with Redux-driven state management, reducing redundant data fetch by about 60%, and performance work targeting ~2s page loads.",
+    technologies: [
+      "React",
+      "Node.js",
+      "MongoDB",
+      "Material-UI",
+      "Redux"
+    ],
+    link: ""
+  },
+  {
+    name: "Enterprise Inventory Management System",
+    description: "Real-time inventory system for 1000+ SKUs with role-based access control, cutting manual reconciliation by about 70%.",
+    technologies: [
+      "Angular",
+      "Node.js",
+      "MongoDB",
+      "REST APIs"
+    ],
+    link: ""
   }
-  return t;
-}
-function _objectSpread(e) {
-  for (var r = 1; r < arguments.length; r++) {
-    var t = null != arguments[r] ? arguments[r] : {};
-    r % 2 ? ownKeys(Object(t), true).forEach(function(r2) {
-      _defineProperty(e, r2, t[r2]);
-    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function(r2) {
-      Object.defineProperty(e, r2, Object.getOwnPropertyDescriptor(t, r2));
-    });
+];
+const certifications = [
+  {
+    name: "Supervised Machine Learning: Regression and Classification",
+    issuer: "Coursera",
+    date: "May 2025",
+    credentialId: "",
+    description: "Foundational ML: supervised learning, regression, classification, and practical model evaluation (Andrew Ng / DeepLearning.AI track)."
+  },
+  {
+    name: "Engineering: Undergraduate & Masters Asia Virtual Experience Program",
+    issuer: "Microsoft",
+    date: "",
+    credentialId: "",
+    description: "Virtual experience covering software engineering workflows and Microsoft engineering culture (Asia undergraduate & masters program)."
+  },
+  {
+    name: "InsighT Python",
+    issuer: "TCS InsighT",
+    date: "",
+    credentialId: "",
+    description: "Python fundamentals and application development through TCS InsighT."
+  },
+  {
+    name: "Introduction to Programming in C",
+    issuer: "TCS iON Digital Learning Hub",
+    date: "",
+    credentialId: "",
+    description: "Core C programming: syntax, control flow, and problem-solving basics."
+  },
+  {
+    name: "Introduction to R Software",
+    issuer: "NPTEL",
+    date: "",
+    credentialId: "",
+    description: "Introductory R for data handling, syntax, and basic statistical scripting."
+  },
+  {
+    name: "National Level Quiz on Java (Core) & SQL (Oracle)",
+    issuer: "IQAC & Department of Computer Science, Government General Degree College, Singur",
+    date: "",
+    credentialId: "",
+    description: "National-level assessment of core Java and Oracle SQL."
   }
-  return e;
-}
-function _defineProperty(e, r, t) {
-  return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e;
-}
-function _toPropertyKey(t) {
-  var i = _toPrimitive(t, "string");
-  return "symbol" == typeof i ? i : i + "";
-}
-function _toPrimitive(t, r) {
-  if ("object" != typeof t || !t) return t;
-  var e = t[Symbol.toPrimitive];
-  if (void 0 !== e) {
-    var i = e.call(t, r);
-    if ("object" != typeof i) return i;
-    throw new TypeError("@@toPrimitive must return a primitive value.");
+];
+const education = [
+  {
+    degree: "Bachelor of Technology, Computer Science and Engineering",
+    institution: "Government College of Engineering and Ceramic Technology, Kolkata",
+    startYear: 2019,
+    endYear: 2023,
+    cgpa: "9.33/10",
+    location: "Kolkata, India"
   }
-  return ("string" === r ? String : Number)(t);
-}
-function Tree2Element(tree) {
-  return tree && tree.map((node, i) => /* @__PURE__ */ React$2.createElement(node.tag, _objectSpread({
-    key: i
-  }, node.attr), Tree2Element(node.child)));
-}
-function GenIcon(data) {
-  return (props) => /* @__PURE__ */ React$2.createElement(IconBase, _extends({
-    attr: _objectSpread({}, data.attr)
-  }, props), Tree2Element(data.child));
-}
-function IconBase(props) {
-  var elem = (conf) => {
-    var {
-      attr,
-      size,
-      title
-    } = props, svgProps = _objectWithoutProperties(props, _excluded);
-    var computedSize = size || conf.size || "1em";
-    var className;
-    if (conf.className) className = conf.className;
-    if (props.className) className = (className ? className + " " : "") + props.className;
-    return /* @__PURE__ */ React$2.createElement("svg", _extends({
-      stroke: "currentColor",
-      fill: "currentColor",
-      strokeWidth: "0"
-    }, conf.attr, attr, svgProps, {
-      className,
-      style: _objectSpread(_objectSpread({
-        color: props.color || conf.color
-      }, conf.style), props.style),
-      height: computedSize,
-      width: computedSize,
-      xmlns: "http://www.w3.org/2000/svg"
-    }), title && /* @__PURE__ */ React$2.createElement("title", null, title), props.children);
-  };
-  return IconContext !== void 0 ? /* @__PURE__ */ React$2.createElement(IconContext.Consumer, null, (conf) => elem(conf)) : elem(DefaultContext);
-}
-function SiLeetcode(props) {
-  return GenIcon({ "attr": { "role": "img", "viewBox": "0 0 24 24" }, "child": [{ "tag": "path", "attr": { "d": "M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a5.266 5.266 0 0 0-1.209 2.104 5.35 5.35 0 0 0-.125.513 5.527 5.527 0 0 0 .062 2.362 5.83 5.83 0 0 0 .349 1.017 5.938 5.938 0 0 0 1.271 1.818l4.277 4.193.039.038c2.248 2.165 5.852 2.133 8.063-.074l2.396-2.392c.54-.54.54-1.414.003-1.955a1.378 1.378 0 0 0-1.951-.003l-2.396 2.392a3.021 3.021 0 0 1-4.205.038l-.02-.019-4.276-4.193c-.652-.64-.972-1.469-.948-2.263a2.68 2.68 0 0 1 .066-.523 2.545 2.545 0 0 1 .619-1.164L9.13 8.114c1.058-1.134 3.204-1.27 4.43-.278l3.501 2.831c.593.48 1.461.387 1.94-.207a1.384 1.384 0 0 0-.207-1.943l-3.5-2.831c-.8-.647-1.766-1.045-2.774-1.202l2.015-2.158A1.384 1.384 0 0 0 13.483 0zm-2.866 12.815a1.38 1.38 0 0 0-1.38 1.382 1.38 1.38 0 0 0 1.38 1.382H20.79a1.38 1.38 0 0 0 1.38-1.382 1.38 1.38 0 0 0-1.38-1.382z" }, "child": [] }] })(props);
-}
-function PortfolioLoader() {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-    "div",
-    {
-      className: "min-h-screen min-h-dvh flex flex-col items-center justify-center bg-[var(--pf-deep)] text-[var(--pf-text)] px-6",
-      "aria-busy": "true",
-      "aria-label": "Loading portfolio",
-      children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "portfolio-loader-visual", "aria-hidden": true, children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "portfolio-loader-ring" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "portfolio-loader-ring portfolio-loader-ring--delayed" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "portfolio-loader-core" })
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-8 text-sm font-medium tracking-wide text-[var(--pf-text-muted)]", children: "Loading portfolio" })
-      ]
-    }
-  );
-}
+];
+const codingAchievements = [
+  {
+    platform: "LeetCode",
+    rank: "1800+ rating",
+    rating: 1800,
+    detail: "Problem solving, contests & DSA — see full profile below",
+    color: "#F89F1B",
+    icon: "⚡"
+  }
+];
+const awards = [];
+const portfolioSeed = {
+  personalInfo,
+  heroRoles,
+  profileSummary,
+  skillCategories,
+  experiences,
+  projects,
+  certifications,
+  education,
+  codingAchievements,
+  awards
+};
 function portfolioUrl() {
   return "/api/portfolio";
 }
@@ -23214,12 +23304,10 @@ function PortfolioProvider({ children }) {
     queryFn: fetchPortfolio,
     staleTime: 6e4,
     retry: 1,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    initialData: portfolioSeed
   });
-  if (query.isPending) {
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(PortfolioLoader, {});
-  }
-  if (query.isError || !query.data) {
+  if (!query.data) {
     const detail = query.error instanceof Error ? query.error.message : query.error != null ? String(query.error) : null;
     return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-h-screen flex flex-col items-center justify-center gap-3 px-4 text-center bg-[var(--pf-deep)] text-[var(--pf-text)]", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-semibold", children: "Could not load portfolio" }),
@@ -23246,6 +23334,3432 @@ function usePortfolioData() {
   }
   return ctx;
 }
+function setRef(ref, value) {
+  if (typeof ref === "function") {
+    return ref(value);
+  } else if (ref !== null && ref !== void 0) {
+    ref.current = value;
+  }
+}
+function composeRefs(...refs) {
+  return (node) => {
+    let hasCleanup = false;
+    const cleanups = refs.map((ref) => {
+      const cleanup = setRef(ref, node);
+      if (!hasCleanup && typeof cleanup == "function") {
+        hasCleanup = true;
+      }
+      return cleanup;
+    });
+    if (hasCleanup) {
+      return () => {
+        for (let i = 0; i < cleanups.length; i++) {
+          const cleanup = cleanups[i];
+          if (typeof cleanup == "function") {
+            cleanup();
+          } else {
+            setRef(refs[i], null);
+          }
+        }
+      };
+    }
+  };
+}
+var REACT_LAZY_TYPE = Symbol.for("react.lazy");
+var use = React$3[" use ".trim().toString()];
+function isPromiseLike(value) {
+  return typeof value === "object" && value !== null && "then" in value;
+}
+function isLazyComponent(element) {
+  return element != null && typeof element === "object" && "$$typeof" in element && element.$$typeof === REACT_LAZY_TYPE && "_payload" in element && isPromiseLike(element._payload);
+}
+// @__NO_SIDE_EFFECTS__
+function createSlot(ownerName) {
+  const SlotClone = /* @__PURE__ */ createSlotClone(ownerName);
+  const Slot2 = reactExports.forwardRef((props, forwardedRef) => {
+    let { children, ...slotProps } = props;
+    if (isLazyComponent(children) && typeof use === "function") {
+      children = use(children._payload);
+    }
+    const childrenArray = reactExports.Children.toArray(children);
+    const slottable = childrenArray.find(isSlottable);
+    if (slottable) {
+      const newElement = slottable.props.children;
+      const newChildren = childrenArray.map((child) => {
+        if (child === slottable) {
+          if (reactExports.Children.count(newElement) > 1) return reactExports.Children.only(null);
+          return reactExports.isValidElement(newElement) ? newElement.props.children : null;
+        } else {
+          return child;
+        }
+      });
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(SlotClone, { ...slotProps, ref: forwardedRef, children: reactExports.isValidElement(newElement) ? reactExports.cloneElement(newElement, void 0, newChildren) : null });
+    }
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(SlotClone, { ...slotProps, ref: forwardedRef, children });
+  });
+  Slot2.displayName = `${ownerName}.Slot`;
+  return Slot2;
+}
+var Slot = /* @__PURE__ */ createSlot("Slot");
+// @__NO_SIDE_EFFECTS__
+function createSlotClone(ownerName) {
+  const SlotClone = reactExports.forwardRef((props, forwardedRef) => {
+    let { children, ...slotProps } = props;
+    if (isLazyComponent(children) && typeof use === "function") {
+      children = use(children._payload);
+    }
+    if (reactExports.isValidElement(children)) {
+      const childrenRef = getElementRef(children);
+      const props2 = mergeProps(slotProps, children.props);
+      if (children.type !== reactExports.Fragment) {
+        props2.ref = forwardedRef ? composeRefs(forwardedRef, childrenRef) : childrenRef;
+      }
+      return reactExports.cloneElement(children, props2);
+    }
+    return reactExports.Children.count(children) > 1 ? reactExports.Children.only(null) : null;
+  });
+  SlotClone.displayName = `${ownerName}.SlotClone`;
+  return SlotClone;
+}
+var SLOTTABLE_IDENTIFIER = Symbol("radix.slottable");
+function isSlottable(child) {
+  return reactExports.isValidElement(child) && typeof child.type === "function" && "__radixId" in child.type && child.type.__radixId === SLOTTABLE_IDENTIFIER;
+}
+function mergeProps(slotProps, childProps) {
+  const overrideProps = { ...childProps };
+  for (const propName in childProps) {
+    const slotPropValue = slotProps[propName];
+    const childPropValue = childProps[propName];
+    const isHandler = /^on[A-Z]/.test(propName);
+    if (isHandler) {
+      if (slotPropValue && childPropValue) {
+        overrideProps[propName] = (...args) => {
+          const result = childPropValue(...args);
+          slotPropValue(...args);
+          return result;
+        };
+      } else if (slotPropValue) {
+        overrideProps[propName] = slotPropValue;
+      }
+    } else if (propName === "style") {
+      overrideProps[propName] = { ...slotPropValue, ...childPropValue };
+    } else if (propName === "className") {
+      overrideProps[propName] = [slotPropValue, childPropValue].filter(Boolean).join(" ");
+    }
+  }
+  return { ...slotProps, ...overrideProps };
+}
+function getElementRef(element) {
+  var _a2, _b2;
+  let getter = (_a2 = Object.getOwnPropertyDescriptor(element.props, "ref")) == null ? void 0 : _a2.get;
+  let mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+  if (mayWarn) {
+    return element.ref;
+  }
+  getter = (_b2 = Object.getOwnPropertyDescriptor(element, "ref")) == null ? void 0 : _b2.get;
+  mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+  if (mayWarn) {
+    return element.props.ref;
+  }
+  return element.props.ref || element.ref;
+}
+function r(e) {
+  var t, f, n = "";
+  if ("string" == typeof e || "number" == typeof e) n += e;
+  else if ("object" == typeof e) if (Array.isArray(e)) {
+    var o = e.length;
+    for (t = 0; t < o; t++) e[t] && (f = r(e[t])) && (n && (n += " "), n += f);
+  } else for (f in e) e[f] && (n && (n += " "), n += f);
+  return n;
+}
+function clsx() {
+  for (var e, t, f = 0, n = "", o = arguments.length; f < o; f++) (e = arguments[f]) && (t = r(e)) && (n && (n += " "), n += t);
+  return n;
+}
+const falsyToString = (value) => typeof value === "boolean" ? `${value}` : value === 0 ? "0" : value;
+const cx = clsx;
+const cva = (base, config) => (props) => {
+  var _config_compoundVariants;
+  if ((config === null || config === void 0 ? void 0 : config.variants) == null) return cx(base, props === null || props === void 0 ? void 0 : props.class, props === null || props === void 0 ? void 0 : props.className);
+  const { variants, defaultVariants } = config;
+  const getVariantClassNames = Object.keys(variants).map((variant) => {
+    const variantProp = props === null || props === void 0 ? void 0 : props[variant];
+    const defaultVariantProp = defaultVariants === null || defaultVariants === void 0 ? void 0 : defaultVariants[variant];
+    if (variantProp === null) return null;
+    const variantKey = falsyToString(variantProp) || falsyToString(defaultVariantProp);
+    return variants[variant][variantKey];
+  });
+  const propsWithoutUndefined = props && Object.entries(props).reduce((acc, param) => {
+    let [key, value] = param;
+    if (value === void 0) {
+      return acc;
+    }
+    acc[key] = value;
+    return acc;
+  }, {});
+  const getCompoundVariantClassNames = config === null || config === void 0 ? void 0 : (_config_compoundVariants = config.compoundVariants) === null || _config_compoundVariants === void 0 ? void 0 : _config_compoundVariants.reduce((acc, param) => {
+    let { class: cvClass, className: cvClassName, ...compoundVariantOptions } = param;
+    return Object.entries(compoundVariantOptions).every((param2) => {
+      let [key, value] = param2;
+      return Array.isArray(value) ? value.includes({
+        ...defaultVariants,
+        ...propsWithoutUndefined
+      }[key]) : {
+        ...defaultVariants,
+        ...propsWithoutUndefined
+      }[key] === value;
+    }) ? [
+      ...acc,
+      cvClass,
+      cvClassName
+    ] : acc;
+  }, []);
+  return cx(base, getVariantClassNames, getCompoundVariantClassNames, props === null || props === void 0 ? void 0 : props.class, props === null || props === void 0 ? void 0 : props.className);
+};
+const CLASS_PART_SEPARATOR = "-";
+const createClassGroupUtils = (config) => {
+  const classMap = createClassMap(config);
+  const {
+    conflictingClassGroups,
+    conflictingClassGroupModifiers
+  } = config;
+  const getClassGroupId = (className) => {
+    const classParts = className.split(CLASS_PART_SEPARATOR);
+    if (classParts[0] === "" && classParts.length !== 1) {
+      classParts.shift();
+    }
+    return getGroupRecursive(classParts, classMap) || getGroupIdForArbitraryProperty(className);
+  };
+  const getConflictingClassGroupIds = (classGroupId, hasPostfixModifier) => {
+    const conflicts = conflictingClassGroups[classGroupId] || [];
+    if (hasPostfixModifier && conflictingClassGroupModifiers[classGroupId]) {
+      return [...conflicts, ...conflictingClassGroupModifiers[classGroupId]];
+    }
+    return conflicts;
+  };
+  return {
+    getClassGroupId,
+    getConflictingClassGroupIds
+  };
+};
+const getGroupRecursive = (classParts, classPartObject) => {
+  var _a2;
+  if (classParts.length === 0) {
+    return classPartObject.classGroupId;
+  }
+  const currentClassPart = classParts[0];
+  const nextClassPartObject = classPartObject.nextPart.get(currentClassPart);
+  const classGroupFromNextClassPart = nextClassPartObject ? getGroupRecursive(classParts.slice(1), nextClassPartObject) : void 0;
+  if (classGroupFromNextClassPart) {
+    return classGroupFromNextClassPart;
+  }
+  if (classPartObject.validators.length === 0) {
+    return void 0;
+  }
+  const classRest = classParts.join(CLASS_PART_SEPARATOR);
+  return (_a2 = classPartObject.validators.find(({
+    validator
+  }) => validator(classRest))) == null ? void 0 : _a2.classGroupId;
+};
+const arbitraryPropertyRegex = /^\[(.+)\]$/;
+const getGroupIdForArbitraryProperty = (className) => {
+  if (arbitraryPropertyRegex.test(className)) {
+    const arbitraryPropertyClassName = arbitraryPropertyRegex.exec(className)[1];
+    const property = arbitraryPropertyClassName == null ? void 0 : arbitraryPropertyClassName.substring(0, arbitraryPropertyClassName.indexOf(":"));
+    if (property) {
+      return "arbitrary.." + property;
+    }
+  }
+};
+const createClassMap = (config) => {
+  const {
+    theme,
+    prefix: prefix2
+  } = config;
+  const classMap = {
+    nextPart: /* @__PURE__ */ new Map(),
+    validators: []
+  };
+  const prefixedClassGroupEntries = getPrefixedClassGroupEntries(Object.entries(config.classGroups), prefix2);
+  prefixedClassGroupEntries.forEach(([classGroupId, classGroup]) => {
+    processClassesRecursively(classGroup, classMap, classGroupId, theme);
+  });
+  return classMap;
+};
+const processClassesRecursively = (classGroup, classPartObject, classGroupId, theme) => {
+  classGroup.forEach((classDefinition) => {
+    if (typeof classDefinition === "string") {
+      const classPartObjectToEdit = classDefinition === "" ? classPartObject : getPart(classPartObject, classDefinition);
+      classPartObjectToEdit.classGroupId = classGroupId;
+      return;
+    }
+    if (typeof classDefinition === "function") {
+      if (isThemeGetter(classDefinition)) {
+        processClassesRecursively(classDefinition(theme), classPartObject, classGroupId, theme);
+        return;
+      }
+      classPartObject.validators.push({
+        validator: classDefinition,
+        classGroupId
+      });
+      return;
+    }
+    Object.entries(classDefinition).forEach(([key, classGroup2]) => {
+      processClassesRecursively(classGroup2, getPart(classPartObject, key), classGroupId, theme);
+    });
+  });
+};
+const getPart = (classPartObject, path) => {
+  let currentClassPartObject = classPartObject;
+  path.split(CLASS_PART_SEPARATOR).forEach((pathPart) => {
+    if (!currentClassPartObject.nextPart.has(pathPart)) {
+      currentClassPartObject.nextPart.set(pathPart, {
+        nextPart: /* @__PURE__ */ new Map(),
+        validators: []
+      });
+    }
+    currentClassPartObject = currentClassPartObject.nextPart.get(pathPart);
+  });
+  return currentClassPartObject;
+};
+const isThemeGetter = (func) => func.isThemeGetter;
+const getPrefixedClassGroupEntries = (classGroupEntries, prefix2) => {
+  if (!prefix2) {
+    return classGroupEntries;
+  }
+  return classGroupEntries.map(([classGroupId, classGroup]) => {
+    const prefixedClassGroup = classGroup.map((classDefinition) => {
+      if (typeof classDefinition === "string") {
+        return prefix2 + classDefinition;
+      }
+      if (typeof classDefinition === "object") {
+        return Object.fromEntries(Object.entries(classDefinition).map(([key, value]) => [prefix2 + key, value]));
+      }
+      return classDefinition;
+    });
+    return [classGroupId, prefixedClassGroup];
+  });
+};
+const createLruCache = (maxCacheSize) => {
+  if (maxCacheSize < 1) {
+    return {
+      get: () => void 0,
+      set: () => {
+      }
+    };
+  }
+  let cacheSize = 0;
+  let cache = /* @__PURE__ */ new Map();
+  let previousCache = /* @__PURE__ */ new Map();
+  const update = (key, value) => {
+    cache.set(key, value);
+    cacheSize++;
+    if (cacheSize > maxCacheSize) {
+      cacheSize = 0;
+      previousCache = cache;
+      cache = /* @__PURE__ */ new Map();
+    }
+  };
+  return {
+    get(key) {
+      let value = cache.get(key);
+      if (value !== void 0) {
+        return value;
+      }
+      if ((value = previousCache.get(key)) !== void 0) {
+        update(key, value);
+        return value;
+      }
+    },
+    set(key, value) {
+      if (cache.has(key)) {
+        cache.set(key, value);
+      } else {
+        update(key, value);
+      }
+    }
+  };
+};
+const IMPORTANT_MODIFIER = "!";
+const createParseClassName = (config) => {
+  const {
+    separator,
+    experimentalParseClassName
+  } = config;
+  const isSeparatorSingleCharacter = separator.length === 1;
+  const firstSeparatorCharacter = separator[0];
+  const separatorLength = separator.length;
+  const parseClassName = (className) => {
+    const modifiers = [];
+    let bracketDepth = 0;
+    let modifierStart = 0;
+    let postfixModifierPosition;
+    for (let index2 = 0; index2 < className.length; index2++) {
+      let currentCharacter = className[index2];
+      if (bracketDepth === 0) {
+        if (currentCharacter === firstSeparatorCharacter && (isSeparatorSingleCharacter || className.slice(index2, index2 + separatorLength) === separator)) {
+          modifiers.push(className.slice(modifierStart, index2));
+          modifierStart = index2 + separatorLength;
+          continue;
+        }
+        if (currentCharacter === "/") {
+          postfixModifierPosition = index2;
+          continue;
+        }
+      }
+      if (currentCharacter === "[") {
+        bracketDepth++;
+      } else if (currentCharacter === "]") {
+        bracketDepth--;
+      }
+    }
+    const baseClassNameWithImportantModifier = modifiers.length === 0 ? className : className.substring(modifierStart);
+    const hasImportantModifier = baseClassNameWithImportantModifier.startsWith(IMPORTANT_MODIFIER);
+    const baseClassName = hasImportantModifier ? baseClassNameWithImportantModifier.substring(1) : baseClassNameWithImportantModifier;
+    const maybePostfixModifierPosition = postfixModifierPosition && postfixModifierPosition > modifierStart ? postfixModifierPosition - modifierStart : void 0;
+    return {
+      modifiers,
+      hasImportantModifier,
+      baseClassName,
+      maybePostfixModifierPosition
+    };
+  };
+  if (experimentalParseClassName) {
+    return (className) => experimentalParseClassName({
+      className,
+      parseClassName
+    });
+  }
+  return parseClassName;
+};
+const sortModifiers = (modifiers) => {
+  if (modifiers.length <= 1) {
+    return modifiers;
+  }
+  const sortedModifiers = [];
+  let unsortedModifiers = [];
+  modifiers.forEach((modifier) => {
+    const isArbitraryVariant = modifier[0] === "[";
+    if (isArbitraryVariant) {
+      sortedModifiers.push(...unsortedModifiers.sort(), modifier);
+      unsortedModifiers = [];
+    } else {
+      unsortedModifiers.push(modifier);
+    }
+  });
+  sortedModifiers.push(...unsortedModifiers.sort());
+  return sortedModifiers;
+};
+const createConfigUtils = (config) => ({
+  cache: createLruCache(config.cacheSize),
+  parseClassName: createParseClassName(config),
+  ...createClassGroupUtils(config)
+});
+const SPLIT_CLASSES_REGEX = /\s+/;
+const mergeClassList = (classList, configUtils) => {
+  const {
+    parseClassName,
+    getClassGroupId,
+    getConflictingClassGroupIds
+  } = configUtils;
+  const classGroupsInConflict = [];
+  const classNames = classList.trim().split(SPLIT_CLASSES_REGEX);
+  let result = "";
+  for (let index2 = classNames.length - 1; index2 >= 0; index2 -= 1) {
+    const originalClassName = classNames[index2];
+    const {
+      modifiers,
+      hasImportantModifier,
+      baseClassName,
+      maybePostfixModifierPosition
+    } = parseClassName(originalClassName);
+    let hasPostfixModifier = Boolean(maybePostfixModifierPosition);
+    let classGroupId = getClassGroupId(hasPostfixModifier ? baseClassName.substring(0, maybePostfixModifierPosition) : baseClassName);
+    if (!classGroupId) {
+      if (!hasPostfixModifier) {
+        result = originalClassName + (result.length > 0 ? " " + result : result);
+        continue;
+      }
+      classGroupId = getClassGroupId(baseClassName);
+      if (!classGroupId) {
+        result = originalClassName + (result.length > 0 ? " " + result : result);
+        continue;
+      }
+      hasPostfixModifier = false;
+    }
+    const variantModifier = sortModifiers(modifiers).join(":");
+    const modifierId = hasImportantModifier ? variantModifier + IMPORTANT_MODIFIER : variantModifier;
+    const classId = modifierId + classGroupId;
+    if (classGroupsInConflict.includes(classId)) {
+      continue;
+    }
+    classGroupsInConflict.push(classId);
+    const conflictGroups = getConflictingClassGroupIds(classGroupId, hasPostfixModifier);
+    for (let i = 0; i < conflictGroups.length; ++i) {
+      const group = conflictGroups[i];
+      classGroupsInConflict.push(modifierId + group);
+    }
+    result = originalClassName + (result.length > 0 ? " " + result : result);
+  }
+  return result;
+};
+function twJoin() {
+  let index2 = 0;
+  let argument;
+  let resolvedValue;
+  let string = "";
+  while (index2 < arguments.length) {
+    if (argument = arguments[index2++]) {
+      if (resolvedValue = toValue(argument)) {
+        string && (string += " ");
+        string += resolvedValue;
+      }
+    }
+  }
+  return string;
+}
+const toValue = (mix2) => {
+  if (typeof mix2 === "string") {
+    return mix2;
+  }
+  let resolvedValue;
+  let string = "";
+  for (let k = 0; k < mix2.length; k++) {
+    if (mix2[k]) {
+      if (resolvedValue = toValue(mix2[k])) {
+        string && (string += " ");
+        string += resolvedValue;
+      }
+    }
+  }
+  return string;
+};
+function createTailwindMerge(createConfigFirst, ...createConfigRest) {
+  let configUtils;
+  let cacheGet;
+  let cacheSet;
+  let functionToCall = initTailwindMerge;
+  function initTailwindMerge(classList) {
+    const config = createConfigRest.reduce((previousConfig, createConfigCurrent) => createConfigCurrent(previousConfig), createConfigFirst());
+    configUtils = createConfigUtils(config);
+    cacheGet = configUtils.cache.get;
+    cacheSet = configUtils.cache.set;
+    functionToCall = tailwindMerge;
+    return tailwindMerge(classList);
+  }
+  function tailwindMerge(classList) {
+    const cachedResult = cacheGet(classList);
+    if (cachedResult) {
+      return cachedResult;
+    }
+    const result = mergeClassList(classList, configUtils);
+    cacheSet(classList, result);
+    return result;
+  }
+  return function callTailwindMerge() {
+    return functionToCall(twJoin.apply(null, arguments));
+  };
+}
+const fromTheme = (key) => {
+  const themeGetter = (theme) => theme[key] || [];
+  themeGetter.isThemeGetter = true;
+  return themeGetter;
+};
+const arbitraryValueRegex = /^\[(?:([a-z-]+):)?(.+)\]$/i;
+const fractionRegex = /^\d+\/\d+$/;
+const stringLengths = /* @__PURE__ */ new Set(["px", "full", "screen"]);
+const tshirtUnitRegex = /^(\d+(\.\d+)?)?(xs|sm|md|lg|xl)$/;
+const lengthUnitRegex = /\d+(%|px|r?em|[sdl]?v([hwib]|min|max)|pt|pc|in|cm|mm|cap|ch|ex|r?lh|cq(w|h|i|b|min|max))|\b(calc|min|max|clamp)\(.+\)|^0$/;
+const colorFunctionRegex = /^(rgba?|hsla?|hwb|(ok)?(lab|lch)|color-mix)\(.+\)$/;
+const shadowRegex = /^(inset_)?-?((\d+)?\.?(\d+)[a-z]+|0)_-?((\d+)?\.?(\d+)[a-z]+|0)/;
+const imageRegex = /^(url|image|image-set|cross-fade|element|(repeating-)?(linear|radial|conic)-gradient)\(.+\)$/;
+const isLength = (value) => isNumber(value) || stringLengths.has(value) || fractionRegex.test(value);
+const isArbitraryLength = (value) => getIsArbitraryValue(value, "length", isLengthOnly);
+const isNumber = (value) => Boolean(value) && !Number.isNaN(Number(value));
+const isArbitraryNumber = (value) => getIsArbitraryValue(value, "number", isNumber);
+const isInteger = (value) => Boolean(value) && Number.isInteger(Number(value));
+const isPercent = (value) => value.endsWith("%") && isNumber(value.slice(0, -1));
+const isArbitraryValue = (value) => arbitraryValueRegex.test(value);
+const isTshirtSize = (value) => tshirtUnitRegex.test(value);
+const sizeLabels = /* @__PURE__ */ new Set(["length", "size", "percentage"]);
+const isArbitrarySize = (value) => getIsArbitraryValue(value, sizeLabels, isNever);
+const isArbitraryPosition = (value) => getIsArbitraryValue(value, "position", isNever);
+const imageLabels = /* @__PURE__ */ new Set(["image", "url"]);
+const isArbitraryImage = (value) => getIsArbitraryValue(value, imageLabels, isImage);
+const isArbitraryShadow = (value) => getIsArbitraryValue(value, "", isShadow);
+const isAny = () => true;
+const getIsArbitraryValue = (value, label, testValue) => {
+  const result = arbitraryValueRegex.exec(value);
+  if (result) {
+    if (result[1]) {
+      return typeof label === "string" ? result[1] === label : label.has(result[1]);
+    }
+    return testValue(result[2]);
+  }
+  return false;
+};
+const isLengthOnly = (value) => (
+  // `colorFunctionRegex` check is necessary because color functions can have percentages in them which which would be incorrectly classified as lengths.
+  // For example, `hsl(0 0% 0%)` would be classified as a length without this check.
+  // I could also use lookbehind assertion in `lengthUnitRegex` but that isn't supported widely enough.
+  lengthUnitRegex.test(value) && !colorFunctionRegex.test(value)
+);
+const isNever = () => false;
+const isShadow = (value) => shadowRegex.test(value);
+const isImage = (value) => imageRegex.test(value);
+const getDefaultConfig = () => {
+  const colors = fromTheme("colors");
+  const spacing = fromTheme("spacing");
+  const blur = fromTheme("blur");
+  const brightness = fromTheme("brightness");
+  const borderColor = fromTheme("borderColor");
+  const borderRadius = fromTheme("borderRadius");
+  const borderSpacing = fromTheme("borderSpacing");
+  const borderWidth = fromTheme("borderWidth");
+  const contrast = fromTheme("contrast");
+  const grayscale = fromTheme("grayscale");
+  const hueRotate = fromTheme("hueRotate");
+  const invert = fromTheme("invert");
+  const gap = fromTheme("gap");
+  const gradientColorStops = fromTheme("gradientColorStops");
+  const gradientColorStopPositions = fromTheme("gradientColorStopPositions");
+  const inset = fromTheme("inset");
+  const margin = fromTheme("margin");
+  const opacity = fromTheme("opacity");
+  const padding = fromTheme("padding");
+  const saturate = fromTheme("saturate");
+  const scale2 = fromTheme("scale");
+  const sepia = fromTheme("sepia");
+  const skew = fromTheme("skew");
+  const space = fromTheme("space");
+  const translate = fromTheme("translate");
+  const getOverscroll = () => ["auto", "contain", "none"];
+  const getOverflow = () => ["auto", "hidden", "clip", "visible", "scroll"];
+  const getSpacingWithAutoAndArbitrary = () => ["auto", isArbitraryValue, spacing];
+  const getSpacingWithArbitrary = () => [isArbitraryValue, spacing];
+  const getLengthWithEmptyAndArbitrary = () => ["", isLength, isArbitraryLength];
+  const getNumberWithAutoAndArbitrary = () => ["auto", isNumber, isArbitraryValue];
+  const getPositions = () => ["bottom", "center", "left", "left-bottom", "left-top", "right", "right-bottom", "right-top", "top"];
+  const getLineStyles = () => ["solid", "dashed", "dotted", "double", "none"];
+  const getBlendModes = () => ["normal", "multiply", "screen", "overlay", "darken", "lighten", "color-dodge", "color-burn", "hard-light", "soft-light", "difference", "exclusion", "hue", "saturation", "color", "luminosity"];
+  const getAlign = () => ["start", "end", "center", "between", "around", "evenly", "stretch"];
+  const getZeroAndEmpty = () => ["", "0", isArbitraryValue];
+  const getBreaks = () => ["auto", "avoid", "all", "avoid-page", "page", "left", "right", "column"];
+  const getNumberAndArbitrary = () => [isNumber, isArbitraryValue];
+  return {
+    cacheSize: 500,
+    separator: ":",
+    theme: {
+      colors: [isAny],
+      spacing: [isLength, isArbitraryLength],
+      blur: ["none", "", isTshirtSize, isArbitraryValue],
+      brightness: getNumberAndArbitrary(),
+      borderColor: [colors],
+      borderRadius: ["none", "", "full", isTshirtSize, isArbitraryValue],
+      borderSpacing: getSpacingWithArbitrary(),
+      borderWidth: getLengthWithEmptyAndArbitrary(),
+      contrast: getNumberAndArbitrary(),
+      grayscale: getZeroAndEmpty(),
+      hueRotate: getNumberAndArbitrary(),
+      invert: getZeroAndEmpty(),
+      gap: getSpacingWithArbitrary(),
+      gradientColorStops: [colors],
+      gradientColorStopPositions: [isPercent, isArbitraryLength],
+      inset: getSpacingWithAutoAndArbitrary(),
+      margin: getSpacingWithAutoAndArbitrary(),
+      opacity: getNumberAndArbitrary(),
+      padding: getSpacingWithArbitrary(),
+      saturate: getNumberAndArbitrary(),
+      scale: getNumberAndArbitrary(),
+      sepia: getZeroAndEmpty(),
+      skew: getNumberAndArbitrary(),
+      space: getSpacingWithArbitrary(),
+      translate: getSpacingWithArbitrary()
+    },
+    classGroups: {
+      // Layout
+      /**
+       * Aspect Ratio
+       * @see https://tailwindcss.com/docs/aspect-ratio
+       */
+      aspect: [{
+        aspect: ["auto", "square", "video", isArbitraryValue]
+      }],
+      /**
+       * Container
+       * @see https://tailwindcss.com/docs/container
+       */
+      container: ["container"],
+      /**
+       * Columns
+       * @see https://tailwindcss.com/docs/columns
+       */
+      columns: [{
+        columns: [isTshirtSize]
+      }],
+      /**
+       * Break After
+       * @see https://tailwindcss.com/docs/break-after
+       */
+      "break-after": [{
+        "break-after": getBreaks()
+      }],
+      /**
+       * Break Before
+       * @see https://tailwindcss.com/docs/break-before
+       */
+      "break-before": [{
+        "break-before": getBreaks()
+      }],
+      /**
+       * Break Inside
+       * @see https://tailwindcss.com/docs/break-inside
+       */
+      "break-inside": [{
+        "break-inside": ["auto", "avoid", "avoid-page", "avoid-column"]
+      }],
+      /**
+       * Box Decoration Break
+       * @see https://tailwindcss.com/docs/box-decoration-break
+       */
+      "box-decoration": [{
+        "box-decoration": ["slice", "clone"]
+      }],
+      /**
+       * Box Sizing
+       * @see https://tailwindcss.com/docs/box-sizing
+       */
+      box: [{
+        box: ["border", "content"]
+      }],
+      /**
+       * Display
+       * @see https://tailwindcss.com/docs/display
+       */
+      display: ["block", "inline-block", "inline", "flex", "inline-flex", "table", "inline-table", "table-caption", "table-cell", "table-column", "table-column-group", "table-footer-group", "table-header-group", "table-row-group", "table-row", "flow-root", "grid", "inline-grid", "contents", "list-item", "hidden"],
+      /**
+       * Floats
+       * @see https://tailwindcss.com/docs/float
+       */
+      float: [{
+        float: ["right", "left", "none", "start", "end"]
+      }],
+      /**
+       * Clear
+       * @see https://tailwindcss.com/docs/clear
+       */
+      clear: [{
+        clear: ["left", "right", "both", "none", "start", "end"]
+      }],
+      /**
+       * Isolation
+       * @see https://tailwindcss.com/docs/isolation
+       */
+      isolation: ["isolate", "isolation-auto"],
+      /**
+       * Object Fit
+       * @see https://tailwindcss.com/docs/object-fit
+       */
+      "object-fit": [{
+        object: ["contain", "cover", "fill", "none", "scale-down"]
+      }],
+      /**
+       * Object Position
+       * @see https://tailwindcss.com/docs/object-position
+       */
+      "object-position": [{
+        object: [...getPositions(), isArbitraryValue]
+      }],
+      /**
+       * Overflow
+       * @see https://tailwindcss.com/docs/overflow
+       */
+      overflow: [{
+        overflow: getOverflow()
+      }],
+      /**
+       * Overflow X
+       * @see https://tailwindcss.com/docs/overflow
+       */
+      "overflow-x": [{
+        "overflow-x": getOverflow()
+      }],
+      /**
+       * Overflow Y
+       * @see https://tailwindcss.com/docs/overflow
+       */
+      "overflow-y": [{
+        "overflow-y": getOverflow()
+      }],
+      /**
+       * Overscroll Behavior
+       * @see https://tailwindcss.com/docs/overscroll-behavior
+       */
+      overscroll: [{
+        overscroll: getOverscroll()
+      }],
+      /**
+       * Overscroll Behavior X
+       * @see https://tailwindcss.com/docs/overscroll-behavior
+       */
+      "overscroll-x": [{
+        "overscroll-x": getOverscroll()
+      }],
+      /**
+       * Overscroll Behavior Y
+       * @see https://tailwindcss.com/docs/overscroll-behavior
+       */
+      "overscroll-y": [{
+        "overscroll-y": getOverscroll()
+      }],
+      /**
+       * Position
+       * @see https://tailwindcss.com/docs/position
+       */
+      position: ["static", "fixed", "absolute", "relative", "sticky"],
+      /**
+       * Top / Right / Bottom / Left
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      inset: [{
+        inset: [inset]
+      }],
+      /**
+       * Right / Left
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      "inset-x": [{
+        "inset-x": [inset]
+      }],
+      /**
+       * Top / Bottom
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      "inset-y": [{
+        "inset-y": [inset]
+      }],
+      /**
+       * Start
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      start: [{
+        start: [inset]
+      }],
+      /**
+       * End
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      end: [{
+        end: [inset]
+      }],
+      /**
+       * Top
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      top: [{
+        top: [inset]
+      }],
+      /**
+       * Right
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      right: [{
+        right: [inset]
+      }],
+      /**
+       * Bottom
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      bottom: [{
+        bottom: [inset]
+      }],
+      /**
+       * Left
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      left: [{
+        left: [inset]
+      }],
+      /**
+       * Visibility
+       * @see https://tailwindcss.com/docs/visibility
+       */
+      visibility: ["visible", "invisible", "collapse"],
+      /**
+       * Z-Index
+       * @see https://tailwindcss.com/docs/z-index
+       */
+      z: [{
+        z: ["auto", isInteger, isArbitraryValue]
+      }],
+      // Flexbox and Grid
+      /**
+       * Flex Basis
+       * @see https://tailwindcss.com/docs/flex-basis
+       */
+      basis: [{
+        basis: getSpacingWithAutoAndArbitrary()
+      }],
+      /**
+       * Flex Direction
+       * @see https://tailwindcss.com/docs/flex-direction
+       */
+      "flex-direction": [{
+        flex: ["row", "row-reverse", "col", "col-reverse"]
+      }],
+      /**
+       * Flex Wrap
+       * @see https://tailwindcss.com/docs/flex-wrap
+       */
+      "flex-wrap": [{
+        flex: ["wrap", "wrap-reverse", "nowrap"]
+      }],
+      /**
+       * Flex
+       * @see https://tailwindcss.com/docs/flex
+       */
+      flex: [{
+        flex: ["1", "auto", "initial", "none", isArbitraryValue]
+      }],
+      /**
+       * Flex Grow
+       * @see https://tailwindcss.com/docs/flex-grow
+       */
+      grow: [{
+        grow: getZeroAndEmpty()
+      }],
+      /**
+       * Flex Shrink
+       * @see https://tailwindcss.com/docs/flex-shrink
+       */
+      shrink: [{
+        shrink: getZeroAndEmpty()
+      }],
+      /**
+       * Order
+       * @see https://tailwindcss.com/docs/order
+       */
+      order: [{
+        order: ["first", "last", "none", isInteger, isArbitraryValue]
+      }],
+      /**
+       * Grid Template Columns
+       * @see https://tailwindcss.com/docs/grid-template-columns
+       */
+      "grid-cols": [{
+        "grid-cols": [isAny]
+      }],
+      /**
+       * Grid Column Start / End
+       * @see https://tailwindcss.com/docs/grid-column
+       */
+      "col-start-end": [{
+        col: ["auto", {
+          span: ["full", isInteger, isArbitraryValue]
+        }, isArbitraryValue]
+      }],
+      /**
+       * Grid Column Start
+       * @see https://tailwindcss.com/docs/grid-column
+       */
+      "col-start": [{
+        "col-start": getNumberWithAutoAndArbitrary()
+      }],
+      /**
+       * Grid Column End
+       * @see https://tailwindcss.com/docs/grid-column
+       */
+      "col-end": [{
+        "col-end": getNumberWithAutoAndArbitrary()
+      }],
+      /**
+       * Grid Template Rows
+       * @see https://tailwindcss.com/docs/grid-template-rows
+       */
+      "grid-rows": [{
+        "grid-rows": [isAny]
+      }],
+      /**
+       * Grid Row Start / End
+       * @see https://tailwindcss.com/docs/grid-row
+       */
+      "row-start-end": [{
+        row: ["auto", {
+          span: [isInteger, isArbitraryValue]
+        }, isArbitraryValue]
+      }],
+      /**
+       * Grid Row Start
+       * @see https://tailwindcss.com/docs/grid-row
+       */
+      "row-start": [{
+        "row-start": getNumberWithAutoAndArbitrary()
+      }],
+      /**
+       * Grid Row End
+       * @see https://tailwindcss.com/docs/grid-row
+       */
+      "row-end": [{
+        "row-end": getNumberWithAutoAndArbitrary()
+      }],
+      /**
+       * Grid Auto Flow
+       * @see https://tailwindcss.com/docs/grid-auto-flow
+       */
+      "grid-flow": [{
+        "grid-flow": ["row", "col", "dense", "row-dense", "col-dense"]
+      }],
+      /**
+       * Grid Auto Columns
+       * @see https://tailwindcss.com/docs/grid-auto-columns
+       */
+      "auto-cols": [{
+        "auto-cols": ["auto", "min", "max", "fr", isArbitraryValue]
+      }],
+      /**
+       * Grid Auto Rows
+       * @see https://tailwindcss.com/docs/grid-auto-rows
+       */
+      "auto-rows": [{
+        "auto-rows": ["auto", "min", "max", "fr", isArbitraryValue]
+      }],
+      /**
+       * Gap
+       * @see https://tailwindcss.com/docs/gap
+       */
+      gap: [{
+        gap: [gap]
+      }],
+      /**
+       * Gap X
+       * @see https://tailwindcss.com/docs/gap
+       */
+      "gap-x": [{
+        "gap-x": [gap]
+      }],
+      /**
+       * Gap Y
+       * @see https://tailwindcss.com/docs/gap
+       */
+      "gap-y": [{
+        "gap-y": [gap]
+      }],
+      /**
+       * Justify Content
+       * @see https://tailwindcss.com/docs/justify-content
+       */
+      "justify-content": [{
+        justify: ["normal", ...getAlign()]
+      }],
+      /**
+       * Justify Items
+       * @see https://tailwindcss.com/docs/justify-items
+       */
+      "justify-items": [{
+        "justify-items": ["start", "end", "center", "stretch"]
+      }],
+      /**
+       * Justify Self
+       * @see https://tailwindcss.com/docs/justify-self
+       */
+      "justify-self": [{
+        "justify-self": ["auto", "start", "end", "center", "stretch"]
+      }],
+      /**
+       * Align Content
+       * @see https://tailwindcss.com/docs/align-content
+       */
+      "align-content": [{
+        content: ["normal", ...getAlign(), "baseline"]
+      }],
+      /**
+       * Align Items
+       * @see https://tailwindcss.com/docs/align-items
+       */
+      "align-items": [{
+        items: ["start", "end", "center", "baseline", "stretch"]
+      }],
+      /**
+       * Align Self
+       * @see https://tailwindcss.com/docs/align-self
+       */
+      "align-self": [{
+        self: ["auto", "start", "end", "center", "stretch", "baseline"]
+      }],
+      /**
+       * Place Content
+       * @see https://tailwindcss.com/docs/place-content
+       */
+      "place-content": [{
+        "place-content": [...getAlign(), "baseline"]
+      }],
+      /**
+       * Place Items
+       * @see https://tailwindcss.com/docs/place-items
+       */
+      "place-items": [{
+        "place-items": ["start", "end", "center", "baseline", "stretch"]
+      }],
+      /**
+       * Place Self
+       * @see https://tailwindcss.com/docs/place-self
+       */
+      "place-self": [{
+        "place-self": ["auto", "start", "end", "center", "stretch"]
+      }],
+      // Spacing
+      /**
+       * Padding
+       * @see https://tailwindcss.com/docs/padding
+       */
+      p: [{
+        p: [padding]
+      }],
+      /**
+       * Padding X
+       * @see https://tailwindcss.com/docs/padding
+       */
+      px: [{
+        px: [padding]
+      }],
+      /**
+       * Padding Y
+       * @see https://tailwindcss.com/docs/padding
+       */
+      py: [{
+        py: [padding]
+      }],
+      /**
+       * Padding Start
+       * @see https://tailwindcss.com/docs/padding
+       */
+      ps: [{
+        ps: [padding]
+      }],
+      /**
+       * Padding End
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pe: [{
+        pe: [padding]
+      }],
+      /**
+       * Padding Top
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pt: [{
+        pt: [padding]
+      }],
+      /**
+       * Padding Right
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pr: [{
+        pr: [padding]
+      }],
+      /**
+       * Padding Bottom
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pb: [{
+        pb: [padding]
+      }],
+      /**
+       * Padding Left
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pl: [{
+        pl: [padding]
+      }],
+      /**
+       * Margin
+       * @see https://tailwindcss.com/docs/margin
+       */
+      m: [{
+        m: [margin]
+      }],
+      /**
+       * Margin X
+       * @see https://tailwindcss.com/docs/margin
+       */
+      mx: [{
+        mx: [margin]
+      }],
+      /**
+       * Margin Y
+       * @see https://tailwindcss.com/docs/margin
+       */
+      my: [{
+        my: [margin]
+      }],
+      /**
+       * Margin Start
+       * @see https://tailwindcss.com/docs/margin
+       */
+      ms: [{
+        ms: [margin]
+      }],
+      /**
+       * Margin End
+       * @see https://tailwindcss.com/docs/margin
+       */
+      me: [{
+        me: [margin]
+      }],
+      /**
+       * Margin Top
+       * @see https://tailwindcss.com/docs/margin
+       */
+      mt: [{
+        mt: [margin]
+      }],
+      /**
+       * Margin Right
+       * @see https://tailwindcss.com/docs/margin
+       */
+      mr: [{
+        mr: [margin]
+      }],
+      /**
+       * Margin Bottom
+       * @see https://tailwindcss.com/docs/margin
+       */
+      mb: [{
+        mb: [margin]
+      }],
+      /**
+       * Margin Left
+       * @see https://tailwindcss.com/docs/margin
+       */
+      ml: [{
+        ml: [margin]
+      }],
+      /**
+       * Space Between X
+       * @see https://tailwindcss.com/docs/space
+       */
+      "space-x": [{
+        "space-x": [space]
+      }],
+      /**
+       * Space Between X Reverse
+       * @see https://tailwindcss.com/docs/space
+       */
+      "space-x-reverse": ["space-x-reverse"],
+      /**
+       * Space Between Y
+       * @see https://tailwindcss.com/docs/space
+       */
+      "space-y": [{
+        "space-y": [space]
+      }],
+      /**
+       * Space Between Y Reverse
+       * @see https://tailwindcss.com/docs/space
+       */
+      "space-y-reverse": ["space-y-reverse"],
+      // Sizing
+      /**
+       * Width
+       * @see https://tailwindcss.com/docs/width
+       */
+      w: [{
+        w: ["auto", "min", "max", "fit", "svw", "lvw", "dvw", isArbitraryValue, spacing]
+      }],
+      /**
+       * Min-Width
+       * @see https://tailwindcss.com/docs/min-width
+       */
+      "min-w": [{
+        "min-w": [isArbitraryValue, spacing, "min", "max", "fit"]
+      }],
+      /**
+       * Max-Width
+       * @see https://tailwindcss.com/docs/max-width
+       */
+      "max-w": [{
+        "max-w": [isArbitraryValue, spacing, "none", "full", "min", "max", "fit", "prose", {
+          screen: [isTshirtSize]
+        }, isTshirtSize]
+      }],
+      /**
+       * Height
+       * @see https://tailwindcss.com/docs/height
+       */
+      h: [{
+        h: [isArbitraryValue, spacing, "auto", "min", "max", "fit", "svh", "lvh", "dvh"]
+      }],
+      /**
+       * Min-Height
+       * @see https://tailwindcss.com/docs/min-height
+       */
+      "min-h": [{
+        "min-h": [isArbitraryValue, spacing, "min", "max", "fit", "svh", "lvh", "dvh"]
+      }],
+      /**
+       * Max-Height
+       * @see https://tailwindcss.com/docs/max-height
+       */
+      "max-h": [{
+        "max-h": [isArbitraryValue, spacing, "min", "max", "fit", "svh", "lvh", "dvh"]
+      }],
+      /**
+       * Size
+       * @see https://tailwindcss.com/docs/size
+       */
+      size: [{
+        size: [isArbitraryValue, spacing, "auto", "min", "max", "fit"]
+      }],
+      // Typography
+      /**
+       * Font Size
+       * @see https://tailwindcss.com/docs/font-size
+       */
+      "font-size": [{
+        text: ["base", isTshirtSize, isArbitraryLength]
+      }],
+      /**
+       * Font Smoothing
+       * @see https://tailwindcss.com/docs/font-smoothing
+       */
+      "font-smoothing": ["antialiased", "subpixel-antialiased"],
+      /**
+       * Font Style
+       * @see https://tailwindcss.com/docs/font-style
+       */
+      "font-style": ["italic", "not-italic"],
+      /**
+       * Font Weight
+       * @see https://tailwindcss.com/docs/font-weight
+       */
+      "font-weight": [{
+        font: ["thin", "extralight", "light", "normal", "medium", "semibold", "bold", "extrabold", "black", isArbitraryNumber]
+      }],
+      /**
+       * Font Family
+       * @see https://tailwindcss.com/docs/font-family
+       */
+      "font-family": [{
+        font: [isAny]
+      }],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-normal": ["normal-nums"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-ordinal": ["ordinal"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-slashed-zero": ["slashed-zero"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-figure": ["lining-nums", "oldstyle-nums"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-spacing": ["proportional-nums", "tabular-nums"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-fraction": ["diagonal-fractions", "stacked-fractions"],
+      /**
+       * Letter Spacing
+       * @see https://tailwindcss.com/docs/letter-spacing
+       */
+      tracking: [{
+        tracking: ["tighter", "tight", "normal", "wide", "wider", "widest", isArbitraryValue]
+      }],
+      /**
+       * Line Clamp
+       * @see https://tailwindcss.com/docs/line-clamp
+       */
+      "line-clamp": [{
+        "line-clamp": ["none", isNumber, isArbitraryNumber]
+      }],
+      /**
+       * Line Height
+       * @see https://tailwindcss.com/docs/line-height
+       */
+      leading: [{
+        leading: ["none", "tight", "snug", "normal", "relaxed", "loose", isLength, isArbitraryValue]
+      }],
+      /**
+       * List Style Image
+       * @see https://tailwindcss.com/docs/list-style-image
+       */
+      "list-image": [{
+        "list-image": ["none", isArbitraryValue]
+      }],
+      /**
+       * List Style Type
+       * @see https://tailwindcss.com/docs/list-style-type
+       */
+      "list-style-type": [{
+        list: ["none", "disc", "decimal", isArbitraryValue]
+      }],
+      /**
+       * List Style Position
+       * @see https://tailwindcss.com/docs/list-style-position
+       */
+      "list-style-position": [{
+        list: ["inside", "outside"]
+      }],
+      /**
+       * Placeholder Color
+       * @deprecated since Tailwind CSS v3.0.0
+       * @see https://tailwindcss.com/docs/placeholder-color
+       */
+      "placeholder-color": [{
+        placeholder: [colors]
+      }],
+      /**
+       * Placeholder Opacity
+       * @see https://tailwindcss.com/docs/placeholder-opacity
+       */
+      "placeholder-opacity": [{
+        "placeholder-opacity": [opacity]
+      }],
+      /**
+       * Text Alignment
+       * @see https://tailwindcss.com/docs/text-align
+       */
+      "text-alignment": [{
+        text: ["left", "center", "right", "justify", "start", "end"]
+      }],
+      /**
+       * Text Color
+       * @see https://tailwindcss.com/docs/text-color
+       */
+      "text-color": [{
+        text: [colors]
+      }],
+      /**
+       * Text Opacity
+       * @see https://tailwindcss.com/docs/text-opacity
+       */
+      "text-opacity": [{
+        "text-opacity": [opacity]
+      }],
+      /**
+       * Text Decoration
+       * @see https://tailwindcss.com/docs/text-decoration
+       */
+      "text-decoration": ["underline", "overline", "line-through", "no-underline"],
+      /**
+       * Text Decoration Style
+       * @see https://tailwindcss.com/docs/text-decoration-style
+       */
+      "text-decoration-style": [{
+        decoration: [...getLineStyles(), "wavy"]
+      }],
+      /**
+       * Text Decoration Thickness
+       * @see https://tailwindcss.com/docs/text-decoration-thickness
+       */
+      "text-decoration-thickness": [{
+        decoration: ["auto", "from-font", isLength, isArbitraryLength]
+      }],
+      /**
+       * Text Underline Offset
+       * @see https://tailwindcss.com/docs/text-underline-offset
+       */
+      "underline-offset": [{
+        "underline-offset": ["auto", isLength, isArbitraryValue]
+      }],
+      /**
+       * Text Decoration Color
+       * @see https://tailwindcss.com/docs/text-decoration-color
+       */
+      "text-decoration-color": [{
+        decoration: [colors]
+      }],
+      /**
+       * Text Transform
+       * @see https://tailwindcss.com/docs/text-transform
+       */
+      "text-transform": ["uppercase", "lowercase", "capitalize", "normal-case"],
+      /**
+       * Text Overflow
+       * @see https://tailwindcss.com/docs/text-overflow
+       */
+      "text-overflow": ["truncate", "text-ellipsis", "text-clip"],
+      /**
+       * Text Wrap
+       * @see https://tailwindcss.com/docs/text-wrap
+       */
+      "text-wrap": [{
+        text: ["wrap", "nowrap", "balance", "pretty"]
+      }],
+      /**
+       * Text Indent
+       * @see https://tailwindcss.com/docs/text-indent
+       */
+      indent: [{
+        indent: getSpacingWithArbitrary()
+      }],
+      /**
+       * Vertical Alignment
+       * @see https://tailwindcss.com/docs/vertical-align
+       */
+      "vertical-align": [{
+        align: ["baseline", "top", "middle", "bottom", "text-top", "text-bottom", "sub", "super", isArbitraryValue]
+      }],
+      /**
+       * Whitespace
+       * @see https://tailwindcss.com/docs/whitespace
+       */
+      whitespace: [{
+        whitespace: ["normal", "nowrap", "pre", "pre-line", "pre-wrap", "break-spaces"]
+      }],
+      /**
+       * Word Break
+       * @see https://tailwindcss.com/docs/word-break
+       */
+      break: [{
+        break: ["normal", "words", "all", "keep"]
+      }],
+      /**
+       * Hyphens
+       * @see https://tailwindcss.com/docs/hyphens
+       */
+      hyphens: [{
+        hyphens: ["none", "manual", "auto"]
+      }],
+      /**
+       * Content
+       * @see https://tailwindcss.com/docs/content
+       */
+      content: [{
+        content: ["none", isArbitraryValue]
+      }],
+      // Backgrounds
+      /**
+       * Background Attachment
+       * @see https://tailwindcss.com/docs/background-attachment
+       */
+      "bg-attachment": [{
+        bg: ["fixed", "local", "scroll"]
+      }],
+      /**
+       * Background Clip
+       * @see https://tailwindcss.com/docs/background-clip
+       */
+      "bg-clip": [{
+        "bg-clip": ["border", "padding", "content", "text"]
+      }],
+      /**
+       * Background Opacity
+       * @deprecated since Tailwind CSS v3.0.0
+       * @see https://tailwindcss.com/docs/background-opacity
+       */
+      "bg-opacity": [{
+        "bg-opacity": [opacity]
+      }],
+      /**
+       * Background Origin
+       * @see https://tailwindcss.com/docs/background-origin
+       */
+      "bg-origin": [{
+        "bg-origin": ["border", "padding", "content"]
+      }],
+      /**
+       * Background Position
+       * @see https://tailwindcss.com/docs/background-position
+       */
+      "bg-position": [{
+        bg: [...getPositions(), isArbitraryPosition]
+      }],
+      /**
+       * Background Repeat
+       * @see https://tailwindcss.com/docs/background-repeat
+       */
+      "bg-repeat": [{
+        bg: ["no-repeat", {
+          repeat: ["", "x", "y", "round", "space"]
+        }]
+      }],
+      /**
+       * Background Size
+       * @see https://tailwindcss.com/docs/background-size
+       */
+      "bg-size": [{
+        bg: ["auto", "cover", "contain", isArbitrarySize]
+      }],
+      /**
+       * Background Image
+       * @see https://tailwindcss.com/docs/background-image
+       */
+      "bg-image": [{
+        bg: ["none", {
+          "gradient-to": ["t", "tr", "r", "br", "b", "bl", "l", "tl"]
+        }, isArbitraryImage]
+      }],
+      /**
+       * Background Color
+       * @see https://tailwindcss.com/docs/background-color
+       */
+      "bg-color": [{
+        bg: [colors]
+      }],
+      /**
+       * Gradient Color Stops From Position
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-from-pos": [{
+        from: [gradientColorStopPositions]
+      }],
+      /**
+       * Gradient Color Stops Via Position
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-via-pos": [{
+        via: [gradientColorStopPositions]
+      }],
+      /**
+       * Gradient Color Stops To Position
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-to-pos": [{
+        to: [gradientColorStopPositions]
+      }],
+      /**
+       * Gradient Color Stops From
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-from": [{
+        from: [gradientColorStops]
+      }],
+      /**
+       * Gradient Color Stops Via
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-via": [{
+        via: [gradientColorStops]
+      }],
+      /**
+       * Gradient Color Stops To
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-to": [{
+        to: [gradientColorStops]
+      }],
+      // Borders
+      /**
+       * Border Radius
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      rounded: [{
+        rounded: [borderRadius]
+      }],
+      /**
+       * Border Radius Start
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-s": [{
+        "rounded-s": [borderRadius]
+      }],
+      /**
+       * Border Radius End
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-e": [{
+        "rounded-e": [borderRadius]
+      }],
+      /**
+       * Border Radius Top
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-t": [{
+        "rounded-t": [borderRadius]
+      }],
+      /**
+       * Border Radius Right
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-r": [{
+        "rounded-r": [borderRadius]
+      }],
+      /**
+       * Border Radius Bottom
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-b": [{
+        "rounded-b": [borderRadius]
+      }],
+      /**
+       * Border Radius Left
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-l": [{
+        "rounded-l": [borderRadius]
+      }],
+      /**
+       * Border Radius Start Start
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-ss": [{
+        "rounded-ss": [borderRadius]
+      }],
+      /**
+       * Border Radius Start End
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-se": [{
+        "rounded-se": [borderRadius]
+      }],
+      /**
+       * Border Radius End End
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-ee": [{
+        "rounded-ee": [borderRadius]
+      }],
+      /**
+       * Border Radius End Start
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-es": [{
+        "rounded-es": [borderRadius]
+      }],
+      /**
+       * Border Radius Top Left
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-tl": [{
+        "rounded-tl": [borderRadius]
+      }],
+      /**
+       * Border Radius Top Right
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-tr": [{
+        "rounded-tr": [borderRadius]
+      }],
+      /**
+       * Border Radius Bottom Right
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-br": [{
+        "rounded-br": [borderRadius]
+      }],
+      /**
+       * Border Radius Bottom Left
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-bl": [{
+        "rounded-bl": [borderRadius]
+      }],
+      /**
+       * Border Width
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w": [{
+        border: [borderWidth]
+      }],
+      /**
+       * Border Width X
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-x": [{
+        "border-x": [borderWidth]
+      }],
+      /**
+       * Border Width Y
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-y": [{
+        "border-y": [borderWidth]
+      }],
+      /**
+       * Border Width Start
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-s": [{
+        "border-s": [borderWidth]
+      }],
+      /**
+       * Border Width End
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-e": [{
+        "border-e": [borderWidth]
+      }],
+      /**
+       * Border Width Top
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-t": [{
+        "border-t": [borderWidth]
+      }],
+      /**
+       * Border Width Right
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-r": [{
+        "border-r": [borderWidth]
+      }],
+      /**
+       * Border Width Bottom
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-b": [{
+        "border-b": [borderWidth]
+      }],
+      /**
+       * Border Width Left
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-l": [{
+        "border-l": [borderWidth]
+      }],
+      /**
+       * Border Opacity
+       * @see https://tailwindcss.com/docs/border-opacity
+       */
+      "border-opacity": [{
+        "border-opacity": [opacity]
+      }],
+      /**
+       * Border Style
+       * @see https://tailwindcss.com/docs/border-style
+       */
+      "border-style": [{
+        border: [...getLineStyles(), "hidden"]
+      }],
+      /**
+       * Divide Width X
+       * @see https://tailwindcss.com/docs/divide-width
+       */
+      "divide-x": [{
+        "divide-x": [borderWidth]
+      }],
+      /**
+       * Divide Width X Reverse
+       * @see https://tailwindcss.com/docs/divide-width
+       */
+      "divide-x-reverse": ["divide-x-reverse"],
+      /**
+       * Divide Width Y
+       * @see https://tailwindcss.com/docs/divide-width
+       */
+      "divide-y": [{
+        "divide-y": [borderWidth]
+      }],
+      /**
+       * Divide Width Y Reverse
+       * @see https://tailwindcss.com/docs/divide-width
+       */
+      "divide-y-reverse": ["divide-y-reverse"],
+      /**
+       * Divide Opacity
+       * @see https://tailwindcss.com/docs/divide-opacity
+       */
+      "divide-opacity": [{
+        "divide-opacity": [opacity]
+      }],
+      /**
+       * Divide Style
+       * @see https://tailwindcss.com/docs/divide-style
+       */
+      "divide-style": [{
+        divide: getLineStyles()
+      }],
+      /**
+       * Border Color
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color": [{
+        border: [borderColor]
+      }],
+      /**
+       * Border Color X
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-x": [{
+        "border-x": [borderColor]
+      }],
+      /**
+       * Border Color Y
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-y": [{
+        "border-y": [borderColor]
+      }],
+      /**
+       * Border Color S
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-s": [{
+        "border-s": [borderColor]
+      }],
+      /**
+       * Border Color E
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-e": [{
+        "border-e": [borderColor]
+      }],
+      /**
+       * Border Color Top
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-t": [{
+        "border-t": [borderColor]
+      }],
+      /**
+       * Border Color Right
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-r": [{
+        "border-r": [borderColor]
+      }],
+      /**
+       * Border Color Bottom
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-b": [{
+        "border-b": [borderColor]
+      }],
+      /**
+       * Border Color Left
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-l": [{
+        "border-l": [borderColor]
+      }],
+      /**
+       * Divide Color
+       * @see https://tailwindcss.com/docs/divide-color
+       */
+      "divide-color": [{
+        divide: [borderColor]
+      }],
+      /**
+       * Outline Style
+       * @see https://tailwindcss.com/docs/outline-style
+       */
+      "outline-style": [{
+        outline: ["", ...getLineStyles()]
+      }],
+      /**
+       * Outline Offset
+       * @see https://tailwindcss.com/docs/outline-offset
+       */
+      "outline-offset": [{
+        "outline-offset": [isLength, isArbitraryValue]
+      }],
+      /**
+       * Outline Width
+       * @see https://tailwindcss.com/docs/outline-width
+       */
+      "outline-w": [{
+        outline: [isLength, isArbitraryLength]
+      }],
+      /**
+       * Outline Color
+       * @see https://tailwindcss.com/docs/outline-color
+       */
+      "outline-color": [{
+        outline: [colors]
+      }],
+      /**
+       * Ring Width
+       * @see https://tailwindcss.com/docs/ring-width
+       */
+      "ring-w": [{
+        ring: getLengthWithEmptyAndArbitrary()
+      }],
+      /**
+       * Ring Width Inset
+       * @see https://tailwindcss.com/docs/ring-width
+       */
+      "ring-w-inset": ["ring-inset"],
+      /**
+       * Ring Color
+       * @see https://tailwindcss.com/docs/ring-color
+       */
+      "ring-color": [{
+        ring: [colors]
+      }],
+      /**
+       * Ring Opacity
+       * @see https://tailwindcss.com/docs/ring-opacity
+       */
+      "ring-opacity": [{
+        "ring-opacity": [opacity]
+      }],
+      /**
+       * Ring Offset Width
+       * @see https://tailwindcss.com/docs/ring-offset-width
+       */
+      "ring-offset-w": [{
+        "ring-offset": [isLength, isArbitraryLength]
+      }],
+      /**
+       * Ring Offset Color
+       * @see https://tailwindcss.com/docs/ring-offset-color
+       */
+      "ring-offset-color": [{
+        "ring-offset": [colors]
+      }],
+      // Effects
+      /**
+       * Box Shadow
+       * @see https://tailwindcss.com/docs/box-shadow
+       */
+      shadow: [{
+        shadow: ["", "inner", "none", isTshirtSize, isArbitraryShadow]
+      }],
+      /**
+       * Box Shadow Color
+       * @see https://tailwindcss.com/docs/box-shadow-color
+       */
+      "shadow-color": [{
+        shadow: [isAny]
+      }],
+      /**
+       * Opacity
+       * @see https://tailwindcss.com/docs/opacity
+       */
+      opacity: [{
+        opacity: [opacity]
+      }],
+      /**
+       * Mix Blend Mode
+       * @see https://tailwindcss.com/docs/mix-blend-mode
+       */
+      "mix-blend": [{
+        "mix-blend": [...getBlendModes(), "plus-lighter", "plus-darker"]
+      }],
+      /**
+       * Background Blend Mode
+       * @see https://tailwindcss.com/docs/background-blend-mode
+       */
+      "bg-blend": [{
+        "bg-blend": getBlendModes()
+      }],
+      // Filters
+      /**
+       * Filter
+       * @deprecated since Tailwind CSS v3.0.0
+       * @see https://tailwindcss.com/docs/filter
+       */
+      filter: [{
+        filter: ["", "none"]
+      }],
+      /**
+       * Blur
+       * @see https://tailwindcss.com/docs/blur
+       */
+      blur: [{
+        blur: [blur]
+      }],
+      /**
+       * Brightness
+       * @see https://tailwindcss.com/docs/brightness
+       */
+      brightness: [{
+        brightness: [brightness]
+      }],
+      /**
+       * Contrast
+       * @see https://tailwindcss.com/docs/contrast
+       */
+      contrast: [{
+        contrast: [contrast]
+      }],
+      /**
+       * Drop Shadow
+       * @see https://tailwindcss.com/docs/drop-shadow
+       */
+      "drop-shadow": [{
+        "drop-shadow": ["", "none", isTshirtSize, isArbitraryValue]
+      }],
+      /**
+       * Grayscale
+       * @see https://tailwindcss.com/docs/grayscale
+       */
+      grayscale: [{
+        grayscale: [grayscale]
+      }],
+      /**
+       * Hue Rotate
+       * @see https://tailwindcss.com/docs/hue-rotate
+       */
+      "hue-rotate": [{
+        "hue-rotate": [hueRotate]
+      }],
+      /**
+       * Invert
+       * @see https://tailwindcss.com/docs/invert
+       */
+      invert: [{
+        invert: [invert]
+      }],
+      /**
+       * Saturate
+       * @see https://tailwindcss.com/docs/saturate
+       */
+      saturate: [{
+        saturate: [saturate]
+      }],
+      /**
+       * Sepia
+       * @see https://tailwindcss.com/docs/sepia
+       */
+      sepia: [{
+        sepia: [sepia]
+      }],
+      /**
+       * Backdrop Filter
+       * @deprecated since Tailwind CSS v3.0.0
+       * @see https://tailwindcss.com/docs/backdrop-filter
+       */
+      "backdrop-filter": [{
+        "backdrop-filter": ["", "none"]
+      }],
+      /**
+       * Backdrop Blur
+       * @see https://tailwindcss.com/docs/backdrop-blur
+       */
+      "backdrop-blur": [{
+        "backdrop-blur": [blur]
+      }],
+      /**
+       * Backdrop Brightness
+       * @see https://tailwindcss.com/docs/backdrop-brightness
+       */
+      "backdrop-brightness": [{
+        "backdrop-brightness": [brightness]
+      }],
+      /**
+       * Backdrop Contrast
+       * @see https://tailwindcss.com/docs/backdrop-contrast
+       */
+      "backdrop-contrast": [{
+        "backdrop-contrast": [contrast]
+      }],
+      /**
+       * Backdrop Grayscale
+       * @see https://tailwindcss.com/docs/backdrop-grayscale
+       */
+      "backdrop-grayscale": [{
+        "backdrop-grayscale": [grayscale]
+      }],
+      /**
+       * Backdrop Hue Rotate
+       * @see https://tailwindcss.com/docs/backdrop-hue-rotate
+       */
+      "backdrop-hue-rotate": [{
+        "backdrop-hue-rotate": [hueRotate]
+      }],
+      /**
+       * Backdrop Invert
+       * @see https://tailwindcss.com/docs/backdrop-invert
+       */
+      "backdrop-invert": [{
+        "backdrop-invert": [invert]
+      }],
+      /**
+       * Backdrop Opacity
+       * @see https://tailwindcss.com/docs/backdrop-opacity
+       */
+      "backdrop-opacity": [{
+        "backdrop-opacity": [opacity]
+      }],
+      /**
+       * Backdrop Saturate
+       * @see https://tailwindcss.com/docs/backdrop-saturate
+       */
+      "backdrop-saturate": [{
+        "backdrop-saturate": [saturate]
+      }],
+      /**
+       * Backdrop Sepia
+       * @see https://tailwindcss.com/docs/backdrop-sepia
+       */
+      "backdrop-sepia": [{
+        "backdrop-sepia": [sepia]
+      }],
+      // Tables
+      /**
+       * Border Collapse
+       * @see https://tailwindcss.com/docs/border-collapse
+       */
+      "border-collapse": [{
+        border: ["collapse", "separate"]
+      }],
+      /**
+       * Border Spacing
+       * @see https://tailwindcss.com/docs/border-spacing
+       */
+      "border-spacing": [{
+        "border-spacing": [borderSpacing]
+      }],
+      /**
+       * Border Spacing X
+       * @see https://tailwindcss.com/docs/border-spacing
+       */
+      "border-spacing-x": [{
+        "border-spacing-x": [borderSpacing]
+      }],
+      /**
+       * Border Spacing Y
+       * @see https://tailwindcss.com/docs/border-spacing
+       */
+      "border-spacing-y": [{
+        "border-spacing-y": [borderSpacing]
+      }],
+      /**
+       * Table Layout
+       * @see https://tailwindcss.com/docs/table-layout
+       */
+      "table-layout": [{
+        table: ["auto", "fixed"]
+      }],
+      /**
+       * Caption Side
+       * @see https://tailwindcss.com/docs/caption-side
+       */
+      caption: [{
+        caption: ["top", "bottom"]
+      }],
+      // Transitions and Animation
+      /**
+       * Tranisition Property
+       * @see https://tailwindcss.com/docs/transition-property
+       */
+      transition: [{
+        transition: ["none", "all", "", "colors", "opacity", "shadow", "transform", isArbitraryValue]
+      }],
+      /**
+       * Transition Duration
+       * @see https://tailwindcss.com/docs/transition-duration
+       */
+      duration: [{
+        duration: getNumberAndArbitrary()
+      }],
+      /**
+       * Transition Timing Function
+       * @see https://tailwindcss.com/docs/transition-timing-function
+       */
+      ease: [{
+        ease: ["linear", "in", "out", "in-out", isArbitraryValue]
+      }],
+      /**
+       * Transition Delay
+       * @see https://tailwindcss.com/docs/transition-delay
+       */
+      delay: [{
+        delay: getNumberAndArbitrary()
+      }],
+      /**
+       * Animation
+       * @see https://tailwindcss.com/docs/animation
+       */
+      animate: [{
+        animate: ["none", "spin", "ping", "pulse", "bounce", isArbitraryValue]
+      }],
+      // Transforms
+      /**
+       * Transform
+       * @see https://tailwindcss.com/docs/transform
+       */
+      transform: [{
+        transform: ["", "gpu", "none"]
+      }],
+      /**
+       * Scale
+       * @see https://tailwindcss.com/docs/scale
+       */
+      scale: [{
+        scale: [scale2]
+      }],
+      /**
+       * Scale X
+       * @see https://tailwindcss.com/docs/scale
+       */
+      "scale-x": [{
+        "scale-x": [scale2]
+      }],
+      /**
+       * Scale Y
+       * @see https://tailwindcss.com/docs/scale
+       */
+      "scale-y": [{
+        "scale-y": [scale2]
+      }],
+      /**
+       * Rotate
+       * @see https://tailwindcss.com/docs/rotate
+       */
+      rotate: [{
+        rotate: [isInteger, isArbitraryValue]
+      }],
+      /**
+       * Translate X
+       * @see https://tailwindcss.com/docs/translate
+       */
+      "translate-x": [{
+        "translate-x": [translate]
+      }],
+      /**
+       * Translate Y
+       * @see https://tailwindcss.com/docs/translate
+       */
+      "translate-y": [{
+        "translate-y": [translate]
+      }],
+      /**
+       * Skew X
+       * @see https://tailwindcss.com/docs/skew
+       */
+      "skew-x": [{
+        "skew-x": [skew]
+      }],
+      /**
+       * Skew Y
+       * @see https://tailwindcss.com/docs/skew
+       */
+      "skew-y": [{
+        "skew-y": [skew]
+      }],
+      /**
+       * Transform Origin
+       * @see https://tailwindcss.com/docs/transform-origin
+       */
+      "transform-origin": [{
+        origin: ["center", "top", "top-right", "right", "bottom-right", "bottom", "bottom-left", "left", "top-left", isArbitraryValue]
+      }],
+      // Interactivity
+      /**
+       * Accent Color
+       * @see https://tailwindcss.com/docs/accent-color
+       */
+      accent: [{
+        accent: ["auto", colors]
+      }],
+      /**
+       * Appearance
+       * @see https://tailwindcss.com/docs/appearance
+       */
+      appearance: [{
+        appearance: ["none", "auto"]
+      }],
+      /**
+       * Cursor
+       * @see https://tailwindcss.com/docs/cursor
+       */
+      cursor: [{
+        cursor: ["auto", "default", "pointer", "wait", "text", "move", "help", "not-allowed", "none", "context-menu", "progress", "cell", "crosshair", "vertical-text", "alias", "copy", "no-drop", "grab", "grabbing", "all-scroll", "col-resize", "row-resize", "n-resize", "e-resize", "s-resize", "w-resize", "ne-resize", "nw-resize", "se-resize", "sw-resize", "ew-resize", "ns-resize", "nesw-resize", "nwse-resize", "zoom-in", "zoom-out", isArbitraryValue]
+      }],
+      /**
+       * Caret Color
+       * @see https://tailwindcss.com/docs/just-in-time-mode#caret-color-utilities
+       */
+      "caret-color": [{
+        caret: [colors]
+      }],
+      /**
+       * Pointer Events
+       * @see https://tailwindcss.com/docs/pointer-events
+       */
+      "pointer-events": [{
+        "pointer-events": ["none", "auto"]
+      }],
+      /**
+       * Resize
+       * @see https://tailwindcss.com/docs/resize
+       */
+      resize: [{
+        resize: ["none", "y", "x", ""]
+      }],
+      /**
+       * Scroll Behavior
+       * @see https://tailwindcss.com/docs/scroll-behavior
+       */
+      "scroll-behavior": [{
+        scroll: ["auto", "smooth"]
+      }],
+      /**
+       * Scroll Margin
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-m": [{
+        "scroll-m": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin X
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-mx": [{
+        "scroll-mx": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Y
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-my": [{
+        "scroll-my": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Start
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-ms": [{
+        "scroll-ms": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin End
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-me": [{
+        "scroll-me": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Top
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-mt": [{
+        "scroll-mt": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Right
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-mr": [{
+        "scroll-mr": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Bottom
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-mb": [{
+        "scroll-mb": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Left
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-ml": [{
+        "scroll-ml": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-p": [{
+        "scroll-p": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding X
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-px": [{
+        "scroll-px": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Y
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-py": [{
+        "scroll-py": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Start
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-ps": [{
+        "scroll-ps": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding End
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pe": [{
+        "scroll-pe": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Top
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pt": [{
+        "scroll-pt": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Right
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pr": [{
+        "scroll-pr": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Bottom
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pb": [{
+        "scroll-pb": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Left
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pl": [{
+        "scroll-pl": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Snap Align
+       * @see https://tailwindcss.com/docs/scroll-snap-align
+       */
+      "snap-align": [{
+        snap: ["start", "end", "center", "align-none"]
+      }],
+      /**
+       * Scroll Snap Stop
+       * @see https://tailwindcss.com/docs/scroll-snap-stop
+       */
+      "snap-stop": [{
+        snap: ["normal", "always"]
+      }],
+      /**
+       * Scroll Snap Type
+       * @see https://tailwindcss.com/docs/scroll-snap-type
+       */
+      "snap-type": [{
+        snap: ["none", "x", "y", "both"]
+      }],
+      /**
+       * Scroll Snap Type Strictness
+       * @see https://tailwindcss.com/docs/scroll-snap-type
+       */
+      "snap-strictness": [{
+        snap: ["mandatory", "proximity"]
+      }],
+      /**
+       * Touch Action
+       * @see https://tailwindcss.com/docs/touch-action
+       */
+      touch: [{
+        touch: ["auto", "none", "manipulation"]
+      }],
+      /**
+       * Touch Action X
+       * @see https://tailwindcss.com/docs/touch-action
+       */
+      "touch-x": [{
+        "touch-pan": ["x", "left", "right"]
+      }],
+      /**
+       * Touch Action Y
+       * @see https://tailwindcss.com/docs/touch-action
+       */
+      "touch-y": [{
+        "touch-pan": ["y", "up", "down"]
+      }],
+      /**
+       * Touch Action Pinch Zoom
+       * @see https://tailwindcss.com/docs/touch-action
+       */
+      "touch-pz": ["touch-pinch-zoom"],
+      /**
+       * User Select
+       * @see https://tailwindcss.com/docs/user-select
+       */
+      select: [{
+        select: ["none", "text", "all", "auto"]
+      }],
+      /**
+       * Will Change
+       * @see https://tailwindcss.com/docs/will-change
+       */
+      "will-change": [{
+        "will-change": ["auto", "scroll", "contents", "transform", isArbitraryValue]
+      }],
+      // SVG
+      /**
+       * Fill
+       * @see https://tailwindcss.com/docs/fill
+       */
+      fill: [{
+        fill: [colors, "none"]
+      }],
+      /**
+       * Stroke Width
+       * @see https://tailwindcss.com/docs/stroke-width
+       */
+      "stroke-w": [{
+        stroke: [isLength, isArbitraryLength, isArbitraryNumber]
+      }],
+      /**
+       * Stroke
+       * @see https://tailwindcss.com/docs/stroke
+       */
+      stroke: [{
+        stroke: [colors, "none"]
+      }],
+      // Accessibility
+      /**
+       * Screen Readers
+       * @see https://tailwindcss.com/docs/screen-readers
+       */
+      sr: ["sr-only", "not-sr-only"],
+      /**
+       * Forced Color Adjust
+       * @see https://tailwindcss.com/docs/forced-color-adjust
+       */
+      "forced-color-adjust": [{
+        "forced-color-adjust": ["auto", "none"]
+      }]
+    },
+    conflictingClassGroups: {
+      overflow: ["overflow-x", "overflow-y"],
+      overscroll: ["overscroll-x", "overscroll-y"],
+      inset: ["inset-x", "inset-y", "start", "end", "top", "right", "bottom", "left"],
+      "inset-x": ["right", "left"],
+      "inset-y": ["top", "bottom"],
+      flex: ["basis", "grow", "shrink"],
+      gap: ["gap-x", "gap-y"],
+      p: ["px", "py", "ps", "pe", "pt", "pr", "pb", "pl"],
+      px: ["pr", "pl"],
+      py: ["pt", "pb"],
+      m: ["mx", "my", "ms", "me", "mt", "mr", "mb", "ml"],
+      mx: ["mr", "ml"],
+      my: ["mt", "mb"],
+      size: ["w", "h"],
+      "font-size": ["leading"],
+      "fvn-normal": ["fvn-ordinal", "fvn-slashed-zero", "fvn-figure", "fvn-spacing", "fvn-fraction"],
+      "fvn-ordinal": ["fvn-normal"],
+      "fvn-slashed-zero": ["fvn-normal"],
+      "fvn-figure": ["fvn-normal"],
+      "fvn-spacing": ["fvn-normal"],
+      "fvn-fraction": ["fvn-normal"],
+      "line-clamp": ["display", "overflow"],
+      rounded: ["rounded-s", "rounded-e", "rounded-t", "rounded-r", "rounded-b", "rounded-l", "rounded-ss", "rounded-se", "rounded-ee", "rounded-es", "rounded-tl", "rounded-tr", "rounded-br", "rounded-bl"],
+      "rounded-s": ["rounded-ss", "rounded-es"],
+      "rounded-e": ["rounded-se", "rounded-ee"],
+      "rounded-t": ["rounded-tl", "rounded-tr"],
+      "rounded-r": ["rounded-tr", "rounded-br"],
+      "rounded-b": ["rounded-br", "rounded-bl"],
+      "rounded-l": ["rounded-tl", "rounded-bl"],
+      "border-spacing": ["border-spacing-x", "border-spacing-y"],
+      "border-w": ["border-w-s", "border-w-e", "border-w-t", "border-w-r", "border-w-b", "border-w-l"],
+      "border-w-x": ["border-w-r", "border-w-l"],
+      "border-w-y": ["border-w-t", "border-w-b"],
+      "border-color": ["border-color-s", "border-color-e", "border-color-t", "border-color-r", "border-color-b", "border-color-l"],
+      "border-color-x": ["border-color-r", "border-color-l"],
+      "border-color-y": ["border-color-t", "border-color-b"],
+      "scroll-m": ["scroll-mx", "scroll-my", "scroll-ms", "scroll-me", "scroll-mt", "scroll-mr", "scroll-mb", "scroll-ml"],
+      "scroll-mx": ["scroll-mr", "scroll-ml"],
+      "scroll-my": ["scroll-mt", "scroll-mb"],
+      "scroll-p": ["scroll-px", "scroll-py", "scroll-ps", "scroll-pe", "scroll-pt", "scroll-pr", "scroll-pb", "scroll-pl"],
+      "scroll-px": ["scroll-pr", "scroll-pl"],
+      "scroll-py": ["scroll-pt", "scroll-pb"],
+      touch: ["touch-x", "touch-y", "touch-pz"],
+      "touch-x": ["touch"],
+      "touch-y": ["touch"],
+      "touch-pz": ["touch"]
+    },
+    conflictingClassGroupModifiers: {
+      "font-size": ["leading"]
+    }
+  };
+};
+const twMerge = /* @__PURE__ */ createTailwindMerge(getDefaultConfig);
+function cn(...inputs) {
+  return twMerge(clsx(inputs));
+}
+const badgeVariants = cva(
+  "inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden",
+  {
+    variants: {
+      variant: {
+        default: "border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
+        secondary: "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
+        destructive: "border-transparent bg-destructive text-destructive-foreground [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+        outline: "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+        blue: "border border-[oklch(0.38_0.04_252/0.4)] bg-[oklch(0.24_0.03_252/0.3)] text-[oklch(0.82_0.06_252)] [a&]:hover:bg-[oklch(0.28_0.035_252/0.4)]",
+        muted: "border border-[oklch(0.34_0.014_85)] bg-[oklch(0.2_0.008_85)] text-[oklch(0.72_0.015_85)]",
+        ghost: "border border-[oklch(0.34_0.014_85/0.65)] bg-transparent text-[oklch(0.74_0.018_85)]"
+      }
+    },
+    defaultVariants: {
+      variant: "default"
+    }
+  }
+);
+function Badge({
+  className,
+  variant,
+  asChild = false,
+  ...props
+}) {
+  const Comp = asChild ? Slot : "span";
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    Comp,
+    {
+      "data-slot": "badge",
+      className: cn(badgeVariants({ variant }), className),
+      ...props
+    }
+  );
+}
+const slideOffset = {
+  left: { x: -36, y: 0 },
+  right: { x: 36, y: 0 },
+  up: { x: 0, y: 40 },
+  down: { x: 0, y: -40 },
+  none: { x: 0, y: 0 }
+};
+function Card({ className, delay: delay2 = 0, slideFrom = "up", children, ...props }) {
+  const off = slideOffset[slideFrom];
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    motion.div,
+    {
+      "data-slot": "card",
+      initial: { opacity: 0, ...off },
+      whileInView: { opacity: 1, x: 0, y: 0 },
+      viewport: { once: true, margin: "-32px 0px -8% 0px" },
+      transition: {
+        duration: 0.55,
+        delay: delay2,
+        ease: [0.22, 1, 0.36, 1]
+      },
+      whileHover: {
+        y: -2,
+        transition: { type: "spring", stiffness: 480, damping: 32 }
+      },
+      whileTap: { scale: 0.992 },
+      className: cn(
+        "portfolio-card pf-card-shell flex flex-col gap-6 rounded-2xl py-7 shadow-none text-[var(--pf-text)] overflow-hidden will-change-transform",
+        className
+      ),
+      ...props,
+      children
+    }
+  );
+}
+function Section({ id: id2, children, className = "", alt = false }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    "section",
+    {
+      id: id2,
+      className: `py-20 md:py-24 lg:py-28 px-4 sm:px-6 lg:px-10 ${alt ? "section-alt" : ""} ${className}`,
+      children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-7xl mx-auto", children })
+    }
+  );
+}
+function SectionHeader({ title, highlight, subtitle }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    motion.div,
+    {
+      initial: { opacity: 0, y: 20 },
+      whileInView: { opacity: 1, y: 0 },
+      viewport: { once: true },
+      transition: { duration: 0.5 },
+      className: "mb-12 md:mb-14 max-w-3xl",
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("h2", { className: "section-heading", children: [
+          title,
+          " ",
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: highlight })
+        ] }),
+        subtitle && /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "p",
+          {
+            className: "text-[15px] sm:text-base mt-3 leading-relaxed",
+            style: { color: "var(--pf-text-muted)" },
+            children: subtitle
+          }
+        )
+      ]
+    }
+  );
+}
+function externalHref$2(raw) {
+  const t = raw.trim();
+  if (!t) return "";
+  return /^https?:\/\//i.test(t) ? t : `https://${t}`;
+}
+function Achievements() {
+  const { awards: awards2, codingAchievements: codingAchievements2, personalInfo: personalInfo2 } = usePortfolioData();
+  const leetcodeUrl = (personalInfo2.leetcode ?? "").trim();
+  if (codingAchievements2.length === 0 && awards2.length === 0) {
+    return null;
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Section, { id: "achievements", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      SectionHeader,
+      {
+        title: "Coding",
+        highlight: "Achievements",
+        subtitle: "Competitive programming rankings and honors"
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10", children: codingAchievements2.map((ach, i) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Card,
+      {
+        delay: i * 0.1,
+        slideFrom: "up",
+        "data-ocid": `achievements.item.${i + 1}`,
+        className: "p-0 gap-0",
+        children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-6 flex flex-col gap-4", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between gap-3", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              motion.span,
+              {
+                className: "text-3xl",
+                initial: { scale: 0, rotate: -25 },
+                whileInView: { scale: 1, rotate: 0 },
+                viewport: { once: true },
+                transition: { type: "spring", stiffness: 260, damping: 16, delay: i * 0.08 },
+                children: ach.icon
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              motion.span,
+              {
+                className: "text-2xl font-extrabold tabular-nums font-syne",
+                style: { color: "var(--pf-accent)" },
+                initial: { opacity: 0, x: 12 },
+                whileInView: { opacity: 1, x: 0 },
+                viewport: { once: true },
+                transition: { delay: i * 0.1 + 0.15, duration: 0.45 },
+                children: ach.rating
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-base font-bold font-syne", style: { color: "var(--pf-text)" }, children: ach.platform }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-2", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "blue", children: ach.rank }) })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs leading-relaxed", style: { color: "var(--pf-text-muted)" }, children: ach.detail }),
+          leetcodeUrl && /leetcode/i.test(ach.platform) ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            motion.a,
+            {
+              href: externalHref$2(leetcodeUrl),
+              target: "_blank",
+              rel: "noreferrer",
+              className: "inline-flex items-center gap-1.5 text-xs font-semibold mt-1 w-fit rounded-lg px-2 py-1.5 -ml-2 transition-colors",
+              style: { color: "var(--pf-accent)" },
+              whileHover: { x: 2 },
+              "data-ocid": "achievements.leetcode.profile",
+              children: [
+                "LeetCode profile",
+                /* @__PURE__ */ jsxRuntimeExports.jsx(ExternalLink, { className: "w-3 h-3 opacity-80" })
+              ]
+            }
+          ) : null
+        ] })
+      },
+      ach.platform
+    )) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "sub-section-label mb-5", children: "Awards & Honors" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-5", children: awards2.map((award, i) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Card,
+        {
+          delay: i * 0.1,
+          slideFrom: "left",
+          "data-ocid": `awards.item.${i + 1}`,
+          className: "p-0 gap-0",
+          children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-5 flex items-center gap-4", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              motion.span,
+              {
+                className: "pf-card-icon-tile w-12 h-12 text-2xl shrink-0",
+                whileHover: { scale: 1.08, rotate: [0, -6, 6, 0] },
+                transition: { duration: 0.45 },
+                children: award.icon
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: "text-sm font-bold font-syne", style: { color: "var(--pf-text)" }, children: award.title }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs mt-1 leading-relaxed", style: { color: "var(--pf-text-muted)" }, children: award.detail })
+            ] })
+          ] })
+        },
+        award.title
+      )) })
+    ] })
+  ] });
+}
+function Certifications() {
+  const { certifications: certifications2, education: education2 } = usePortfolioData();
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Section, { id: "certifications", className: "section-alt", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      SectionHeader,
+      {
+        title: "Certifications &",
+        highlight: "Education",
+        subtitle: "Credentials and academic background"
+      }
+    ),
+    certifications2.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-12", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "sub-section-label mb-5", children: "Certifications" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5", children: certifications2.map((cert, i) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Card,
+        {
+          delay: i * 0.08,
+          slideFrom: "up",
+          "data-ocid": `certifications.item.${i + 1}`,
+          className: "p-0 gap-0",
+          children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-5 flex flex-col gap-4 h-full", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              motion.div,
+              {
+                className: "pf-card-icon-tile w-10 h-10 rounded-xl shrink-0",
+                initial: { scale: 0.85, rotate: -8 },
+                whileInView: { scale: 1, rotate: 0 },
+                viewport: { once: true },
+                transition: { type: "spring", stiffness: 400, damping: 20, delay: i * 0.05 },
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(Award, { className: "w-4 h-4", style: { color: "var(--pf-accent)" } })
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 flex flex-col gap-2 min-h-0", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: "text-sm font-bold leading-snug font-syne", style: { color: "var(--pf-text)" }, children: cert.name }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-semibold", style: { color: "var(--pf-accent)" }, children: cert.issuer }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs leading-relaxed flex-1", style: { color: "var(--pf-text-muted)" }, children: cert.description })
+            ] }),
+            cert.date ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-2 border-t border-[oklch(0.34_0.014_85/0.45)]", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "muted", className: "self-start", children: cert.date }) }) : null
+          ] })
+        },
+        cert.name
+      )) })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "sub-section-label mb-5", children: "Education" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 lg:grid-cols-2 gap-5", children: education2.map((edu, i) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Card,
+        {
+          delay: i * 0.1,
+          slideFrom: "right",
+          "data-ocid": `education.item.${i + 1}`,
+          className: "p-0 gap-0",
+          children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-5 flex gap-4", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              motion.div,
+              {
+                className: "pf-card-icon-tile w-12 h-12 rounded-xl flex-shrink-0",
+                whileHover: { scale: 1.05 },
+                transition: { type: "spring", stiffness: 400, damping: 18 },
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(GraduationCap, { className: "w-5 h-5", style: { color: "var(--pf-accent)" } })
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0 flex-1", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: "text-sm font-bold mb-1 font-syne", style: { color: "var(--pf-text)" }, children: edu.degree }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-medium mb-3", style: { color: "var(--pf-accent)" }, children: edu.institution }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 flex-wrap", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(Badge, { variant: "muted", children: [
+                  edu.startYear,
+                  " — ",
+                  edu.endYear
+                ] }),
+                edu.cgpa ? /* @__PURE__ */ jsxRuntimeExports.jsxs(Badge, { variant: "ghost", children: [
+                  "GPA: ",
+                  edu.cgpa
+                ] }) : null
+              ] })
+            ] })
+          ] })
+        },
+        edu.degree
+      )) })
+    ] })
+  ] });
+}
+function Experience() {
+  const { experiences: experiences2 } = usePortfolioData();
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Section, { id: "experience", className: "section-alt", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      SectionHeader,
+      {
+        title: "Work",
+        highlight: "Experience",
+        subtitle: "My professional journey and key contributions"
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "div",
+        {
+          className: "absolute left-[7px] top-2 bottom-2 w-0.5 hidden sm:block",
+          style: {
+            background: "linear-gradient(to bottom, oklch(0.42 0.03 252) 0%, oklch(0.32 0.014 85) 100%)"
+          }
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-col gap-8", children: experiences2.map((exp, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        Card,
+        {
+          delay: i * 0.12,
+          slideFrom: "left",
+          "data-ocid": `experience.item.${i + 1}`,
+          className: "sm:ml-10 p-0 gap-0 overflow-visible",
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute -left-3 top-7 w-3.5 h-3.5 rounded-full timeline-dot hidden sm:block ring-4 ring-[oklch(0.14_0.008_85)]" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-6 pb-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 border-b border-[oklch(0.34_0.014_85/0.45)]", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-lg font-bold font-syne tracking-tight", style: { color: "var(--pf-text)" }, children: exp.role }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-semibold", style: { color: "var(--pf-accent)" }, children: exp.company })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs(Badge, { variant: "blue", className: "flex-shrink-0 self-start sm:self-center", children: [
+                exp.startDate,
+                " — ",
+                exp.endDate ?? "Present"
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              motion.ul,
+              {
+                className: "flex flex-col gap-3 px-6 pb-6 pt-5",
+                initial: "hidden",
+                whileInView: "visible",
+                viewport: { once: true, margin: "-20px" },
+                variants: {
+                  hidden: { opacity: 0 },
+                  visible: {
+                    opacity: 1,
+                    transition: { staggerChildren: 0.055, delayChildren: 0.08 }
+                  }
+                },
+                children: exp.description.map((bullet) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  motion.li,
+                  {
+                    variants: {
+                      hidden: { opacity: 0, x: -14 },
+                      visible: { opacity: 1, x: 0 }
+                    },
+                    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
+                    className: "flex gap-3 text-sm leading-relaxed",
+                    style: { color: "var(--pf-text-secondary)" },
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "span",
+                        {
+                          className: "mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[var(--pf-accent)]"
+                        }
+                      ),
+                      bullet
+                    ]
+                  },
+                  bullet
+                ))
+              }
+            )
+          ]
+        },
+        `${exp.role}-${exp.company}`
+      )) })
+    ] })
+  ] });
+}
+function Notes() {
+  const [notes, setNotes] = reactExports.useState([]);
+  const [draft, setDraft] = reactExports.useState("");
+  const addNote = () => {
+    const trimmed = draft.trim();
+    if (!trimmed) return;
+    setNotes((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        text: trimmed,
+        createdAt: (/* @__PURE__ */ new Date()).toLocaleString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit"
+        })
+      }
+    ]);
+    setDraft("");
+  };
+  const deleteNote = (id2) => {
+    setNotes((prev) => prev.filter((n) => n.id !== id2));
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("section", { id: "notes", className: "py-16 px-4 sm:px-6 lg:px-10", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-7xl mx-auto", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      motion.div,
+      {
+        initial: { opacity: 0, y: 20 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true },
+        transition: { duration: 0.5 },
+        className: "mb-8",
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("h2", { className: "section-heading", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(StickyNote, { className: "inline-block w-7 h-7 mr-2 mb-1", style: { color: "var(--pf-accent)" } }),
+            "Personal ",
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Notes" })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm", style: { color: "var(--pf-text-muted)" }, children: "Jot down reminders, ideas, or anything you want to remember. Notes are stored in this session only." })
+        ]
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      motion.div,
+      {
+        initial: { opacity: 0, y: 10 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true },
+        transition: { duration: 0.4, delay: 0.1 },
+        className: "flex gap-3 mb-8",
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "textarea",
+            {
+              value: draft,
+              onChange: (e) => setDraft(e.target.value),
+              onKeyDown: (e) => {
+                if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) addNote();
+              },
+              rows: 2,
+              placeholder: "Write a note… (Ctrl+Enter to add)",
+              className: "notes-input flex-1"
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: addNote,
+              disabled: !draft.trim(),
+              className: "notes-add-btn",
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "w-5 h-5" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-semibold", children: "Add" })
+              ]
+            }
+          )
+        ]
+      }
+    ),
+    notes.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      motion.div,
+      {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        className: "flex flex-col items-center gap-3 py-14",
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(StickyNote, { className: "w-10 h-10 opacity-25", style: { color: "var(--pf-accent)" } }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm", style: { color: "var(--pf-text-muted)" }, children: "No notes yet — add your first one above" })
+        ]
+      }
+    ) : /* @__PURE__ */ jsxRuntimeExports.jsx(motion.div, { layout: true, className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4", children: /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { children: notes.map((note) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      motion.div,
+      {
+        layout: true,
+        initial: { opacity: 0, scale: 0.9, y: 10 },
+        animate: { opacity: 1, scale: 1, y: 0 },
+        exit: { opacity: 0, scale: 0.85, y: -10 },
+        transition: { duration: 0.3 },
+        className: "note-card group",
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start justify-between gap-2 mb-3", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(StickyNote, { className: "w-4 h-4 mt-0.5 flex-shrink-0", style: { color: "var(--pf-accent)" } }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                type: "button",
+                onClick: () => deleteNote(note.id),
+                className: "opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-red-500/10",
+                style: { color: "oklch(0.65 0.22 27)" },
+                "aria-label": "Delete note",
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "w-3.5 h-3.5" })
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm leading-relaxed flex-1", style: { color: "var(--pf-text-secondary)" }, children: note.text }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] mt-3", style: { color: "var(--pf-text-muted)" }, children: note.createdAt })
+        ]
+      },
+      note.id
+    )) }) })
+  ] }) });
+}
+function Projects() {
+  const { projects: projects2 } = usePortfolioData();
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Section, { id: "projects", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      SectionHeader,
+      {
+        title: "Featured",
+        highlight: "Projects",
+        subtitle: "Things I have built and shipped"
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6", children: projects2.map((project, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      Card,
+      {
+        delay: i * 0.1,
+        slideFrom: "up",
+        "data-ocid": `projects.item.${i + 1}`,
+        className: "p-0 gap-0 group",
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-6 flex flex-col gap-4 flex-1", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start justify-between gap-3", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                motion.div,
+                {
+                  className: "pf-card-icon-tile w-11 h-11 rounded-xl font-bold text-base",
+                  style: { color: "var(--pf-accent)" },
+                  whileHover: { scale: 1.02 },
+                  transition: { duration: 0.2 },
+                  children: project.name.charAt(0)
+                }
+              ),
+              project.link ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                motion.a,
+                {
+                  href: project.link,
+                  target: "_blank",
+                  rel: "noreferrer",
+                  className: "opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-2 rounded-xl",
+                  style: { color: "var(--pf-accent)", background: "oklch(0.24 0.03 252 / 0.35)" },
+                  "data-ocid": `projects.item.${i + 1}.link`,
+                  "aria-label": `Open ${project.name}`,
+                  whileHover: { scale: 1.08 },
+                  whileTap: { scale: 0.95 },
+                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(ExternalLink, { className: "w-4 h-4" })
+                }
+              ) : null
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-px w-full bg-gradient-to-r from-transparent via-[oklch(0.38_0.02_85/0.35)] to-transparent" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-base font-bold font-syne mb-2", style: { color: "var(--pf-text)" }, children: project.name }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm leading-relaxed", style: { color: "var(--pf-text-secondary)" }, children: project.description })
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "div",
+            {
+              className: "px-6 py-4 mt-auto border-t flex flex-wrap gap-2",
+              style: {
+                borderColor: "oklch(0.34 0.014 85 / 0.55)",
+                background: "linear-gradient(180deg, oklch(0.16 0.008 85 / 0.55) 0%, transparent 100%)"
+              },
+              children: project.technologies.map((tech, ti) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+                motion.span,
+                {
+                  initial: { opacity: 0, y: 6 },
+                  whileInView: { opacity: 1, y: 0 },
+                  viewport: { once: true },
+                  transition: { delay: i * 0.08 + ti * 0.04, duration: 0.35 },
+                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "blue", children: tech })
+                },
+                tech
+              ))
+            }
+          )
+        ]
+      },
+      project.name
+    )) })
+  ] });
+}
+function Skills() {
+  const { skillCategories: skillCategories2 } = usePortfolioData();
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Section, { id: "skills", alt: true, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      SectionHeader,
+      {
+        title: "Technical",
+        highlight: "Skills",
+        subtitle: "Languages, frameworks, and platforms I use to ship production systems"
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5", children: skillCategories2.map((cat, i) => /* @__PURE__ */ jsxRuntimeExports.jsx(Card, { delay: i * 0.07, slideFrom: "up", className: "p-0 gap-0", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-5 flex flex-col gap-4", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          motion.span,
+          {
+            className: "pf-card-icon-tile w-11 h-11 text-xl shrink-0",
+            role: "img",
+            "aria-label": cat.category,
+            whileHover: { scale: 1.06 },
+            transition: { type: "spring", stiffness: 400, damping: 22 },
+            children: cat.icon
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0 flex-1", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-px w-full max-w-[48px] rounded-full bg-[oklch(0.4_0.02_85/0.45)] mb-2" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-[13px] font-semibold leading-tight font-syne", style: { color: "var(--pf-text)" }, children: cat.category })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-wrap gap-1.5", children: cat.skills.map((skill, si) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+        motion.span,
+        {
+          initial: { opacity: 0, scale: 0.88, y: 6 },
+          whileInView: { opacity: 1, scale: 1, y: 0 },
+          viewport: { once: true },
+          transition: {
+            type: "spring",
+            stiffness: 380,
+            damping: 22,
+            delay: i * 0.05 + si * 0.025
+          },
+          className: "skill-pill",
+          children: skill
+        },
+        skill
+      )) })
+    ] }) }, cat.category)) })
+  ] });
+}
+function Summary() {
+  const { profileSummary: profileSummary2 } = usePortfolioData();
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("section", { id: "summary", className: "py-12 px-4 sm:px-6 lg:px-10 section-alt", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-7xl mx-auto", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    motion.div,
+    {
+      initial: { opacity: 0, y: 20 },
+      whileInView: { opacity: 1, y: 0 },
+      viewport: { once: true },
+      transition: { duration: 0.5 },
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("h2", { className: "section-heading mb-5", children: [
+          "Profile ",
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Summary" })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "summary-display-static", children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm sm:text-base leading-relaxed", style: { color: "var(--pf-text-secondary)" }, children: profileSummary2 }) })
+      ]
+    }
+  ) }) });
+}
+function BelowFold() {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Summary, {}),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Skills, {}),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Experience, {}),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Projects, {}),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Certifications, {}),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Achievements, {}),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Notes, {})
+  ] });
+}
+var DefaultContext = {
+  color: void 0,
+  size: void 0,
+  className: void 0,
+  style: void 0,
+  attr: void 0
+};
+var IconContext = React$2.createContext && /* @__PURE__ */ React$2.createContext(DefaultContext);
+var _excluded = ["attr", "size", "title"];
+function _objectWithoutProperties(e, t) {
+  if (null == e) return {};
+  var o, r2, i = _objectWithoutPropertiesLoose(e, t);
+  if (Object.getOwnPropertySymbols) {
+    var n = Object.getOwnPropertySymbols(e);
+    for (r2 = 0; r2 < n.length; r2++) o = n[r2], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]);
+  }
+  return i;
+}
+function _objectWithoutPropertiesLoose(r2, e) {
+  if (null == r2) return {};
+  var t = {};
+  for (var n in r2) if ({}.hasOwnProperty.call(r2, n)) {
+    if (-1 !== e.indexOf(n)) continue;
+    t[n] = r2[n];
+  }
+  return t;
+}
+function _extends() {
+  return _extends = Object.assign ? Object.assign.bind() : function(n) {
+    for (var e = 1; e < arguments.length; e++) {
+      var t = arguments[e];
+      for (var r2 in t) ({}).hasOwnProperty.call(t, r2) && (n[r2] = t[r2]);
+    }
+    return n;
+  }, _extends.apply(null, arguments);
+}
+function ownKeys(e, r2) {
+  var t = Object.keys(e);
+  if (Object.getOwnPropertySymbols) {
+    var o = Object.getOwnPropertySymbols(e);
+    r2 && (o = o.filter(function(r3) {
+      return Object.getOwnPropertyDescriptor(e, r3).enumerable;
+    })), t.push.apply(t, o);
+  }
+  return t;
+}
+function _objectSpread(e) {
+  for (var r2 = 1; r2 < arguments.length; r2++) {
+    var t = null != arguments[r2] ? arguments[r2] : {};
+    r2 % 2 ? ownKeys(Object(t), true).forEach(function(r3) {
+      _defineProperty(e, r3, t[r3]);
+    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function(r3) {
+      Object.defineProperty(e, r3, Object.getOwnPropertyDescriptor(t, r3));
+    });
+  }
+  return e;
+}
+function _defineProperty(e, r2, t) {
+  return (r2 = _toPropertyKey(r2)) in e ? Object.defineProperty(e, r2, { value: t, enumerable: true, configurable: true, writable: true }) : e[r2] = t, e;
+}
+function _toPropertyKey(t) {
+  var i = _toPrimitive(t, "string");
+  return "symbol" == typeof i ? i : i + "";
+}
+function _toPrimitive(t, r2) {
+  if ("object" != typeof t || !t) return t;
+  var e = t[Symbol.toPrimitive];
+  if (void 0 !== e) {
+    var i = e.call(t, r2);
+    if ("object" != typeof i) return i;
+    throw new TypeError("@@toPrimitive must return a primitive value.");
+  }
+  return ("string" === r2 ? String : Number)(t);
+}
+function Tree2Element(tree) {
+  return tree && tree.map((node, i) => /* @__PURE__ */ React$2.createElement(node.tag, _objectSpread({
+    key: i
+  }, node.attr), Tree2Element(node.child)));
+}
+function GenIcon(data) {
+  return (props) => /* @__PURE__ */ React$2.createElement(IconBase, _extends({
+    attr: _objectSpread({}, data.attr)
+  }, props), Tree2Element(data.child));
+}
+function IconBase(props) {
+  var elem = (conf) => {
+    var {
+      attr,
+      size,
+      title
+    } = props, svgProps = _objectWithoutProperties(props, _excluded);
+    var computedSize = size || conf.size || "1em";
+    var className;
+    if (conf.className) className = conf.className;
+    if (props.className) className = (className ? className + " " : "") + props.className;
+    return /* @__PURE__ */ React$2.createElement("svg", _extends({
+      stroke: "currentColor",
+      fill: "currentColor",
+      strokeWidth: "0"
+    }, conf.attr, attr, svgProps, {
+      className,
+      style: _objectSpread(_objectSpread({
+        color: props.color || conf.color
+      }, conf.style), props.style),
+      height: computedSize,
+      width: computedSize,
+      xmlns: "http://www.w3.org/2000/svg"
+    }), title && /* @__PURE__ */ React$2.createElement("title", null, title), props.children);
+  };
+  return IconContext !== void 0 ? /* @__PURE__ */ React$2.createElement(IconContext.Consumer, null, (conf) => elem(conf)) : elem(DefaultContext);
+}
+function SiLeetcode(props) {
+  return GenIcon({ "attr": { "role": "img", "viewBox": "0 0 24 24" }, "child": [{ "tag": "path", "attr": { "d": "M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a5.266 5.266 0 0 0-1.209 2.104 5.35 5.35 0 0 0-.125.513 5.527 5.527 0 0 0 .062 2.362 5.83 5.83 0 0 0 .349 1.017 5.938 5.938 0 0 0 1.271 1.818l4.277 4.193.039.038c2.248 2.165 5.852 2.133 8.063-.074l2.396-2.392c.54-.54.54-1.414.003-1.955a1.378 1.378 0 0 0-1.951-.003l-2.396 2.392a3.021 3.021 0 0 1-4.205.038l-.02-.019-4.276-4.193c-.652-.64-.972-1.469-.948-2.263a2.68 2.68 0 0 1 .066-.523 2.545 2.545 0 0 1 .619-1.164L9.13 8.114c1.058-1.134 3.204-1.27 4.43-.278l3.501 2.831c.593.48 1.461.387 1.94-.207a1.384 1.384 0 0 0-.207-1.943l-3.5-2.831c-.8-.647-1.766-1.045-2.774-1.202l2.015-2.158A1.384 1.384 0 0 0 13.483 0zm-2.866 12.815a1.38 1.38 0 0 0-1.38 1.382 1.38 1.38 0 0 0 1.38 1.382H20.79a1.38 1.38 0 0 0 1.38-1.382 1.38 1.38 0 0 0-1.38-1.382z" }, "child": [] }] })(props);
+}
 function initialsFromName(name) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -23258,14 +26772,17 @@ function externalHref$1(raw) {
   return /^https?:\/\//i.test(t) ? t : `https://${t}`;
 }
 function Footer() {
-  const { personalInfo, profileSummary, codingAchievements, awards } = usePortfolioData();
-  const initials = reactExports.useMemo(() => initialsFromName(personalInfo.name), [personalInfo.name]);
+  const { personalInfo: personalInfo2, profileSummary: profileSummary2, codingAchievements: codingAchievements2, awards: awards2 } = usePortfolioData();
+  const initials = reactExports.useMemo(() => initialsFromName(personalInfo2.name), [personalInfo2.name]);
+  const profilePhotoSrc = (personalInfo2.profilePhoto ?? "").trim() || "/profile-photo.png";
+  const [photoFailed, setPhotoFailed] = reactExports.useState(false);
+  const onPhotoError = reactExports.useCallback(() => setPhotoFailed(true), []);
   const footerBio = reactExports.useMemo(() => {
-    const t = profileSummary.trim();
+    const t = profileSummary2.trim();
     if (t.length <= 220) return t;
     return `${t.slice(0, 217).trim()}…`;
-  }, [profileSummary]);
-  const showAchievements = codingAchievements.length > 0 || awards.length > 0;
+  }, [profileSummary2]);
+  const showAchievements = codingAchievements2.length > 0 || awards2.length > 0;
   const navSections = reactExports.useMemo(() => {
     const portfolioLinks = [
       { text: "Home", href: "#hero" },
@@ -23276,15 +26793,15 @@ function Footer() {
     ];
     if (showAchievements) portfolioLinks.push({ text: "Achievements", href: "#achievements" });
     const connectLinks = [
-      { text: "Email Me", href: `mailto:${personalInfo.email}` }
+      { text: "Email Me", href: `mailto:${personalInfo2.email}` }
     ];
-    if (personalInfo.linkedin.trim()) {
-      connectLinks.push({ text: "LinkedIn", href: externalHref$1(personalInfo.linkedin) });
+    if (personalInfo2.linkedin.trim()) {
+      connectLinks.push({ text: "LinkedIn", href: externalHref$1(personalInfo2.linkedin) });
     }
-    if (personalInfo.github.trim()) {
-      connectLinks.push({ text: "GitHub", href: externalHref$1(personalInfo.github) });
+    if (personalInfo2.github.trim()) {
+      connectLinks.push({ text: "GitHub", href: externalHref$1(personalInfo2.github) });
     }
-    const lc = (personalInfo.leetcode ?? "").trim();
+    const lc = (personalInfo2.leetcode ?? "").trim();
     if (lc) {
       connectLinks.push({ text: "LeetCode", href: externalHref$1(lc) });
     }
@@ -23293,30 +26810,30 @@ function Footer() {
       { label: "Portfolio", links: portfolioLinks },
       { label: "Connect", links: connectLinks }
     ];
-  }, [personalInfo, showAchievements]);
+  }, [personalInfo2, showAchievements]);
   const contactDetails = reactExports.useMemo(
     () => [
-      { icon: Mail, text: personalInfo.email, href: `mailto:${personalInfo.email}` },
-      { icon: Phone, text: personalInfo.phone, href: void 0 },
-      { icon: MapPin, text: personalInfo.location, href: void 0 }
+      { icon: Mail, text: personalInfo2.email, href: `mailto:${personalInfo2.email}` },
+      { icon: Phone, text: personalInfo2.phone, href: void 0 },
+      { icon: MapPin, text: personalInfo2.location, href: void 0 }
     ],
-    [personalInfo]
+    [personalInfo2]
   );
   const social = reactExports.useMemo(() => {
     const items = [];
-    if (personalInfo.linkedin.trim()) {
-      items.push({ icon: Linkedin, href: externalHref$1(personalInfo.linkedin), label: "LinkedIn" });
+    if (personalInfo2.linkedin.trim()) {
+      items.push({ icon: Linkedin, href: externalHref$1(personalInfo2.linkedin), label: "LinkedIn" });
     }
-    if (personalInfo.github.trim()) {
-      items.push({ icon: Github, href: externalHref$1(personalInfo.github), label: "GitHub" });
+    if (personalInfo2.github.trim()) {
+      items.push({ icon: Github, href: externalHref$1(personalInfo2.github), label: "GitHub" });
     }
-    const lc = (personalInfo.leetcode ?? "").trim();
+    const lc = (personalInfo2.leetcode ?? "").trim();
     if (lc) {
       items.push({ icon: SiLeetcode, href: externalHref$1(lc), label: "LeetCode" });
     }
-    items.push({ icon: Mail, href: `mailto:${personalInfo.email}`, label: "Email" });
+    items.push({ icon: Mail, href: `mailto:${personalInfo2.email}`, label: "Email" });
     return items;
-  }, [personalInfo]);
+  }, [personalInfo2]);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("footer", { id: "footer", className: "relative overflow-hidden", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "footer-top-glow" }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "footer-body", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-10", children: [
@@ -23331,10 +26848,20 @@ function Footer() {
             className: "footer-brand-col",
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3 mb-4", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "footer-avatar", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: initials }) }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "footer-avatar", children: !photoFailed ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "img",
+                  {
+                    src: profilePhotoSrc,
+                    alt: "",
+                    width: 104,
+                    height: 104,
+                    decoding: "async",
+                    onError: onPhotoError
+                  }
+                ) : /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: initials }) }),
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-lg font-bold leading-tight font-syne", style: { color: "var(--pf-text)" }, children: personalInfo.name }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs", style: { color: "var(--pf-text-muted)" }, children: personalInfo.title })
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-lg font-bold leading-tight font-syne", style: { color: "var(--pf-text)" }, children: personalInfo2.name }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs", style: { color: "var(--pf-text-muted)" }, children: personalInfo2.title })
                 ] })
               ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm leading-relaxed mb-6 max-w-sm", style: { color: "var(--pf-text-secondary)" }, children: footerBio }),
@@ -23388,11 +26915,8 @@ function Footer() {
                 return /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: c.href ? /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: c.href, className: "hover:opacity-80 transition-opacity", children: inner }) : inner }, c.text);
               }) }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "footer-availability mt-6", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "relative flex h-2 w-2", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "relative inline-flex rounded-full h-2 w-2 bg-emerald-400" })
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-medium", style: { color: "oklch(0.82 0.12 165)" }, children: "Open to new opportunities" })
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "inline-flex rounded-full h-2 w-2 shrink-0 bg-emerald-600/90" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-medium", style: { color: "var(--pf-text-secondary)" }, children: "Open to new opportunities" })
               ] })
             ]
           }
@@ -23404,7 +26928,7 @@ function Footer() {
           "© ",
           (/* @__PURE__ */ new Date()).getFullYear(),
           " ",
-          personalInfo.name,
+          personalInfo2.name,
           " — All rights reserved"
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs flex items-center gap-1", style: { color: "var(--pf-text-muted)" }, children: [
@@ -23422,26 +26946,26 @@ const STATS = [
   {
     value: "~3 yrs",
     label: "Experience",
-    bg: "oklch(0.55 0.2 195 / 0.1)",
-    border: "oklch(0.62 0.2 195 / 0.45)",
-    color: "oklch(0.82 0.16 195)",
-    glow: "oklch(0.55 0.22 195 / 0.4)"
+    bg: "oklch(0.22 0.06 252 / 0.22)",
+    border: "oklch(0.48 0.1 252 / 0.45)",
+    color: "oklch(0.92 0.11 252)",
+    glow: "0 0 28px oklch(0.5 0.14 252 / 0.35)"
   },
   {
     value: "10K+",
     label: "Users (payments)",
-    bg: "oklch(0.48 0.14 165 / 0.12)",
-    border: "oklch(0.55 0.15 165 / 0.45)",
-    color: "oklch(0.85 0.13 165)",
-    glow: "oklch(0.5 0.14 165 / 0.35)"
+    bg: "oklch(0.2 0.06 165 / 0.2)",
+    border: "oklch(0.42 0.1 165 / 0.42)",
+    color: "oklch(0.9 0.12 165)",
+    glow: "0 0 26px oklch(0.45 0.12 165 / 0.3)"
   },
   {
     value: "2",
     label: "Major projects",
-    bg: "oklch(0.55 0.12 72 / 0.12)",
-    border: "oklch(0.72 0.14 72 / 0.5)",
-    color: "oklch(0.92 0.12 72)",
-    glow: "oklch(0.65 0.14 72 / 0.35)"
+    bg: "oklch(0.22 0.06 75 / 0.18)",
+    border: "oklch(0.48 0.1 75 / 0.4)",
+    color: "oklch(0.95 0.12 85)",
+    glow: "0 0 24px oklch(0.55 0.1 75 / 0.22)"
   }
 ];
 function externalHref(raw) {
@@ -23466,7 +26990,7 @@ function RotatingRole({ roles }) {
       animate: { opacity: 1, y: 0 },
       exit: { opacity: 0, y: -20 },
       transition: { duration: 0.45, ease: "easeInOut" },
-      className: "absolute px-1 text-center text-base min-[400px]:text-lg sm:text-xl font-semibold gradient-text whitespace-normal sm:whitespace-nowrap leading-snug max-w-full",
+      className: "absolute px-1 text-center text-base min-[400px]:text-lg sm:text-xl hero-role-shimmer whitespace-normal sm:whitespace-nowrap leading-snug max-w-full",
       children: roles[index2]
     },
     roles[index2]
@@ -23484,50 +27008,53 @@ function ContactBarRow({ item }) {
   ] });
 }
 function Hero() {
-  const { personalInfo, heroRoles } = usePortfolioData();
-  const resumeHref = (personalInfo.resumePdf ?? "").trim() || "/Roshan_mishra.pdf";
+  const { personalInfo: personalInfo2, heroRoles: heroRoles2 } = usePortfolioData();
+  const resumeHref = (personalInfo2.resumePdf ?? "").trim() || "/Roshan_mishra.pdf";
+  const profilePhotoSrc = (personalInfo2.profilePhoto ?? "").trim() || "/profile-photo.png";
   const initials = reactExports.useMemo(
-    () => initialsFromName(personalInfo.name),
-    [personalInfo.name]
+    () => initialsFromName(personalInfo2.name),
+    [personalInfo2.name]
   );
+  const [photoFailed, setPhotoFailed] = reactExports.useState(false);
+  const onPhotoError = reactExports.useCallback(() => setPhotoFailed(true), []);
   const contactItems = reactExports.useMemo(() => {
     const items = [
       {
         icon: Mail,
-        text: personalInfo.email,
-        href: `mailto:${personalInfo.email}`,
+        text: personalInfo2.email,
+        href: `mailto:${personalInfo2.email}`,
         external: false
       },
       {
         icon: Phone,
-        text: personalInfo.phone,
+        text: personalInfo2.phone,
         href: void 0,
         external: false
       },
       {
         icon: MapPin,
-        text: personalInfo.location,
+        text: personalInfo2.location,
         href: void 0,
         external: false
       }
     ];
-    if (personalInfo.linkedin.trim()) {
+    if (personalInfo2.linkedin.trim()) {
       items.push({
         icon: Linkedin,
         text: "LinkedIn",
-        href: externalHref(personalInfo.linkedin),
+        href: externalHref(personalInfo2.linkedin),
         external: true
       });
     }
-    if (personalInfo.github.trim()) {
+    if (personalInfo2.github.trim()) {
       items.push({
         icon: Github,
         text: "GitHub",
-        href: externalHref(personalInfo.github),
+        href: externalHref(personalInfo2.github),
         external: true
       });
     }
-    const lc = (personalInfo.leetcode ?? "").trim();
+    const lc = (personalInfo2.leetcode ?? "").trim();
     if (lc) {
       items.push({
         icon: SiLeetcode,
@@ -23537,22 +27064,16 @@ function Hero() {
       });
     }
     return items;
-  }, [personalInfo]);
+  }, [personalInfo2]);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs(
       "section",
       {
         id: "hero",
-        className: "relative w-full pt-[calc(5.5rem+env(safe-area-inset-top,0px))] pb-12 sm:pt-28 sm:pb-20 md:pt-32 md:pb-24 lg:pb-28 px-3 min-[400px]:px-4 sm:px-6 lg:px-10 overflow-hidden",
+        className: "relative w-full pt-[calc(5.5rem+env(safe-area-inset-top,0px))] pb-16 sm:pt-28 sm:pb-24 md:pt-32 md:pb-28 lg:pb-32 px-3 min-[400px]:px-4 sm:px-6 lg:px-10 overflow-hidden",
         children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "absolute inset-0 pointer-events-none", "aria-hidden": true, children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-orb-1" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-orb-2" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-orb-3" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-grid-dots" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-scanlines" })
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-7xl w-full mx-auto relative z-10", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col items-center text-center gap-5 sm:gap-7", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 pointer-events-none hero-backdrop", "aria-hidden": true }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-7xl w-full mx-auto relative z-10", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col items-center text-center gap-6 sm:gap-8", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs(
               motion.div,
               {
@@ -23562,18 +27083,14 @@ function Hero() {
                 className: "flex flex-wrap items-center justify-center gap-2 sm:gap-3 max-w-full",
                 children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "hero-badge-green max-w-[calc(100vw-2rem)] sm:max-w-none", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "relative flex h-1.5 w-1.5", children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" })
-                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "inline-flex rounded-full h-1.5 w-1.5 shrink-0 bg-emerald-500/90" }),
                     "Open to opportunities"
                   ] }),
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "hero-badge-blue max-w-[calc(100vw-2rem)] sm:max-w-none", children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx(
                       "span",
                       {
-                        className: "w-1.5 h-1.5 rounded-full animate-pulse shrink-0",
-                        style: { background: "var(--pf-accent-2)" }
+                        className: "w-1.5 h-1.5 rounded-full shrink-0 bg-[var(--pf-accent)]"
                       }
                     ),
                     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-left leading-tight", children: "SDE-1 @ MONKSPACES.AI" })
@@ -23581,29 +27098,28 @@ function Hero() {
                 ]
               }
             ),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
               motion.div,
               {
                 initial: { opacity: 0, scale: 0.85 },
                 animate: { opacity: 1, scale: 1 },
                 transition: { duration: 0.7, delay: 0.1, ease: "easeOut" },
                 className: "relative flex items-center justify-center",
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "avatar-ring-outer-v2" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "avatar-ring-spin-v2" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "div",
+                children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "hero-avatar-frame z-10", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-avatar-frame-corners", "aria-hidden": true }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-avatar-plate", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-avatar-photo-inner", children: !photoFailed ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "img",
                     {
-                      className: "relative w-[9.25rem] h-[9.25rem] min-[400px]:w-40 min-[400px]:h-40 sm:w-48 sm:h-48 md:w-52 md:h-52 rounded-full z-10 flex items-center justify-center",
-                      style: {
-                        background: "linear-gradient(145deg, oklch(0.12 0.06 292) 0%, oklch(0.09 0.05 305) 100%)",
-                        boxShadow: "0 0 56px oklch(0.5 0.2 195 / 0.35), 0 0 100px oklch(0.45 0.18 310 / 0.2), inset 0 1px 0 oklch(1 0 0 / 0.06)",
-                        border: "2px solid oklch(0.35 0.1 285 / 0.55)"
-                      },
-                      children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-syne font-black text-4xl min-[400px]:text-5xl sm:text-6xl md:text-6xl hero-name-gradient select-none", children: initials })
+                      src: profilePhotoSrc,
+                      alt: `${personalInfo2.name}, professional headshot`,
+                      width: 416,
+                      height: 416,
+                      decoding: "async",
+                      className: "hero-avatar-photo",
+                      onError: onPhotoError
                     }
-                  )
-                ]
+                  ) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex min-h-full w-full items-center justify-center rounded-full bg-[oklch(0.16_0.01_85)]", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-syne font-bold text-4xl min-[400px]:text-5xl sm:text-6xl md:text-6xl hero-headline-gradient select-none", children: initials }) }) }) })
+                ] })
               }
             ),
             /* @__PURE__ */ jsxRuntimeExports.jsxs(
@@ -23614,8 +27130,8 @@ function Hero() {
                 transition: { duration: 0.6, delay: 0.25 },
                 className: "flex flex-col items-center gap-2 w-full px-1",
                 children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "font-syne text-[clamp(1.65rem,5.5vw+0.4rem,4.5rem)] sm:text-6xl lg:text-7xl font-extrabold leading-[1.05] tracking-tight hero-name-gradient break-words max-w-full", children: personalInfo.name }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(RotatingRole, { roles: heroRoles })
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "font-syne text-[clamp(1.65rem,5.5vw+0.4rem,4.5rem)] sm:text-6xl lg:text-7xl font-bold leading-[1.08] tracking-tight hero-headline-gradient break-words max-w-full", children: personalInfo2.name }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(RotatingRole, { roles: heroRoles2 })
                 ]
               }
             ),
@@ -23678,10 +27194,10 @@ function Hero() {
                       /* @__PURE__ */ jsxRuntimeExports.jsx(
                         "span",
                         {
-                          className: "text-2xl min-[400px]:text-3xl font-extrabold leading-none",
+                          className: "text-2xl min-[400px]:text-3xl font-bold leading-none tabular-nums",
                           style: {
                             color: stat.color,
-                            textShadow: `0 0 20px ${stat.glow}`
+                            textShadow: stat.glow
                           },
                           children: stat.value
                         }
@@ -23733,10 +27249,10 @@ function scrollTo(href) {
   (_a2 = document.querySelector(href)) == null ? void 0 : _a2.scrollIntoView({ behavior: "smooth" });
 }
 function Navbar() {
-  const { personalInfo, codingAchievements, awards } = usePortfolioData();
+  const { personalInfo: personalInfo2, codingAchievements: codingAchievements2, awards: awards2 } = usePortfolioData();
   const [mobileOpen, setMobileOpen] = reactExports.useState(false);
-  const initials = reactExports.useMemo(() => initialsFromName(personalInfo.name), [personalInfo.name]);
-  const showAchievements = codingAchievements.length > 0 || awards.length > 0;
+  const initials = reactExports.useMemo(() => initialsFromName(personalInfo2.name), [personalInfo2.name]);
+  const showAchievements = codingAchievements2.length > 0 || awards2.length > 0;
   const navLinks = reactExports.useMemo(() => {
     const base = [
       { label: "Home", href: "#hero" },
@@ -23767,8 +27283,8 @@ function Navbar() {
           children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "navbar-logo-box", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-black tracking-widest text-white", children: initials }) }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-bold leading-none font-syne", style: { color: "var(--pf-text)" }, children: personalInfo.name }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] font-medium", style: { color: "var(--pf-accent)" }, children: personalInfo.title })
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-bold leading-none font-syne", style: { color: "var(--pf-text)" }, children: personalInfo2.name }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] font-medium", style: { color: "var(--pf-accent)" }, children: personalInfo2.title })
             ] })
           ]
         }
@@ -23793,7 +27309,7 @@ function Navbar() {
           animate: { opacity: 1, x: 0 },
           transition: { duration: 0.5, delay: 0.2 },
           className: "hidden md:flex",
-          children: /* @__PURE__ */ jsxRuntimeExports.jsxs("a", { href: `mailto:${personalInfo.email}`, className: "navbar-cta-btn", children: [
+          children: /* @__PURE__ */ jsxRuntimeExports.jsxs("a", { href: `mailto:${personalInfo2.email}`, className: "navbar-cta-btn", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(Mail, { className: "w-3.5 h-3.5" }),
             "GET IN TOUCH"
           ] })
@@ -23819,8 +27335,8 @@ function Navbar() {
         exit: { opacity: 0, height: 0 },
         className: "md:hidden border-t overflow-hidden",
         style: {
-          background: "oklch(0.08 0.045 292 / 0.98)",
-          borderColor: "oklch(0.3 0.07 285 / 0.55)"
+          background: "oklch(0.15 0.008 85 / 0.98)",
+          borderColor: "oklch(0.34 0.014 85 / 0.55)"
         },
         children: /* @__PURE__ */ jsxRuntimeExports.jsxs("nav", { className: "flex flex-col px-4 py-4 gap-1", children: [
           navLinks.map((link) => /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -23834,7 +27350,7 @@ function Navbar() {
             },
             link.href
           )),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("a", { href: `mailto:${personalInfo.email}`, className: "mt-3 navbar-cta-btn w-fit", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("a", { href: `mailto:${personalInfo2.email}`, className: "mt-3 navbar-cta-btn w-fit", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(Mail, { className: "w-3.5 h-3.5" }),
             "GET IN TOUCH"
           ] })
@@ -23843,31 +27359,12 @@ function Navbar() {
     ) })
   ] });
 }
-const BelowFold = reactExports.lazy(async () => {
-  const m = await __vitePreload(() => import("./BelowFold-BaGerIN7.js"), true ? [] : void 0);
-  return { default: m.BelowFold };
-});
-function BelowFoldFallback() {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-    "div",
-    {
-      className: "w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-12 md:py-16 space-y-10",
-      "aria-hidden": true,
-      children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-9 w-40 rounded-lg bg-oklch(0.16 0.04 285 / 0.9) animate-pulse" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-36 rounded-2xl bg-oklch(0.12 0.045 290 / 0.85) animate-pulse" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-48 rounded-2xl bg-oklch(0.12 0.045 290 / 0.85) animate-pulse" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-40 rounded-2xl bg-oklch(0.12 0.045 290 / 0.85) animate-pulse" })
-      ]
-    }
-  );
-}
 function App() {
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-h-screen relative z-[1]", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(Navbar, {}),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("main", { children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(Hero, {}),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.Suspense, { fallback: /* @__PURE__ */ jsxRuntimeExports.jsx(BelowFoldFallback, {}), children: /* @__PURE__ */ jsxRuntimeExports.jsx(BelowFold, {}) })
+      /* @__PURE__ */ jsxRuntimeExports.jsx(BelowFold, {})
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx(Footer, {})
   ] });
@@ -23876,12 +27373,3 @@ const queryClient = new QueryClient();
 ReactDOM.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(QueryClientProvider, { client: queryClient, children: /* @__PURE__ */ jsxRuntimeExports.jsx(PortfolioProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) }) })
 );
-export {
-  AnimatePresence as A,
-  React$3 as R,
-  createLucideIcon as c,
-  jsxRuntimeExports as j,
-  motion as m,
-  reactExports as r,
-  usePortfolioData as u
-};

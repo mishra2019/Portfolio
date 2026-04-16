@@ -1,6 +1,6 @@
+import portfolioSeed from "@portfolio-seed";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, createContext, useContext } from "react";
-import { PortfolioLoader } from "../components/portfolio/PortfolioLoader";
 import { fetchPortfolio } from "../lib/api";
 import type { PortfolioPayload } from "../types/portfolio";
 
@@ -13,13 +13,10 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     staleTime: 60_000,
     retry: 1,
     refetchOnWindowFocus: false,
+    initialData: portfolioSeed as PortfolioPayload,
   });
 
-  if (query.isPending) {
-    return <PortfolioLoader />;
-  }
-
-  if (query.isError || !query.data) {
+  if (!query.data) {
     const detail =
       query.error instanceof Error
         ? query.error.message

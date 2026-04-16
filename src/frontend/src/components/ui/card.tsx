@@ -33,12 +33,12 @@ function Card({ className, delay = 0, slideFrom = "up", children, ...props }: Ca
         ease: [0.22, 1, 0.36, 1],
       }}
       whileHover={{
-        y: -6,
-        transition: { type: "spring", stiffness: 420, damping: 28 },
+        y: -2,
+        transition: { type: "spring", stiffness: 480, damping: 32 },
       }}
       whileTap={{ scale: 0.992 }}
       className={cn(
-        "portfolio-card pf-card-shell flex flex-col gap-6 rounded-2xl py-6 shadow-none text-[var(--pf-text)] overflow-hidden will-change-transform",
+        "portfolio-card pf-card-shell flex flex-col gap-6 rounded-2xl py-7 shadow-none text-[var(--pf-text)] overflow-hidden will-change-transform",
         className,
       )}
       {...props}

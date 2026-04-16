@@ -1,6 +1,6 @@
 import { Code2, Github, Heart, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 import { motion } from "motion/react";
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { ComponentType } from "react";
 import { SiLeetcode } from "react-icons/si";
 import { usePortfolioData } from "../../hooks/PortfolioProvider";
@@ -15,6 +15,10 @@ function externalHref(raw: string): string {
 export function Footer() {
   const { personalInfo, profileSummary, codingAchievements, awards } = usePortfolioData();
   const initials = useMemo(() => initialsFromName(personalInfo.name), [personalInfo.name]);
+  const profilePhotoSrc =
+    (personalInfo.profilePhoto ?? "").trim() || "/profile-photo.png";
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const onPhotoError = useCallback(() => setPhotoFailed(true), []);
   const footerBio = useMemo(() => {
     const t = profileSummary.trim();
     if (t.length <= 220) return t;
@@ -98,7 +102,18 @@ export function Footer() {
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="footer-avatar">
-                  <span>{initials}</span>
+                  {!photoFailed ? (
+                    <img
+                      src={profilePhotoSrc}
+                      alt=""
+                      width={104}
+                      height={104}
+                      decoding="async"
+                      onError={onPhotoError}
+                    />
+                  ) : (
+                    <span>{initials}</span>
+                  )}
                 </div>
                 <div>
                   <p className="text-lg font-bold leading-tight font-syne" style={{ color: "var(--pf-text)" }}>
@@ -193,11 +208,8 @@ export function Footer() {
 
               {/* Availability badge */}
               <div className="footer-availability mt-6">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
-                </span>
-                <span className="text-xs font-medium" style={{ color: "oklch(0.82 0.12 165)" }}>
+                <span className="inline-flex rounded-full h-2 w-2 shrink-0 bg-emerald-600/90" />
+                <span className="text-xs font-medium" style={{ color: "var(--pf-text-secondary)" }}>
                   Open to new opportunities
                 </span>
               </div>

@@ -8,7 +8,7 @@ import {
   Phone,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import type { ComponentType } from "react";
 import { SiLeetcode } from "react-icons/si";
 import { usePortfolioData } from "../../hooks/PortfolioProvider";
@@ -18,26 +18,26 @@ const STATS = [
   {
     value: "~3 yrs",
     label: "Experience",
-    bg: "oklch(0.55 0.2 195 / 0.1)",
-    border: "oklch(0.62 0.2 195 / 0.45)",
-    color: "oklch(0.82 0.16 195)",
-    glow: "oklch(0.55 0.22 195 / 0.4)",
+    bg: "oklch(0.22 0.06 252 / 0.22)",
+    border: "oklch(0.48 0.1 252 / 0.45)",
+    color: "oklch(0.92 0.11 252)",
+    glow: "0 0 28px oklch(0.5 0.14 252 / 0.35)",
   },
   {
     value: "10K+",
     label: "Users (payments)",
-    bg: "oklch(0.48 0.14 165 / 0.12)",
-    border: "oklch(0.55 0.15 165 / 0.45)",
-    color: "oklch(0.85 0.13 165)",
-    glow: "oklch(0.5 0.14 165 / 0.35)",
+    bg: "oklch(0.2 0.06 165 / 0.2)",
+    border: "oklch(0.42 0.1 165 / 0.42)",
+    color: "oklch(0.9 0.12 165)",
+    glow: "0 0 26px oklch(0.45 0.12 165 / 0.3)",
   },
   {
     value: "2",
     label: "Major projects",
-    bg: "oklch(0.55 0.12 72 / 0.12)",
-    border: "oklch(0.72 0.14 72 / 0.5)",
-    color: "oklch(0.92 0.12 72)",
-    glow: "oklch(0.65 0.14 72 / 0.35)",
+    bg: "oklch(0.22 0.06 75 / 0.18)",
+    border: "oklch(0.48 0.1 75 / 0.4)",
+    color: "oklch(0.95 0.12 85)",
+    glow: "0 0 24px oklch(0.55 0.1 75 / 0.22)",
   },
 ] as const;
 
@@ -69,7 +69,7 @@ function RotatingRole({ roles }: { roles: string[] }) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.45, ease: "easeInOut" }}
-          className="absolute px-1 text-center text-base min-[400px]:text-lg sm:text-xl font-semibold gradient-text whitespace-normal sm:whitespace-nowrap leading-snug max-w-full"
+          className="absolute px-1 text-center text-base min-[400px]:text-lg sm:text-xl hero-role-shimmer whitespace-normal sm:whitespace-nowrap leading-snug max-w-full"
         >
           {roles[index]}
         </motion.p>
@@ -107,10 +107,14 @@ export function Hero() {
   const { personalInfo, heroRoles } = usePortfolioData();
   const resumeHref =
     (personalInfo.resumePdf ?? "").trim() || "/Roshan_mishra.pdf";
+  const profilePhotoSrc =
+    (personalInfo.profilePhoto ?? "").trim() || "/profile-photo.png";
   const initials = useMemo(
     () => initialsFromName(personalInfo.name),
     [personalInfo.name],
   );
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const onPhotoError = useCallback(() => setPhotoFailed(true), []);
   const contactItems = useMemo(() => {
     const items: ContactBarItemData[] = [
       {
@@ -164,19 +168,13 @@ export function Hero() {
     <>
       <section
         id="hero"
-        className="relative w-full pt-[calc(5.5rem+env(safe-area-inset-top,0px))] pb-12 sm:pt-28 sm:pb-20 md:pt-32 md:pb-24 lg:pb-28 px-3 min-[400px]:px-4 sm:px-6 lg:px-10 overflow-hidden"
+        className="relative w-full pt-[calc(5.5rem+env(safe-area-inset-top,0px))] pb-16 sm:pt-28 sm:pb-24 md:pt-32 md:pb-28 lg:pb-32 px-3 min-[400px]:px-4 sm:px-6 lg:px-10 overflow-hidden"
       >
-        {/* Animated background */}
-        <div className="absolute inset-0 pointer-events-none" aria-hidden>
-          <div className="hero-orb-1" />
-          <div className="hero-orb-2" />
-          <div className="hero-orb-3" />
-          <div className="hero-grid-dots" />
-          <div className="hero-scanlines" />
-        </div>
+        {/* Subtle backdrop — calm, editorial (not decorative “game HUD”) */}
+        <div className="absolute inset-0 pointer-events-none hero-backdrop" aria-hidden />
 
         <div className="max-w-7xl w-full mx-auto relative z-10">
-          <div className="flex flex-col items-center text-center gap-5 sm:gap-7">
+          <div className="flex flex-col items-center text-center gap-6 sm:gap-8">
             {/* Status badges */}
             <motion.div
               initial={{ opacity: 0, y: -12 }}
@@ -185,16 +183,12 @@ export function Hero() {
               className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 max-w-full"
             >
               <span className="hero-badge-green max-w-[calc(100vw-2rem)] sm:max-w-none">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
-                </span>
+                <span className="inline-flex rounded-full h-1.5 w-1.5 shrink-0 bg-emerald-500/90" />
                 Open to opportunities
               </span>
               <span className="hero-badge-blue max-w-[calc(100vw-2rem)] sm:max-w-none">
                 <span
-                  className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0"
-                  style={{ background: "var(--pf-accent-2)" }}
+                  className="w-1.5 h-1.5 rounded-full shrink-0 bg-[var(--pf-accent)]"
                 />
                 <span className="text-left leading-tight">
                   SDE-1 @ MONKSPACES.AI
@@ -209,21 +203,29 @@ export function Hero() {
               transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
               className="relative flex items-center justify-center"
             >
-              <div className="avatar-ring-outer-v2" />
-              <div className="avatar-ring-spin-v2" />
-              <div
-                className="relative w-[9.25rem] h-[9.25rem] min-[400px]:w-40 min-[400px]:h-40 sm:w-48 sm:h-48 md:w-52 md:h-52 rounded-full z-10 flex items-center justify-center"
-                style={{
-                  background:
-                    "linear-gradient(145deg, oklch(0.12 0.06 292) 0%, oklch(0.09 0.05 305) 100%)",
-                  boxShadow:
-                    "0 0 56px oklch(0.5 0.2 195 / 0.35), 0 0 100px oklch(0.45 0.18 310 / 0.2), inset 0 1px 0 oklch(1 0 0 / 0.06)",
-                  border: "2px solid oklch(0.35 0.1 285 / 0.55)",
-                }}
-              >
-                <span className="font-syne font-black text-4xl min-[400px]:text-5xl sm:text-6xl md:text-6xl hero-name-gradient select-none">
-                  {initials}
-                </span>
+              <div className="hero-avatar-frame z-10">
+                <div className="hero-avatar-frame-corners" aria-hidden />
+                <div className="hero-avatar-plate">
+                  <div className="hero-avatar-photo-inner">
+                    {!photoFailed ? (
+                      <img
+                        src={profilePhotoSrc}
+                        alt={`${personalInfo.name}, professional headshot`}
+                        width={416}
+                        height={416}
+                        decoding="async"
+                        className="hero-avatar-photo"
+                        onError={onPhotoError}
+                      />
+                    ) : (
+                      <div className="flex min-h-full w-full items-center justify-center rounded-full bg-[oklch(0.16_0.01_85)]">
+                        <span className="font-syne font-bold text-4xl min-[400px]:text-5xl sm:text-6xl md:text-6xl hero-headline-gradient select-none">
+                          {initials}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </motion.div>
 
@@ -234,7 +236,7 @@ export function Hero() {
               transition={{ duration: 0.6, delay: 0.25 }}
               className="flex flex-col items-center gap-2 w-full px-1"
             >
-              <h1 className="font-syne text-[clamp(1.65rem,5.5vw+0.4rem,4.5rem)] sm:text-6xl lg:text-7xl font-extrabold leading-[1.05] tracking-tight hero-name-gradient break-words max-w-full">
+              <h1 className="font-syne text-[clamp(1.65rem,5.5vw+0.4rem,4.5rem)] sm:text-6xl lg:text-7xl font-bold leading-[1.08] tracking-tight hero-headline-gradient break-words max-w-full">
                 {personalInfo.name}
               </h1>
               {/* Rotating role text */}
@@ -288,10 +290,10 @@ export function Hero() {
                   }}
                 >
                   <span
-                    className="text-2xl min-[400px]:text-3xl font-extrabold leading-none"
+                    className="text-2xl min-[400px]:text-3xl font-bold leading-none tabular-nums"
                     style={{
                       color: stat.color,
-                      textShadow: `0 0 20px ${stat.glow}`,
+                      textShadow: stat.glow,
                     }}
                   >
                     {stat.value}

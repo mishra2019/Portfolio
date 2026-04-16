@@ -1,3 +1,4 @@
+import portfolioSeed from "@portfolio-seed";
 import type { PortfolioPayload } from "../types/portfolio";
 
 function portfolioUrl(): string {
@@ -7,8 +8,7 @@ function portfolioUrl(): string {
 
 export async function fetchPortfolio(): Promise<PortfolioPayload> {
   if (import.meta.env.VITE_STATIC_PORTFOLIO === "true") {
-    const { default: data } = await import("@portfolio-seed");
-    return data as PortfolioPayload;
+    return portfolioSeed as PortfolioPayload;
   }
 
   const url = portfolioUrl();

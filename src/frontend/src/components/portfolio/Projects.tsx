@@ -30,8 +30,8 @@ export function Projects() {
                 <motion.div
                   className="pf-card-icon-tile w-11 h-11 rounded-xl font-bold text-base"
                   style={{ color: "var(--pf-accent)" }}
-                  whileHover={{ rotate: [0, -4, 4, 0] }}
-                  transition={{ duration: 0.5 }}
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ duration: 0.2 }}
                 >
                   {project.name.charAt(0)}
                 </motion.div>
@@ -41,7 +41,7 @@ export function Projects() {
                     target="_blank"
                     rel="noreferrer"
                     className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-2 rounded-xl"
-                    style={{ color: "var(--pf-accent)", background: "oklch(0.55 0.18 195 / 0.14)" }}
+                    style={{ color: "var(--pf-accent)", background: "oklch(0.24 0.03 252 / 0.35)" }}
                     data-ocid={`projects.item.${i + 1}.link`}
                     aria-label={`Open ${project.name}`}
                     whileHover={{ scale: 1.08 }}
@@ -52,7 +52,7 @@ export function Projects() {
                 ) : null}
               </div>
 
-              <div className="h-px w-full bg-gradient-to-r from-transparent via-[oklch(0.45_0.15_195/0.35)] to-transparent" />
+              <div className="h-px w-full bg-gradient-to-r from-transparent via-[oklch(0.38_0.02_85/0.35)] to-transparent" />
 
               <div>
                 <h3 className="text-base font-bold font-syne mb-2" style={{ color: "var(--pf-text)" }}>
@@ -67,8 +67,8 @@ export function Projects() {
             <div
               className="px-6 py-4 mt-auto border-t flex flex-wrap gap-2"
               style={{
-                borderColor: "oklch(0.28 0.06 285 / 0.5)",
-                background: "linear-gradient(180deg, oklch(0.08 0.04 292 / 0.5) 0%, transparent 100%)",
+                borderColor: "oklch(0.34 0.014 85 / 0.55)",
+                background: "linear-gradient(180deg, oklch(0.16 0.008 85 / 0.55) 0%, transparent 100%)",
               }}
             >
               {project.technologies.map((tech, ti) => (

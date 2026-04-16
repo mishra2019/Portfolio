@@ -16,11 +16,11 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Outfit', 'system-ui', 'sans-serif'],
-        outfit: ['Outfit', 'sans-serif'],
-        syne: ['Syne', 'system-ui', 'sans-serif'],
-        bricolage: ['Syne', 'Bricolage Grotesque', 'system-ui', 'sans-serif'],
-        inter: ['Outfit', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        outfit: ['Inter', 'sans-serif'],
+        syne: ['DM Sans', 'Inter', 'system-ui', 'sans-serif'],
+        bricolage: ['DM Sans', 'Inter', 'system-ui', 'sans-serif'],
+        inter: ['Inter', 'sans-serif'],
       },
       colors: {
         border: "oklch(var(--border))",
@@ -94,7 +94,7 @@ export default {
       },
       boxShadow: {
         xs: "0 1px 2px 0 rgba(0,0,0,0.05)",
-        panel: "0 0 0 1px oklch(0.24 0.038 250), 0 4px 32px oklch(0.07 0.02 255 / 0.6)",
+        panel: "0 0 0 1px oklch(0.28 0.045 268), 0 4px 32px oklch(0.06 0.025 262 / 0.62)",
       },
       keyframes: {
         "accordion-down": {

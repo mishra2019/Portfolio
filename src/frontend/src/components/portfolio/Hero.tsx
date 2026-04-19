@@ -168,7 +168,7 @@ export function Hero() {
     <>
       <section
         id="hero"
-        className="relative w-full pt-[calc(5.5rem+env(safe-area-inset-top,0px))] pb-16 sm:pt-28 sm:pb-24 md:pt-32 md:pb-28 lg:pb-32 px-3 min-[400px]:px-4 sm:px-6 lg:px-10 overflow-hidden"
+        className="portfolio-section relative w-full pt-[calc(5.5rem+env(safe-area-inset-top,0px))] pb-16 sm:pt-28 sm:pb-24 md:pt-32 md:pb-28 lg:pb-32 px-3 min-[400px]:px-4 sm:px-6 lg:px-10 overflow-hidden"
       >
         {/* Subtle backdrop — calm, editorial (not decorative “game HUD”) */}
         <div className="absolute inset-0 pointer-events-none hero-backdrop" aria-hidden />

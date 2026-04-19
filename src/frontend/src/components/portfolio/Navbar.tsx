@@ -1,6 +1,6 @@
 import { Mail, Menu, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePortfolioData } from "../../hooks/PortfolioProvider";
 import { initialsFromName } from "../../utils/initials";
 
@@ -11,6 +11,14 @@ function scrollTo(href: string) {
 export function Navbar() {
   const { personalInfo, codingAchievements, awards } = usePortfolioData();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   const initials = useMemo(() => initialsFromName(personalInfo.name), [personalInfo.name]);
   const showAchievements = codingAchievements.length > 0 || awards.length > 0;
   const navLinks = useMemo(() => {
@@ -33,7 +41,7 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 navbar-root">
+    <header className={`sticky top-0 z-50 navbar-root ${scrolled ? "navbar-root--scrolled" : ""}`}>
       <div className="navbar-accent-line" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
@@ -91,7 +99,7 @@ export function Navbar() {
           {/* Mobile hamburger */}
           <button
             type="button"
-            className="md:hidden p-2 rounded-lg transition-colors"
+            className="md:hidden p-2 rounded-lg transition-colors nav-icon-btn"
             style={{ color: "var(--pf-text-secondary)" }}
             onClick={() => setMobileOpen((v) => !v)}
             aria-label={mobileOpen ? "Close menu" : "Open menu"}

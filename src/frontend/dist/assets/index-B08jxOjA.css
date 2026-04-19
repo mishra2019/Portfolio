@@ -491,6 +491,17 @@ body {
     background: oklch(0.5 0.12 252 / 0.5);
     color: var(--pf-text);
   }
+:focus-visible {
+    outline: 2px solid oklch(0.62 0.14 252 / 0.95);
+    outline-offset: 3px;
+  }
+.nav-link:focus-visible,
+  .navbar-cta-btn:focus-visible,
+  .hero-btn-primary:focus-visible,
+  .hero-btn-outline:focus-visible,
+  .nav-icon-btn:focus-visible {
+    outline-offset: 2px;
+  }
 body::after {
     content: "";
     position: fixed;
@@ -1571,10 +1582,6 @@ body::after {
   padding-top: 0.375rem;
   padding-bottom: 0.375rem;
 }
-.py-12{
-  padding-top: 3rem;
-  padding-bottom: 3rem;
-}
 .py-14{
   padding-top: 3.5rem;
   padding-bottom: 3.5rem;
@@ -1704,9 +1711,6 @@ body::after {
 }
 .text-\[13px\]{
   font-size: 13px;
-}
-.text-\[15px\]{
-  font-size: 15px;
 }
 .text-\[clamp\(1\.65rem\2c 5\.5vw\+0\.4rem\2c 4\.5rem\)\]{
   font-size: clamp(1.65rem, 5.5vw + 0.4rem, 4.5rem);
@@ -2162,14 +2166,34 @@ body::after {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
 }
+/* Anchor offset under sticky nav */
+.portfolio-section {
+  scroll-margin-top: 5.5rem;
+}
 /* ─── Alternating section background ─── */
 .section-alt {
+  position: relative;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, oklch(0.38 0.06 252 / 0.06), transparent 55%),
+    linear-gradient(
+      180deg,
+      oklch(0.172 0.009 85 / 0.92) 0%,
+      oklch(0.158 0.008 85 / 0.65) 100%
+    );
+  border-block: 1px solid oklch(0.33 0.015 85 / 0.85);
+}
+.section-alt::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.28;
   background: linear-gradient(
-    180deg,
-    oklch(0.165 0.009 85 / 0.85) 0%,
-    oklch(0.155 0.008 85 / 0.55) 100%
+    105deg,
+    transparent 40%,
+    oklch(0.42 0.08 252 / 0.04) 50%,
+    transparent 60%
   );
-  border-block: 1px solid oklch(0.33 0.015 85);
 }
 /* ─── Section labels ─── */
 .sub-section-label {
@@ -2231,6 +2255,37 @@ body::after {
   box-shadow: none;
 }
 /* ─── Section heading ─── */
+.section-header-wrap {
+  position: relative;
+  padding-left: 1.125rem;
+}
+.section-header-wrap::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.25em;
+  bottom: 0.25em;
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(
+    180deg,
+    oklch(0.78 0.13 252) 0%,
+    oklch(0.62 0.1 265) 45%,
+    oklch(0.52 0.08 210 / 0.85) 100%
+  );
+  box-shadow: 0 0 18px oklch(0.55 0.12 252 / 0.35);
+}
+.section-header-subtitle {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--pf-text-muted);
+  max-width: 42rem;
+}
+@media (min-width: 640px) {
+  .section-header-subtitle {
+    font-size: 16px;
+  }
+}
 .section-heading{
   font-size: 1.5rem;
   line-height: 2rem;
@@ -2244,14 +2299,14 @@ body::after {
 }
 @media (min-width: 768px){
   .section-heading{
-    font-size: 2rem;
+    font-size: 2.05rem;
   }
 }
 .section-heading {
   color: var(--pf-text);
   font-family: "DM Sans", "Inter", sans-serif;
-  letter-spacing: -0.025em;
-  line-height: 1.2;
+  letter-spacing: -0.028em;
+  line-height: 1.18;
 }
 .section-heading span {
   background: linear-gradient(
@@ -2273,6 +2328,22 @@ body::after {
   -webkit-backdrop-filter: blur(20px) saturate(1.08);
   border-bottom: 1px solid oklch(0.34 0.014 85);
   box-shadow: 0 8px 32px oklch(0 0 0 / 0.25);
+  transition:
+    background 0.35s ease,
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+.navbar-root--scrolled {
+  background: oklch(0.13 0.008 85 / 0.94);
+  border-bottom-color: oklch(0.34 0.014 85 / 0.9);
+  box-shadow:
+    0 4px 8px oklch(0 0 0 / 0.12),
+    0 18px 48px oklch(0 0 0 / 0.35),
+    0 0 0 1px oklch(0.5 0.06 252 / 0.06);
+}
+.nav-icon-btn:hover {
+  background: oklch(1 0 0 / 0.06);
+  color: var(--pf-text);
 }
 .navbar-accent-line {
   height: 2px;
@@ -2342,6 +2413,10 @@ body::after {
 .nav-link:hover {
   color: var(--pf-text);
   background: oklch(1 0 0 / 0.05);
+}
+.nav-link:focus-visible {
+  color: var(--pf-text);
+  background: oklch(1 0 0 / 0.07);
 }
 /* ─── Hero — focal glow + shimmer headline (respects reduced motion) ─── */
 @keyframes hero-headline-shimmer {
@@ -2669,10 +2744,36 @@ a:hover .contact-bar-item {
 }
 .summary-display:hover .summary-display-hint { opacity: 1; }
 .summary-display-static {
-  background: oklch(0.17 0.009 85);
-  border: 1px solid oklch(0.34 0.014 85);
-  border-radius: 12px;
-  padding: 20px 24px;
+  position: relative;
+  background: linear-gradient(
+    165deg,
+    oklch(0.19 0.012 85) 0%,
+    oklch(0.165 0.009 85) 100%
+  );
+  border: 1px solid oklch(0.36 0.016 85 / 0.75);
+  border-radius: 14px;
+  padding: 22px 26px;
+  box-shadow:
+    0 4px 28px oklch(0 0 0 / 0.2),
+    inset 0 1px 0 oklch(1 0 0 / 0.055);
+}
+.summary-display-static::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 18px;
+  right: 18px;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    oklch(0.55 0.1 252 / 0.45),
+    oklch(0.62 0.12 230 / 0.5),
+    transparent
+  );
+  opacity: 0.85;
+  pointer-events: none;
 }
 /* ─── Notes section ─── */
 .notes-input {
@@ -2744,7 +2845,6 @@ footer {
 @media (min-width: 1024px) {
   .footer-grid { grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: 48px; }
 }
-.footer-brand-col { }
 .footer-avatar {
   width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
@@ -4062,6 +4162,10 @@ footer {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }
+  .md\:py-16{
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
   .md\:py-24{
     padding-top: 6rem;
     padding-bottom: 6rem;
@@ -4079,8 +4183,8 @@ footer {
     font-size: 3.75rem;
     line-height: 1;
   }
-  .md\:text-\[2rem\]{
-    font-size: 2rem;
+  .md\:text-\[2\.05rem\]{
+    font-size: 2.05rem;
   }
   .md\:text-sm{
     font-size: 0.875rem;

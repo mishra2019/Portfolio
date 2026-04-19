@@ -11,7 +11,7 @@ export function Section({ id, children, className = "", alt = false }: SectionPr
   return (
     <section
       id={id}
-      className={`py-20 md:py-24 lg:py-28 px-4 sm:px-6 lg:px-10 ${alt ? "section-alt" : ""} ${className}`}
+      className={`portfolio-section py-20 md:py-24 lg:py-28 px-4 sm:px-6 lg:px-10 ${alt ? "section-alt" : ""} ${className}`}
     >
       <div className="max-w-7xl mx-auto">{children}</div>
     </section>

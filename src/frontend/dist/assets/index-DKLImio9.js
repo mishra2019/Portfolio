@@ -26053,7 +26053,7 @@ function Section({ id: id2, children, className = "", alt = false }) {
     "section",
     {
       id: id2,
-      className: `py-20 md:py-24 lg:py-28 px-4 sm:px-6 lg:px-10 ${alt ? "section-alt" : ""} ${className}`,
+      className: `portfolio-section py-20 md:py-24 lg:py-28 px-4 sm:px-6 lg:px-10 ${alt ? "section-alt" : ""} ${className}`,
       children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-7xl mx-auto", children })
     }
   );
@@ -26066,21 +26066,14 @@ function SectionHeader({ title, highlight, subtitle }) {
       whileInView: { opacity: 1, y: 0 },
       viewport: { once: true },
       transition: { duration: 0.5 },
-      className: "mb-12 md:mb-14 max-w-3xl",
+      className: "section-header-wrap mb-12 md:mb-14 max-w-3xl",
       children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("h2", { className: "section-heading", children: [
           title,
           " ",
           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: highlight })
         ] }),
-        subtitle && /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "p",
-          {
-            className: "text-[15px] sm:text-base mt-3 leading-relaxed",
-            style: { color: "var(--pf-text-muted)" },
-            children: subtitle
-          }
-        )
+        subtitle && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "section-header-subtitle mt-3 leading-relaxed", children: subtitle })
       ]
     }
   );
@@ -26618,18 +26611,19 @@ function Skills() {
 }
 function Summary() {
   const { profileSummary: profileSummary2 } = usePortfolioData();
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("section", { id: "summary", className: "py-12 px-4 sm:px-6 lg:px-10 section-alt", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-7xl mx-auto", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("section", { id: "summary", className: "portfolio-section py-14 md:py-16 px-4 sm:px-6 lg:px-10 section-alt", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-7xl mx-auto", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
     motion.div,
     {
       initial: { opacity: 0, y: 20 },
       whileInView: { opacity: 1, y: 0 },
       viewport: { once: true },
       transition: { duration: 0.5 },
+      className: "relative z-[1]",
       children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("h2", { className: "section-heading mb-5", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "section-header-wrap mb-6", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("h2", { className: "section-heading", children: [
           "Profile ",
           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Summary" })
-        ] }),
+        ] }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "summary-display-static", children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm sm:text-base leading-relaxed", style: { color: "var(--pf-text-secondary)" }, children: profileSummary2 }) })
       ]
     }
@@ -27070,7 +27064,7 @@ function Hero() {
       "section",
       {
         id: "hero",
-        className: "relative w-full pt-[calc(5.5rem+env(safe-area-inset-top,0px))] pb-16 sm:pt-28 sm:pb-24 md:pt-32 md:pb-28 lg:pb-32 px-3 min-[400px]:px-4 sm:px-6 lg:px-10 overflow-hidden",
+        className: "portfolio-section relative w-full pt-[calc(5.5rem+env(safe-area-inset-top,0px))] pb-16 sm:pt-28 sm:pb-24 md:pt-32 md:pb-28 lg:pb-32 px-3 min-[400px]:px-4 sm:px-6 lg:px-10 overflow-hidden",
         children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 pointer-events-none hero-backdrop", "aria-hidden": true }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-7xl w-full mx-auto relative z-10", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col items-center text-center gap-6 sm:gap-8", children: [
@@ -27251,6 +27245,13 @@ function scrollTo(href) {
 function Navbar() {
   const { personalInfo: personalInfo2, codingAchievements: codingAchievements2, awards: awards2 } = usePortfolioData();
   const [mobileOpen, setMobileOpen] = reactExports.useState(false);
+  const [scrolled, setScrolled] = reactExports.useState(false);
+  reactExports.useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   const initials = reactExports.useMemo(() => initialsFromName(personalInfo2.name), [personalInfo2.name]);
   const showAchievements = codingAchievements2.length > 0 || awards2.length > 0;
   const navLinks = reactExports.useMemo(() => {
@@ -27270,7 +27271,7 @@ function Navbar() {
     setMobileOpen(false);
     scrollTo(href);
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: "sticky top-0 z-50 navbar-root", children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: `sticky top-0 z-50 navbar-root ${scrolled ? "navbar-root--scrolled" : ""}`, children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "navbar-accent-line" }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-10", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between h-16", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs(
@@ -27319,7 +27320,7 @@ function Navbar() {
         "button",
         {
           type: "button",
-          className: "md:hidden p-2 rounded-lg transition-colors",
+          className: "md:hidden p-2 rounded-lg transition-colors nav-icon-btn",
           style: { color: "var(--pf-text-secondary)" },
           onClick: () => setMobileOpen((v) => !v),
           "aria-label": mobileOpen ? "Close menu" : "Open menu",

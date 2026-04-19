@@ -13,18 +13,13 @@ export function SectionHeader({ title, highlight, subtitle }: SectionHeaderProps
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="mb-12 md:mb-14 max-w-3xl"
+      className="section-header-wrap mb-12 md:mb-14 max-w-3xl"
     >
       <h2 className="section-heading">
         {title} <span>{highlight}</span>
       </h2>
       {subtitle && (
-        <p
-          className="text-[15px] sm:text-base mt-3 leading-relaxed"
-          style={{ color: "var(--pf-text-muted)" }}
-        >
-          {subtitle}
-        </p>
+        <p className="section-header-subtitle mt-3 leading-relaxed">{subtitle}</p>
       )}
     </motion.div>
   );
